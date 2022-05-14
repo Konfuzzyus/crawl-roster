@@ -1,7 +1,7 @@
-package me.konfuzzyus.crawlroster.jooq
+package me.konfuzzyus.crawl_roster.jooq
 
-import me.konfuzzyus.crawlroster.Repository
-import me.konfuzzyus.crawlroster.jooq.tables.records.HeroRecord
+import me.konfuzzyus.crawl_roster.Repository
+import me.konfuzzyus.crawl_roster.jooq.tables.records.HeroRecord
 import org.junit.jupiter.api.Test
 import java.util.*
 import kotlin.test.assertEquals

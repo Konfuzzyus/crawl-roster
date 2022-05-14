@@ -1,4 +1,5 @@
 import com.rohanprabhu.gradle.plugins.kdjooq.*
+import org.flywaydb.gradle.task.FlywayMigrateTask
 
 buildscript {
     repositories {
@@ -86,8 +87,12 @@ kotlin {
     }
 }
 
+val flywayGeneratedDir = "${project.buildDir}/generated/flyway"
+val flywayJdbc = "jdbc:h2:file:${flywayGeneratedDir}/database"
+val jooqGeneratedDir = "${project.buildDir}/generated/jooq"
+
 flyway {
-    url = "jdbc:h2:file:${project.buildDir}/generated/flyway/crawl-roster"
+    url = flywayJdbc
     user = "sa"
     password = ""
     schemas = arrayOf("ROSTER")
@@ -95,21 +100,27 @@ flyway {
     createSchemas = true
 }
 
+tasks.flywayMigrate {
+    project.kotlin.sourceSets["flyway"].resources.srcDirs.forEach(inputs::dir)
+    outputs.dir(flywayGeneratedDir)
+    doFirst { delete(outputs.files) }
+}
+
 jooqGenerator {
     jooqVersion = "3.16.6"
-    configuration("jvm", project.java.sourceSets["main"]) {
+    configuration("jvm" , java.sourceSets["main"]) {
         configuration = jooqCodegenConfiguration {
             jdbc {
                 username = "sa"
                 password = ""
                 driver = "org.h2.Driver"
-                url = "jdbc:h2:file:${project.buildDir}/generated/flyway/crawl-roster"
+                url = flywayJdbc
             }
 
             generator {
                 target {
-                    packageName = "me.konfuzzyus.crawlroster.jooq"
-                    directory = "${project.buildDir}/generated/jooq"
+                    packageName = "${project.group}.${project.name}.jooq"
+                    directory = jooqGeneratedDir
                 }
 
                 database {
@@ -122,6 +133,16 @@ jooqGenerator {
     dependencies {
         jooqGeneratorRuntime("com.h2database:h2:${Versions.h2db}")
     }
+}
+
+tasks.named("jooq-codegen-jvm") {
+    val fw = tasks.named<FlywayMigrateTask>("flywayMigrate")
+    inputs.files(fw.get().outputs.files)
+    dependsOn(fw)
+}
+
+tasks.named("jvmMainClasses") {
+    dependsOn(tasks.named("jooq-codegen-jvm"))
 }
 
 application {

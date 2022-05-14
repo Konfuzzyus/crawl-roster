@@ -1,7 +1,7 @@
-package me.konfuzzyus.crawlroster
+package me.konfuzzyus.crawl_roster
 
-import me.konfuzzyus.crawlroster.jooq.Tables
-import me.konfuzzyus.crawlroster.jooq.tables.records.HeroRecord
+import me.konfuzzyus.crawl_roster.jooq.Tables
+import me.konfuzzyus.crawl_roster.jooq.tables.records.HeroRecord
 import org.flywaydb.core.Flyway
 import org.jooq.DSLContext
 import org.jooq.SQLDialect

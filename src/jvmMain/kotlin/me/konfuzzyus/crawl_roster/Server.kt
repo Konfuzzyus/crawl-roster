@@ -1,4 +1,4 @@
-package me.konfuzzyus.crawlroster
+package me.konfuzzyus.crawl_roster
 
 import io.ktor.application.*
 import io.ktor.html.*
@@ -8,7 +8,6 @@ import io.ktor.routing.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import kotlinx.html.*
-import java.util.*
 
 fun HTML.index() {
     head {
