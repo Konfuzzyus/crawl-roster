@@ -1,12 +1,11 @@
-package me.konfuzzyus.crawl_roster
+package me.konfuzzyus.roster
 
-import io.ktor.application.*
-import io.ktor.html.*
-import io.ktor.http.*
-import io.ktor.http.content.*
-import io.ktor.routing.*
+import io.ktor.serialization.kotlinx.json.*
+import io.ktor.server.application.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
+import io.ktor.server.plugins.contentnegotiation.*
+import io.ktor.server.routing.*
 import kotlinx.html.*
 
 fun HTML.index() {
@@ -15,9 +14,6 @@ fun HTML.index() {
     }
     body {
         div {
-            "Hello from Ktor"
-        }
-        div {
             id = "root"
         }
         script(src = "/static/crawl-roster.js") {}
@@ -25,14 +21,16 @@ fun HTML.index() {
 }
 
 fun main() {
+    val repo = Repository()
+    repo.migrate()
+
     embeddedServer(Netty, port = 8080, host = "127.0.0.1") {
+        install(ContentNegotiation) {
+            json()
+        }
         routing {
-            get("/") {
-                call.respondHtml(HttpStatusCode.OK, HTML::index)
-            }
-            static("/static") {
-                resources()
-            }
+            ContentApi().addRoutes(this)
+            PlayerApi(repo).addRoutes(this)
         }
     }.start(wait = true)
 }

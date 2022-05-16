@@ -1,13 +1,14 @@
-package me.konfuzzyus.crawl_roster
+package me.konfuzzyus.roster
 
-import me.konfuzzyus.crawl_roster.jooq.Tables
-import me.konfuzzyus.crawl_roster.jooq.tables.records.HeroRecord
+import me.konfuzzyus.roster.jooq.Tables
+import me.konfuzzyus.roster.jooq.tables.records.PlayersRecord
 import org.flywaydb.core.Flyway
 import org.jooq.DSLContext
 import org.jooq.SQLDialect
 import org.jooq.impl.DSL
 import java.sql.Connection
 import java.sql.DriverManager
+import java.util.*
 
 private const val databaseUrl = "jdbc:h2:mem:test;DB_CLOSE_DELAY=-1"
 
@@ -35,20 +36,26 @@ class Repository {
         val flyway = Flyway.configure()
             .dataSource(databaseUrl, null, null)
             .schemas("ROSTER")
+            .createSchemas(true)
             .load()
         flyway.migrate()
     }
 
-    fun addHero(hero: HeroRecord) {
-        withJooq {
-            attach(hero)
-            hero.store()
+    fun fetchAllPlayers(): List<PlayersRecord> {
+        return withJooq {
+            selectFrom(Tables.PLAYERS).fetch().toList()
         }
     }
 
-    fun getHeroes(): List<HeroRecord> {
+    fun fetchPlayer(id: UUID): PlayersRecord? {
         return withJooq {
-            selectFrom(Tables.HERO).fetch().toList()
+            selectFrom(Tables.PLAYERS).where(Tables.PLAYERS.ID.eq(id)).fetchOne()
+        }
+    }
+
+    fun addPlayer(record: PlayersRecord) {
+        withJooq {
+            insertInto(Tables.PLAYERS).set(record).execute()
         }
     }
 }
