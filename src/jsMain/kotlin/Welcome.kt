@@ -1,7 +1,9 @@
+import kotlinx.browser.document
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
-import me.konfuzzyus.roster.Player
-import me.konfuzzyus.roster.PlayerListing
+import org.codecranachan.roster.Player
+import org.codecranachan.roster.PlayerListing
+import org.w3c.dom.Document
 import react.FC
 import react.Props
 import react.dom.html.InputType
@@ -27,7 +29,7 @@ val Welcome = FC<WelcomeProps> { props ->
         }
     }
     div {
-        +"Hello, $name"
+        +"Hello, ${document.cookie}"
     }
     div {
         +"We have $players."

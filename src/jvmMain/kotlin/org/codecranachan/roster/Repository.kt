@@ -1,7 +1,7 @@
-package me.konfuzzyus.roster
+package org.codecranachan.roster
 
-import me.konfuzzyus.roster.jooq.Tables
-import me.konfuzzyus.roster.jooq.tables.records.PlayersRecord
+import org.codecranachan.roster.jooq.Tables
+import org.codecranachan.roster.jooq.tables.records.PlayersRecord
 import org.flywaydb.core.Flyway
 import org.jooq.DSLContext
 import org.jooq.SQLDialect

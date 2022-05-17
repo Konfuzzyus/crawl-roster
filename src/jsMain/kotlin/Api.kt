@@ -5,8 +5,8 @@ import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
-import me.konfuzzyus.roster.Player
-import me.konfuzzyus.roster.PlayerListing
+import org.codecranachan.roster.Player
+import org.codecranachan.roster.PlayerListing
 
 val client = HttpClient(Js) {
     install(ContentNegotiation) {

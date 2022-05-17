@@ -20,7 +20,7 @@ plugins {
     application
 }
 
-group = "me.konfuzzyus"
+group = "org.codecranachan"
 version = "1.0-SNAPSHOT"
 
 object Versions {
@@ -33,6 +33,7 @@ object Versions {
     const val flyway = "8.5.10"
     const val logback = "1.2.11"
     const val uuid = "0.4.0"
+    const val jose4j = "0.7.12"
 }
 
 repositories {
@@ -63,7 +64,7 @@ kotlin {
         }
         val commonMain by getting {
             dependencies {
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:${Versions.kotlinSerialization}")
+                compileOnly("org.jetbrains.kotlinx:kotlinx-serialization-json:${Versions.kotlinSerialization}")
                 implementation("com.benasher44:uuid:${Versions.uuid}")
             }
         }
@@ -75,10 +76,16 @@ kotlin {
         val jvmMain by getting {
             dependsOn(flyway)
             dependencies {
+                implementation("io.ktor:ktor-serialization-kotlinx-json:${Versions.ktor}")
                 implementation("io.ktor:ktor-server-netty:${Versions.ktor}")
                 implementation("io.ktor:ktor-server-content-negotiation:${Versions.ktor}")
                 implementation("io.ktor:ktor-server-html-builder:${Versions.ktor}")
-                implementation("io.ktor:ktor-serialization-kotlinx-json:${Versions.ktor}")
+                implementation("io.ktor:ktor-server-sessions:${Versions.ktor}")
+                implementation("io.ktor:ktor-server-auth:${Versions.ktor}")
+                implementation("org.bitbucket.b_c:jose4j:${Versions.jose4j}")
+                implementation("io.ktor:ktor-client-core:${Versions.ktor}")
+                implementation("io.ktor:ktor-client-cio:${Versions.ktor}")
+                implementation("io.ktor:ktor-client-content-negotiation:${Versions.ktor}")
                 implementation("org.jooq:jooq:${Versions.jooq}")
                 implementation("com.h2database:h2:${Versions.h2db}")
                 implementation("org.flywaydb:flyway-core:${Versions.flyway}")

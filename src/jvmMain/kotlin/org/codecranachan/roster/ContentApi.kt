@@ -1,4 +1,4 @@
-package me.konfuzzyus.roster
+package org.codecranachan.roster
 
 import io.ktor.http.*
 import io.ktor.server.application.*
@@ -10,12 +10,6 @@ import kotlinx.html.HTML
 class ContentApi {
 
     fun addRoutes(route: Route) {
-        route.get("/") {
-            call.respondHtml(HttpStatusCode.OK, HTML::index)
-        }
-        route.static("/static") {
-            resources()
-        }
     }
 
 }

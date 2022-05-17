@@ -1,4 +1,4 @@
-package me.konfuzzyus.roster
+package org.codecranachan.roster
 
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString

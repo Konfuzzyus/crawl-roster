@@ -1,5 +1,5 @@
 import kotlinx.browser.document
-import me.konfuzzyus.roster.PlayerListing
+import org.codecranachan.roster.PlayerListing
 import react.create
 import react.dom.client.createRoot
 import react.dom.render

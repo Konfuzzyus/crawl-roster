@@ -1,4 +1,4 @@
-package me.konfuzzyus.roster
+package org.codecranachan.roster
 
 import com.benasher44.uuid.Uuid
 import com.benasher44.uuid.uuid4
