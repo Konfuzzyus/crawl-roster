@@ -1,3 +1,5 @@
+package api
+
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.engine.js.*
@@ -5,9 +7,16 @@ import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.launch
 import org.codecranachan.roster.Player
 import org.codecranachan.roster.PlayerListing
 import org.codecranachan.roster.UserIdentity
+import org.reduxkotlin.Thunk
+import reducers.ApplicationState
+import reducers.IdentifyUserAction
+
+private val scope = MainScope()
 
 val client = HttpClient(Js) {
     install(ContentNegotiation) {
@@ -26,6 +35,17 @@ suspend fun addPlayer(player: Player) {
     }
 }
 
-suspend fun fetchUserId(): UserIdentity {
-    return client.get("/auth/user").body()
+suspend fun fetchUserId(): UserIdentity? {
+    return try {
+        client.get("/auth/user").body()
+    } catch (e: Exception) {
+        null
+    }
+}
+
+fun updateUserId(): Thunk<ApplicationState> = { dispatch, _, _ ->
+    scope.launch {
+        val result = fetchUserId()
+        dispatch(IdentifyUserAction(result))
+    }
 }

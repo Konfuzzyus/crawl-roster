@@ -145,7 +145,7 @@ class AuthenticationSettings(private val rootUrl: String, private val providers:
                     }
                 }
             }
-            authenticate("auth-session", optional = false) {
+            authenticate("auth-session", optional = true) {
                 get("/auth/user") {
                     val userSession = call.sessions.get<UserSession>()
                     if (userSession == null) {
@@ -154,8 +154,6 @@ class AuthenticationSettings(private val rootUrl: String, private val providers:
                         call.respond(userSession.user)
                     }
                 }
-            }
-            authenticate("auth-session", optional = true) {
                 get("/auth/login") {
                     call.respondHtml {
                         body {

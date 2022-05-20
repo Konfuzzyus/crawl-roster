@@ -28,6 +28,7 @@ object Versions {
     const val kotlinCoroutines = "1.6.1"
     const val kotlinSerialization = "1.3.3"
     const val kotlinDateTime = "0.3.2"
+    const val kotlinRedux = "0.5.5"
     const val ktor = "2.0.1"
     const val jooq = "3.16.6"
     const val h2db = "2.1.212"
@@ -106,13 +107,12 @@ kotlin {
                 implementation("io.ktor:ktor-client-js:${Versions.ktor}")
                 implementation("io.ktor:ktor-client-content-negotiation:${Versions.ktor}")
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.kotlinCoroutines}")
+                implementation("org.reduxkotlin:redux-kotlin:${Versions.kotlinRedux}")
+                implementation("org.reduxkotlin:redux-kotlin-thunk:${Versions.kotlinRedux}")
                 implementation(project.dependencies.enforcedPlatform("org.jetbrains.kotlin-wrappers:kotlin-wrappers-bom:1.0.0-pre.337"))
                 implementation("org.jetbrains.kotlin-wrappers:kotlin-react")
                 implementation("org.jetbrains.kotlin-wrappers:kotlin-react-dom")
                 implementation("org.jetbrains.kotlin-wrappers:kotlin-react-router-dom")
-                implementation("org.jetbrains.kotlin-wrappers:kotlin-styled")
-                implementation("org.jetbrains.kotlin-wrappers:kotlin-redux")
-                implementation("org.jetbrains.kotlin-wrappers:kotlin-react-redux")
             }
         }
         val jsTest by getting

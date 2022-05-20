@@ -11,9 +11,7 @@ import io.ktor.server.html.*
 import io.ktor.server.http.content.*
 import io.ktor.server.netty.*
 import io.ktor.server.plugins.contentnegotiation.*
-import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import io.ktor.server.sessions.*
 import kotlinx.html.*
 import kotlinx.serialization.json.Json
 import org.codecranachan.roster.auth.createDiscordOidProvider
@@ -76,12 +74,7 @@ suspend fun main() {
             }
             authenticate("auth-session", optional = true) {
                 get("/") {
-                    val userSession = call.sessions.get<UserSession>()
-                    if (userSession == null) {
-                        call.respondRedirect("/auth/login")
-                    } else {
-                        call.respondHtml(HttpStatusCode.OK, HTML::index)
-                    }
+                    call.respondHtml(HttpStatusCode.OK, HTML::index)
                 }
             }
             static("/static") {
