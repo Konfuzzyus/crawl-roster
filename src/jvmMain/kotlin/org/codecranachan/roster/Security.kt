@@ -8,40 +8,79 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.sessions.*
 import io.ktor.util.*
+import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
 import kotlinx.html.a
 import kotlinx.html.body
 import kotlinx.html.p
 import org.jose4j.jwa.AlgorithmConstraints
 import org.jose4j.jwk.HttpsJwks
 import org.jose4j.jws.AlgorithmIdentifiers
-import org.jose4j.jwt.consumer.InvalidJwtException
 import org.jose4j.jwt.consumer.JwtConsumerBuilder
 import org.jose4j.keys.resolvers.HttpsJwksVerificationKeyResolver
 
-data class UserSession(val accessToken: String, val idToken: String) : Principal
+data class UserSession(
+    val providerName: String,
+    val accessToken: String,
+    val user: UserIdentity,
+    val expiresIn: Long
+) : Principal
 
 @kotlinx.serialization.Serializable
 data class OpenIdConfiguration(
-    val issuer: String,
+    val issuer: String = "",
     val authorization_endpoint: String,
-    val device_authorization_endpoint: String,
+    val device_authorization_endpoint: String = "",
     val token_endpoint: String,
     val userinfo_endpoint: String,
     val revocation_endpoint: String,
-    val jwks_uri: String,
-    val response_types_supported: List<String>,
-    val subject_types_supported: List<String>,
-    val id_token_signing_alg_values_supported: List<String>,
-    val scopes_supported: List<String>,
-    val token_endpoint_auth_methods_supported: List<String>,
-    val claims_supported: List<String>,
-    val code_challenge_methods_supported: List<String>,
-    val grant_types_supported: List<String>
+    val jwks_uri: String = "",
+    val response_types_supported: List<String> = emptyList(),
+    val subject_types_supported: List<String> = emptyList(),
+    val id_token_signing_alg_values_supported: List<String> = emptyList(),
+    val scopes_supported: List<String> = emptyList(),
+    val token_endpoint_auth_methods_supported: List<String> = emptyList(),
+    val claims_supported: List<String> = emptyList(),
+    val code_challenge_methods_supported: List<String> = emptyList(),
+    val grant_types_supported: List<String> = emptyList()
 )
 
-object ClientCredentials {
-    const val id = "1019714989830-94g4bdinitqv5gd5ugvndqqbjc2l4v7j.apps.googleusercontent.com"
-    const val secret = "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"
+data class ClientCredentials(
+    val id: String,
+    val secret: String
+)
+
+fun interface IdentityRetrievalStrategy {
+    suspend operator fun invoke(auth: OAuthAccessTokenResponse.OAuth2, provider: OpenIdProvider): UserIdentity
+}
+
+data class OpenIdProvider(
+    val cred: ClientCredentials,
+    val conf: OpenIdConfiguration,
+    val scopes: List<String>,
+    val identitySupplier: IdentityRetrievalStrategy
+) {
+    private val _httpsJwksKeyResolver = HttpsJwksVerificationKeyResolver(HttpsJwks(conf.jwks_uri))
+
+    val jwtConsumer = JwtConsumerBuilder()
+        .setVerificationKeyResolver(_httpsJwksKeyResolver)
+        .setJwsAlgorithmConstraints(
+            AlgorithmConstraints.ConstraintType.PERMIT,
+            AlgorithmIdentifiers.RSA_USING_SHA256
+        )
+        .setExpectedIssuer(conf.issuer)
+        .setExpectedAudience(cred.id)
+        .build()
+
+    val settings = OAuthServerSettings.OAuth2ServerSettings(
+        name = conf.issuer,
+        authorizeUrl = conf.authorization_endpoint,
+        accessTokenUrl = conf.token_endpoint,
+        requestMethod = HttpMethod.Post,
+        clientId = cred.id,
+        clientSecret = cred.secret,
+        defaultScopes = scopes
+    )
 }
 
 object SessionSecrets {
@@ -50,30 +89,7 @@ object SessionSecrets {
     val transformer = SessionTransportTransformerEncrypt(secretEncryptKey, secretSignKey)
 }
 
-class AuthenticationSettings(private val oidConf: OpenIdConfiguration) {
-
-    private val _httpsJkws = HttpsJwks(oidConf.jwks_uri)
-    private val _httpsJwksKeyResolver = HttpsJwksVerificationKeyResolver(_httpsJkws)
-
-    val jwtConsumer = JwtConsumerBuilder()
-        .setVerificationKeyResolver(_httpsJwksKeyResolver)
-        .setJwsAlgorithmConstraints(
-            AlgorithmConstraints.ConstraintType.PERMIT,
-            AlgorithmIdentifiers.RSA_USING_SHA256
-        )
-        .setExpectedIssuer(oidConf.issuer)
-        .setExpectedAudience(ClientCredentials.id)
-        .build()
-
-    val settings = OAuthServerSettings.OAuth2ServerSettings(
-        name = "google",
-        authorizeUrl = oidConf.authorization_endpoint,
-        accessTokenUrl = oidConf.token_endpoint,
-        requestMethod = HttpMethod.Post,
-        clientId = ClientCredentials.id,
-        clientSecret = ClientCredentials.secret,
-        defaultScopes = listOf("https://www.googleapis.com/auth/userinfo.profile")
-    )
+class AuthenticationSettings(private val rootUrl: String, private val providers: Map<String, OpenIdProvider>) {
 
     fun install(app: Application) {
         with(app) {
@@ -81,21 +97,23 @@ class AuthenticationSettings(private val oidConf: OpenIdConfiguration) {
                 cookie<UserSession>("user_session") {
                     cookie.path = "/"
                     cookie.maxAgeInSeconds = 60
+                    cookie.extensions["SameSite"] = "lax"
                     transform(SessionSecrets.transformer)
                 }
             }
             install(Authentication) {
-                oauth("auth-oauth-google") {
-                    urlProvider = { "http://localhost:8080/auth/callback" }
-                    providerLookup = { settings }
-                    client = RosterServer.httpClient
+                providers.forEach { (providerName, oidProvider) ->
+                    oauth(providerName) {
+                        urlProvider = { "${rootUrl}/auth/${providerName}/callback" }
+                        providerLookup = { oidProvider.settings }
+                        client = RosterServer.httpClient
+                    }
                 }
                 session<UserSession>("auth-session") {
                     validate { session ->
-                        try {
-                            jwtConsumer.processToClaims(session.idToken)
+                        if (Instant.fromEpochSeconds(session.expiresIn) < Clock.System.now()) {
                             session
-                        } catch (e: InvalidJwtException) {
+                        } else {
                             null
                         }
                     }
@@ -109,17 +127,22 @@ class AuthenticationSettings(private val oidConf: OpenIdConfiguration) {
 
     fun install(r: Routing) {
         with(r) {
-            authenticate("auth-oauth-google") {
-                get("/auth/login/auth-oauth-google") { }
-                get("/auth/callback") {
-                    val principal: OAuthAccessTokenResponse.OAuth2? = call.principal()
-                    call.sessions.set(
-                        UserSession(
-                            principal?.accessToken.toString(),
-                            principal?.extraParameters?.get("id_token").toString()
+            providers.forEach { (providerName, oidProvider) ->
+                authenticate(providerName) {
+                    get("/auth/${providerName}/login") { }
+                    get("/auth/${providerName}/callback") {
+                        val principal: OAuthAccessTokenResponse.OAuth2? = call.principal()
+                        val user = oidProvider.identitySupplier(principal!!, oidProvider)
+                        call.sessions.set(
+                            UserSession(
+                                providerName,
+                                principal.accessToken,
+                                user,
+                                principal.expiresIn
+                            )
                         )
-                    )
-                    call.respondRedirect("/")
+                        call.respondRedirect("/")
+                    }
                 }
             }
             authenticate("auth-session", optional = false) {
@@ -128,14 +151,7 @@ class AuthenticationSettings(private val oidConf: OpenIdConfiguration) {
                     if (userSession == null) {
                         call.respond(Unit)
                     } else {
-                        val claims = jwtConsumer.processToClaims(userSession.idToken)
-                        val user = UserIdentity(
-                            claims.claimsMap["name"] as String,
-                            claims.claimsMap["picture"] as String?,
-                            claims.claimsMap["given_name"] as String?,
-                            claims.claimsMap["locale"] as String?
-                        )
-                        call.respond(user)
+                        call.respond(userSession.user)
                     }
                 }
             }
@@ -143,8 +159,10 @@ class AuthenticationSettings(private val oidConf: OpenIdConfiguration) {
                 get("/auth/login") {
                     call.respondHtml {
                         body {
-                            p {
-                                a("/auth/login/auth-oauth-google") { +"Login with Google" }
+                            providers.forEach { (providerName, _) ->
+                                p {
+                                    a("/auth/${providerName}/login") { +"Login with $providerName" }
+                                }
                             }
                         }
                     }
@@ -154,7 +172,6 @@ class AuthenticationSettings(private val oidConf: OpenIdConfiguration) {
                     call.respondRedirect("/")
                 }
             }
-
         }
     }
 }

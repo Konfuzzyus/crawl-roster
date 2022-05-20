@@ -1,9 +1,7 @@
 package org.codecranachan.roster
 
 import io.ktor.client.*
-import io.ktor.client.call.*
 import io.ktor.client.engine.cio.*
-import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
@@ -17,7 +15,9 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.sessions.*
 import kotlinx.html.*
-import org.jose4j.jwt.consumer.InvalidJwtException
+import kotlinx.serialization.json.Json
+import org.codecranachan.roster.auth.createDiscordOidProvider
+import org.codecranachan.roster.auth.createGoogleOidProvider
 
 fun HTML.index() {
     head {
@@ -35,7 +35,17 @@ class RosterServer {
     companion object {
         val httpClient = HttpClient(CIO) {
             install(io.ktor.client.plugins.contentnegotiation.ContentNegotiation) {
-                json()
+                json(
+                    Json {
+                        encodeDefaults = true
+                        isLenient = true
+                        allowSpecialFloatingPointValues = true
+                        allowStructuredMapKeys = true
+                        prettyPrint = false
+                        useArrayPolymorphism = false
+                        ignoreUnknownKeys = true
+                    }
+                )
             }
         }
     }
@@ -45,9 +55,14 @@ suspend fun main() {
     val repo = Repository()
     repo.migrate()
 
-    val gOidConf: OpenIdConfiguration =
-        RosterServer.httpClient.get("https://accounts.google.com/.well-known/openid-configuration").body()
-    val auth = AuthenticationSettings(gOidConf)
+
+    val auth = AuthenticationSettings(
+        "http://localhost:8080",
+        mapOf(
+            "google" to createGoogleOidProvider(),
+            "discord" to createDiscordOidProvider()
+        )
+    )
 
     embeddedServer(Netty, port = 8080, host = "127.0.0.1") {
         install(ContentNegotiation) {

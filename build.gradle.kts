@@ -27,6 +27,7 @@ object Versions {
     const val kotlinWrappers = "18.1.0-pre.337"
     const val kotlinCoroutines = "1.6.1"
     const val kotlinSerialization = "1.3.3"
+    const val kotlinDateTime = "0.3.2"
     const val ktor = "2.0.1"
     const val jooq = "3.16.6"
     const val h2db = "2.1.212"
@@ -65,6 +66,7 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 compileOnly("org.jetbrains.kotlinx:kotlinx-serialization-json:${Versions.kotlinSerialization}")
+                implementation("org.jetbrains.kotlinx:kotlinx-datetime:${Versions.kotlinDateTime}")
                 implementation("com.benasher44:uuid:${Versions.uuid}")
             }
         }

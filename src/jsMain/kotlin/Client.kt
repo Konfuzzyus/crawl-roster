@@ -1,18 +1,31 @@
 import kotlinx.browser.document
-import org.codecranachan.roster.PlayerListing
 import react.create
 import react.dom.client.createRoot
-import react.dom.render
+import react.redux.Provider
+import redux.Action
+import redux.Reducer
+import redux.createStore
+
+data class AppState(
+    val version: String = "1.0.0"
+)
+
+val AppReducer: Reducer<AppState, Action> = { state: AppState, action: Action ->
+    state
+}
 
 fun main() {
-    val container = document.createElement("div")
-    document.body!!.appendChild(container)
-
-    val welcome = Welcome.create {
-        name = "Kotlin/JS"
-        players = PlayerListing(listOf())
-    }
+    val container = document.getElementById("root")!!
+    val appStore = createStore(AppReducer, AppState())
 
     val root = createRoot(container)
-    root.render(welcome)
+    root.render(
+        Provider.create {
+            store = appStore
+
+            App.create {
+                version = "1.0.0"
+            }
+        }
+    )
 }

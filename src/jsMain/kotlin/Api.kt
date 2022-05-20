@@ -7,6 +7,7 @@ import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import org.codecranachan.roster.Player
 import org.codecranachan.roster.PlayerListing
+import org.codecranachan.roster.UserIdentity
 
 val client = HttpClient(Js) {
     install(ContentNegotiation) {
@@ -23,4 +24,8 @@ suspend fun addPlayer(player: Player) {
         contentType(ContentType.Application.Json)
         setBody(player)
     }
+}
+
+suspend fun fetchUserId(): UserIdentity {
+    return client.get("/auth/user").body()
 }
