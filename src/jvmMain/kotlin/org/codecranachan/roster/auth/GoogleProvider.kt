@@ -7,7 +7,10 @@ import org.codecranachan.roster.OpenIdProvider
 import org.codecranachan.roster.RosterServer
 import org.codecranachan.roster.UserIdentity
 
+const val googleOidProviderName = "google"
+
 suspend fun createGoogleOidProvider() = OpenIdProvider(
+    googleOidProviderName,
     ClientCredentials(
         id = "1019714989830-94g4bdinitqv5gd5ugvndqqbjc2l4v7j.apps.googleusercontent.com",
         secret = "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"

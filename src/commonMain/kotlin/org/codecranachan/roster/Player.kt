@@ -21,7 +21,9 @@ object UuidSerializer : KSerializer<Uuid> {
 data class Player(
     @Serializable(with = UuidSerializer::class)
     val id: Uuid = uuid4(),
-    val handle: String
+    val name: String,
+    val discordHandle: String? = null,
+    val avatarUrl: String? = null
 )
 
 @Serializable

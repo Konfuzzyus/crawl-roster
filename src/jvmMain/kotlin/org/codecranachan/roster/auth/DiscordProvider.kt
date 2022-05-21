@@ -20,7 +20,10 @@ data class DiscordAuthorizationInfo(
     val user: DiscordUser
 )
 
+const val discordOidProviderName = "discord"
+
 fun createDiscordOidProvider() = OpenIdProvider(
+    discordOidProviderName,
     ClientCredentials(
         id = "976931433903960074",
         secret = "xb0sP7Zwz8VjWuMA8MPqkmYLVILH5dFU"
@@ -31,7 +34,7 @@ fun createDiscordOidProvider() = OpenIdProvider(
         userinfo_endpoint = "https://discord.com/api/oauth2/@me",
         revocation_endpoint = "https://discord.com/api/oauth2/token/revoke",
     ),
-    listOf("identify")
+    listOf("identify"),
 ) { principal, provider ->
     val info: DiscordAuthorizationInfo = RosterServer.httpClient.get(provider.conf.userinfo_endpoint) {
         bearerAuth(principal.accessToken)

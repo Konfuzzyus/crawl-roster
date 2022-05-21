@@ -14,8 +14,10 @@ import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.routing.*
 import kotlinx.html.*
 import kotlinx.serialization.json.Json
+import org.codecranachan.roster.api.PlayerApi
 import org.codecranachan.roster.auth.createDiscordOidProvider
 import org.codecranachan.roster.auth.createGoogleOidProvider
+import org.codecranachan.roster.repo.Repository
 
 fun HTML.index() {
     head {
@@ -53,12 +55,11 @@ suspend fun main() {
     val repo = Repository()
     repo.migrate()
 
-
     val auth = AuthenticationSettings(
         "http://localhost:8080",
-        mapOf(
-            "google" to createGoogleOidProvider(),
-            "discord" to createDiscordOidProvider()
+        listOf(
+            createDiscordOidProvider(),
+            createGoogleOidProvider()
         )
     )
 

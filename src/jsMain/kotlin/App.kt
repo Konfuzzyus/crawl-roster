@@ -1,4 +1,5 @@
 import components.Identity
+import components.RosterWidget
 import org.reduxkotlin.Store
 import react.FC
 import react.Props
@@ -16,5 +17,6 @@ val App = FC<AppProps> { props ->
             +"Crawl-Roster ${props.version}"
         }
         Identity { store = props.store }
+        RosterWidget { store = props.store }
     }
 }

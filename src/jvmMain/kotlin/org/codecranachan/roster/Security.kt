@@ -18,6 +18,14 @@ import org.jose4j.jwk.HttpsJwks
 import org.jose4j.jws.AlgorithmIdentifiers
 import org.jose4j.jwt.consumer.JwtConsumerBuilder
 import org.jose4j.keys.resolvers.HttpsJwksVerificationKeyResolver
+import kotlin.time.DurationUnit
+import kotlin.time.toDuration
+
+data class UserIdentity(
+    val id: String,
+    val name: String,
+    val pictureUrl: String?
+)
 
 data class UserSession(
     val providerName: String,
@@ -55,6 +63,7 @@ fun interface IdentityRetrievalStrategy {
 }
 
 data class OpenIdProvider(
+    val name: String,
     val cred: ClientCredentials,
     val conf: OpenIdConfiguration,
     val scopes: List<String>,
@@ -89,22 +98,24 @@ object SessionSecrets {
     val transformer = SessionTransportTransformerEncrypt(secretEncryptKey, secretSignKey)
 }
 
-class AuthenticationSettings(private val rootUrl: String, private val providers: Map<String, OpenIdProvider>) {
+class AuthenticationSettings(private val rootUrl: String, private val providers: List<OpenIdProvider>) {
+
+    private val sessionExiprationTime = 7.toDuration(DurationUnit.DAYS)
 
     fun install(app: Application) {
         with(app) {
             install(Sessions) {
                 cookie<UserSession>("user_session") {
                     cookie.path = "/"
-                    cookie.maxAgeInSeconds = 60
+                    cookie.maxAgeInSeconds = sessionExiprationTime.inWholeSeconds
                     cookie.extensions["SameSite"] = "lax"
                     transform(SessionSecrets.transformer)
                 }
             }
             install(Authentication) {
-                providers.forEach { (providerName, oidProvider) ->
-                    oauth(providerName) {
-                        urlProvider = { "${rootUrl}/auth/${providerName}/callback" }
+                providers.forEach { oidProvider ->
+                    oauth(oidProvider.name) {
+                        urlProvider = { "${rootUrl}/auth/${oidProvider.name}/callback" }
                         providerLookup = { oidProvider.settings }
                         client = RosterServer.httpClient
                     }
@@ -127,15 +138,15 @@ class AuthenticationSettings(private val rootUrl: String, private val providers:
 
     fun install(r: Routing) {
         with(r) {
-            providers.forEach { (providerName, oidProvider) ->
-                authenticate(providerName) {
-                    get("/auth/${providerName}/login") { }
-                    get("/auth/${providerName}/callback") {
+            providers.forEach { oidProvider ->
+                authenticate(oidProvider.name) {
+                    get("/auth/${oidProvider.name}/login") { }
+                    get("/auth/${oidProvider.name}/callback") {
                         val principal: OAuthAccessTokenResponse.OAuth2? = call.principal()
                         val user = oidProvider.identitySupplier(principal!!, oidProvider)
                         call.sessions.set(
                             UserSession(
-                                providerName,
+                                oidProvider.name,
                                 principal.accessToken,
                                 user,
                                 principal.expiresIn
@@ -146,20 +157,12 @@ class AuthenticationSettings(private val rootUrl: String, private val providers:
                 }
             }
             authenticate("auth-session", optional = true) {
-                get("/auth/user") {
-                    val userSession = call.sessions.get<UserSession>()
-                    if (userSession == null) {
-                        call.respond(Unit)
-                    } else {
-                        call.respond(userSession.user)
-                    }
-                }
                 get("/auth/login") {
                     call.respondHtml {
                         body {
-                            providers.forEach { (providerName, _) ->
+                            providers.forEach { oidProvider ->
                                 p {
-                                    a("/auth/${providerName}/login") { +"Login with $providerName" }
+                                    a("/auth/${oidProvider.name}/login") { +"Login with ${oidProvider.name}" }
                                 }
                             }
                         }

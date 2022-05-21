@@ -9,9 +9,9 @@ import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
+import org.codecranachan.roster.Identity
 import org.codecranachan.roster.Player
 import org.codecranachan.roster.PlayerListing
-import org.codecranachan.roster.UserIdentity
 import org.reduxkotlin.Thunk
 import reducers.ApplicationState
 import reducers.IdentifyUserAction
@@ -35,9 +35,9 @@ suspend fun addPlayer(player: Player) {
     }
 }
 
-suspend fun fetchUserId(): UserIdentity? {
+suspend fun fetchUserId(): Identity? {
     return try {
-        client.get("/auth/user").body()
+        client.get("/api/v1/me").body()
     } catch (e: Exception) {
         null
     }
@@ -45,6 +45,14 @@ suspend fun fetchUserId(): UserIdentity? {
 
 fun updateUserId(): Thunk<ApplicationState> = { dispatch, _, _ ->
     scope.launch {
+        val result = fetchUserId()
+        dispatch(IdentifyUserAction(result))
+    }
+}
+
+fun signUpPlayer(p: Player): Thunk<ApplicationState> = { dispatch, _, _ ->
+    scope.launch {
+        addPlayer(p)
         val result = fetchUserId()
         dispatch(IdentifyUserAction(result))
     }

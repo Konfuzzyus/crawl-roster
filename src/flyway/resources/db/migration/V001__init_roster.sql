@@ -1,12 +1,9 @@
-create table Accounts (
-    id UUID not null primary key
-);
-
 create table Players (
     id UUID not null primary key,
-    handle varchar(100) not null,
-
-    unique (handle)
+    player_name varchar(100) null,
+    discord_name varchar(100) null,
+    discord_id varchar(100) null,
+    google_id varchar(100) null
 );
 
 create table DungeonMasters (
@@ -20,6 +17,14 @@ create table PlayerCharacters (
 create table Events (
     id UUID not null primary key,
     event_date DATE not null
+);
+
+create table EventRegistrations (
+    id UUID not null primary key,
+    event_id UUID null,
+    player_id UUID not null,
+
+    foreign key (event_id) references Events(id)
 );
 
 create table GameTableOfferings (
