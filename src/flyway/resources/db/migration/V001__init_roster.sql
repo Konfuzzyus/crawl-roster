@@ -27,10 +27,12 @@ create table Events (
 
 create table EventRegistrations (
     id UUID not null primary key,
-    event_id UUID null,
+    event_id UUID not null,
     player_id UUID not null,
 
-    foreign key (event_id) references Events(id)
+    foreign key (event_id) references Events(id),
+    foreign key (player_id) references Players(id),
+    unique (event_id, player_id)
 );
 
 create table GameTableOfferings (

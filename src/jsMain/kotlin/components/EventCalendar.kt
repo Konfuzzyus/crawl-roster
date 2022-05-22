@@ -1,6 +1,5 @@
 package components
 
-import kotlinx.datetime.internal.JSJoda.DateTimeFormatter
 import org.codecranachan.roster.Guild
 import org.codecranachan.roster.Player
 import org.reduxkotlin.Store
@@ -38,7 +37,10 @@ val EventCalendar = FC<EventCalendarProps> { props ->
                 ol {
                     events.forEach {
                         li {
-                            +"${it.date.dayOfWeek.name}, ${it.date} - ${it.registeredPlayers.size} players registered"
+                            EventEntry {
+                                store = props.store
+                                eventId = it.id
+                            }
                         }
                     }
                 }

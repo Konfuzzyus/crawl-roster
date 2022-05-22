@@ -1,5 +1,6 @@
 package api
 
+import com.benasher44.uuid.uuid4
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.engine.js.*
@@ -62,4 +63,15 @@ suspend fun addEvent(e: Event) {
         contentType(ContentType.Application.Json)
         setBody(e)
     }
+}
+
+suspend fun addEventRegistration(e: Event, p: Player) {
+    client.post("/api/v1/events/${e.id}/registrations") {
+        contentType(ContentType.Application.Json)
+        setBody(EventRegistration(uuid4(), e.id, p.id))
+    }
+}
+
+suspend fun removeEventRegistration(e: Event, p: Player) {
+    client.delete("/api/v1/events/${e.id}/registrations/${p.id}")
 }

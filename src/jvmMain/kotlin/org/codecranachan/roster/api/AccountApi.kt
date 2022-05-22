@@ -28,13 +28,10 @@ class AccountApi(private val repository: Repository) {
                         googleOidProviderName -> repository.fetchPlayerByGoogleId(userSession.user.id)
                         else -> null
                     }
-                    // TODO: Fetch events and tables
                     call.respond(
                         Identity(
                             userSession.user.name,
-                            profile,
-                            emptyList(),
-                            emptyList()
+                            profile
                         )
                     )
                 }

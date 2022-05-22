@@ -13,6 +13,7 @@ data class Event(
     val guildId: Uuid = uuid4(),
     val date: LocalDate,
     val registeredPlayers: List<Player> = listOf(),
+    val hostedTables: List<PlayTable> = listOf()
 )
 
 @Serializable

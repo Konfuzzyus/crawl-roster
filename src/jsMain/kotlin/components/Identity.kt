@@ -14,10 +14,10 @@ external interface IdentityProps : Props {
 }
 
 val Identity = FC<IdentityProps> { props ->
-    val (profile, setProfile) = useState(props.store.state.identity.profile)
+    val (profile, setProfile) = useState(props.store.state.identity.data)
 
     useEffect {
-        val unsubscribe = props.store.subscribe { setProfile(props.store.state.identity.profile) }
+        val unsubscribe = props.store.subscribe { setProfile(props.store.state.identity.data) }
         cleanup(unsubscribe)
     }
     if (profile == null) {

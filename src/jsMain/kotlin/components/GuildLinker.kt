@@ -9,7 +9,8 @@ import org.codecranachan.roster.Guild
 import org.reduxkotlin.Store
 import react.FC
 import react.Props
-import react.dom.html.ReactHTML
+import react.dom.html.ReactHTML.button
+import react.dom.html.ReactHTML.div
 import react.useEffectOnce
 import react.useState
 import reducers.ApplicationState
@@ -29,7 +30,7 @@ val GuildLinker = FC<GuildLinkerProps> { props ->
         }
     }
 
-    ReactHTML.div {
+    div {
         if (ownedGuilds == null) {
             +"Waiting for your guild memberships to load..."
         } else {
@@ -37,11 +38,11 @@ val GuildLinker = FC<GuildLinkerProps> { props ->
                 +"You don't seem to own any guilds. You need to own a guild to link it."
             } else {
                 ownedGuilds.forEach {
-                    ReactHTML.button {
+                    button {
                         +"Link ${it.name}"
                         onClick = { e ->
                             props.store.dispatch(linkGuild(Guild(uuid4(), it.name, it.id)))
-                            e.currentTarget.disabled = true
+                            disabled = true
                         }
                     }
                 }

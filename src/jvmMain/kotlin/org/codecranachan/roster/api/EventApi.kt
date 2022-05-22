@@ -7,10 +7,8 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import org.codecranachan.roster.Event
-import org.codecranachan.roster.repo.Repository
-import org.codecranachan.roster.repo.addEvent
-import org.codecranachan.roster.repo.fetchEvent
-import org.codecranachan.roster.repo.removeEventRegistration
+import org.codecranachan.roster.EventRegistration
+import org.codecranachan.roster.repo.*
 
 class EventApi(private val repository: Repository) {
 
@@ -32,9 +30,17 @@ class EventApi(private val repository: Repository) {
                 call.respond(HttpStatusCode.Created)
             }
 
-            delete("/api/v1/events/{evtId}/registrations/{regId}") {
-                val registrationId = Uuid.fromString(call.parameters["regId"])
-                repository.removeEventRegistration(registrationId)
+            post("/api/v1/events/{evtId}/registrations") {
+                val evtId = Uuid.fromString(call.parameters["evtId"])
+                val reg = call.receive<EventRegistration>()
+                repository.addEventRegistration(EventRegistration(reg.id, evtId, reg.playerId))
+                call.respond(HttpStatusCode.Created)
+            }
+
+            delete("/api/v1/events/{evtId}/registrations/{plrId}") {
+                val evtId = Uuid.fromString(call.parameters["evtId"])
+                val plrId = Uuid.fromString(call.parameters["plrId"])
+                repository.removeEventRegistration(evtId, plrId)
                 call.respond(HttpStatusCode.OK)
             }
         }

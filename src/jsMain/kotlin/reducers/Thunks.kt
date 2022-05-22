@@ -7,7 +7,6 @@ import org.codecranachan.roster.Event
 import org.codecranachan.roster.Guild
 import org.codecranachan.roster.Player
 import org.reduxkotlin.Thunk
-import react.dom.svg.ReactSVG.g
 
 private val scope = MainScope()
 
@@ -46,17 +45,42 @@ fun linkGuild(g: Guild): Thunk<ApplicationState> = { dispatch, _, _ ->
 
 fun selectGuild(g: Guild): Thunk<ApplicationState> = { dispatch, _, _ ->
     scope.launch {
-        val events = fetchEvents(g)
         dispatch(GuildSelected(g))
-        dispatch(EventsUpdated(events))
+        dispatch(updateEvents())
     }
 }
 
 fun createEvent(e: Event): Thunk<ApplicationState> = { dispatch, getState, _ ->
     scope.launch {
         addEvent(e)
+        dispatch(updateEvents())
+    }
+}
+
+fun unsubscribePlayer(e: Event): Thunk<ApplicationState> = { dispatch, getState, _ ->
+    scope.launch {
+        val player = getState().identity.data?.profile
+        if (player != null) {
+            removeEventRegistration(e, player)
+            dispatch(updateEvents())
+        }
+    }
+}
+
+fun subscribePlayer(e: Event): Thunk<ApplicationState> = { dispatch, getState, _ ->
+    scope.launch {
+        val player = getState().identity.data?.profile
+        if (player != null) {
+            addEventRegistration(e, player)
+            dispatch(updateEvents())
+        }
+    }
+}
+
+fun updateEvents() : Thunk<ApplicationState> = { dispatch, getState, _ ->
+    scope.launch {
         val calendar = getState().calendar
-        if (calendar.selectedGuild?.id == e.guildId) {
+        if (calendar.selectedGuild != null) {
             val events = fetchEvents(calendar.selectedGuild)
             dispatch(EventsUpdated(events))
         }
