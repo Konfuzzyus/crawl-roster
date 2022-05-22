@@ -1,13 +1,12 @@
 package components
 
-import api.updateUserId
-import org.codecranachan.roster.Identity
 import org.reduxkotlin.Store
-import react.*
+import react.FC
+import react.Props
 import react.dom.html.ReactHTML.a
-import react.dom.html.ReactHTML.button
 import react.dom.html.ReactHTML.div
-import react.dom.html.ReactHTML.input
+import react.useEffect
+import react.useState
 import reducers.ApplicationState
 
 external interface IdentityProps : Props {
@@ -15,16 +14,13 @@ external interface IdentityProps : Props {
 }
 
 val Identity = FC<IdentityProps> { props ->
-    val (userIdentity, setUserIdentity) = useState<Identity?>(null)
+    val (profile, setProfile) = useState(props.store.state.identity.profile)
 
     useEffect {
-        val unsubscribe = props.store.subscribe { setUserIdentity(props.store.state.identity.profile) }
-        cleanup {
-            unsubscribe()
-        }
+        val unsubscribe = props.store.subscribe { setProfile(props.store.state.identity.profile) }
+        cleanup(unsubscribe)
     }
-
-    if (userIdentity == null) {
+    if (profile == null) {
         div {
             a {
                 href = "/auth/login"
@@ -33,7 +29,7 @@ val Identity = FC<IdentityProps> { props ->
         }
     } else {
         div {
-            +"Logged in as ${userIdentity.name} - "
+            +"Logged in as ${profile.name} - "
             a {
                 href = "/auth/logout"
                 +"Logout"

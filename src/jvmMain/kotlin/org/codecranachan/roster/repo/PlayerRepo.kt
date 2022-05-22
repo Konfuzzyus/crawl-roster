@@ -2,7 +2,6 @@ package org.codecranachan.roster.repo
 
 import com.benasher44.uuid.Uuid
 import org.codecranachan.roster.Player
-import org.codecranachan.roster.PlayerListing
 import org.codecranachan.roster.UserIdentity
 import org.codecranachan.roster.jooq.Tables.PLAYERS
 import org.codecranachan.roster.jooq.tables.records.PlayersRecord
@@ -19,10 +18,9 @@ fun Repository.fetchPlayerByDiscordId(id: String): Player? {
     }
 }
 
-fun Repository.fetchAllPlayers(): PlayerListing {
+fun Repository.fetchAllPlayers(): List<Player> {
     return withJooq {
-        val players = selectFrom(PLAYERS).fetch().toList().map { it.asModel() }
-        PlayerListing(players)
+        selectFrom(PLAYERS).fetch().toList().map { it.asModel() }
     }
 }
 

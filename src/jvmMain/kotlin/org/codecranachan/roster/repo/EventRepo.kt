@@ -4,17 +4,19 @@ import com.benasher44.uuid.Uuid
 import kotlinx.datetime.toJavaLocalDate
 import kotlinx.datetime.toKotlinLocalDate
 import org.codecranachan.roster.Event
-import org.codecranachan.roster.EventListing
 import org.codecranachan.roster.EventRegistration
 import org.codecranachan.roster.jooq.Tables.EVENTREGISTRATIONS
 import org.codecranachan.roster.jooq.Tables.EVENTS
 import org.codecranachan.roster.jooq.tables.records.EventregistrationsRecord
 import org.codecranachan.roster.jooq.tables.records.EventsRecord
 
-fun Repository.fetchAllEvents(): EventListing {
+fun Repository.fetchEventsByGuild(id: Uuid): List<Event> {
     return withJooq {
-        val events = selectFrom(EVENTS).fetch().toList().map { it.asModel() }
-        EventListing(events)
+        selectFrom(EVENTS)
+            .where(EVENTS.GUILD_ID.eq(id))
+            .orderBy(EVENTS.EVENT_DATE.desc())
+            .fetch()
+            .toList().map { it.asModel() }
     }
 }
 
@@ -43,13 +45,13 @@ fun Repository.removeEventRegistration(id: Uuid) {
 }
 
 fun EventRegistration.asRecord(): EventregistrationsRecord {
-    return EventregistrationsRecord(id, event_id, player_id)
+    return EventregistrationsRecord(id, eventId, playerId)
 }
 
 fun EventsRecord.asModel(): Event {
-    return Event(id, eventDate.toKotlinLocalDate())
+    return Event(id, guildId, eventDate.toKotlinLocalDate())
 }
 
 fun Event.asRecord(): EventsRecord {
-    return EventsRecord(id, date.toJavaLocalDate())
+    return EventsRecord(id, date.toJavaLocalDate(), guildId)
 }

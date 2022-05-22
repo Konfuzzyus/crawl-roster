@@ -19,28 +19,6 @@ class PlayerApi(private val repository: Repository) {
 
     fun install(r: Route) {
         with(r) {
-            get("/api/v1/me") {
-                val userSession = call.sessions.get<UserSession>()
-                if (userSession == null) {
-                    // not logged in
-                    call.respond(Unit)
-                } else {
-                    val profile = when (userSession.providerName) {
-                        discordOidProviderName -> repository.fetchPlayerByDiscordId(userSession.user.id)
-                        googleOidProviderName -> repository.fetchPlayerByGoogleId(userSession.user.id)
-                        else -> null
-                    }
-                    // TODO: Fetch events and tables
-                    call.respond(
-                        Identity(
-                            userSession.user.name,
-                            profile,
-                            emptyList(),
-                            emptyList()
-                        )
-                    )
-                }
-            }
 
             get("/api/v1/players") {
                 call.respond(repository.fetchAllPlayers())
@@ -64,7 +42,7 @@ class PlayerApi(private val repository: Repository) {
              */
             post("/api/v1/players/{id}/registrations") {
                 val id = Uuid.fromString(call.parameters["id"])
-                val registration = call.receive<EventRegistration>().copy(player_id = id)
+                val registration = call.receive<EventRegistration>().copy(playerId = id)
                 repository.addEventRegistration(registration)
                 call.respond(HttpStatusCode.Created)
             }
@@ -84,6 +62,7 @@ class PlayerApi(private val repository: Repository) {
                     val googleUser = if (session.providerName == googleOidProviderName) session.user else null
                     val discordUser = if (session.providerName == discordOidProviderName) session.user else null
                     repository.addPlayer(Player(player.id, player.name), discordUser, googleUser)
+                    call.respond(HttpStatusCode.Created)
                 } else {
                     call.respond(HttpStatusCode.Conflict)
                 }

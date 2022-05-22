@@ -25,8 +25,3 @@ data class Player(
     val discordHandle: String? = null,
     val avatarUrl: String? = null
 )
-
-@Serializable
-data class PlayerListing(
-    val players: List<Player>
-)

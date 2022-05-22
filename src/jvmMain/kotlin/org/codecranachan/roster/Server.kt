@@ -14,6 +14,9 @@ import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.routing.*
 import kotlinx.html.*
 import kotlinx.serialization.json.Json
+import org.codecranachan.roster.api.AccountApi
+import org.codecranachan.roster.api.EventApi
+import org.codecranachan.roster.api.GuildApi
 import org.codecranachan.roster.api.PlayerApi
 import org.codecranachan.roster.auth.createDiscordOidProvider
 import org.codecranachan.roster.auth.createGoogleOidProvider
@@ -21,7 +24,7 @@ import org.codecranachan.roster.repo.Repository
 
 fun HTML.index() {
     head {
-        title("Hello from Ktor!")
+        title("Crawl Roster - Adventure League planning for dummies")
     }
     body {
         div {
@@ -72,8 +75,11 @@ suspend fun main() {
             auth.install(this)
             authenticate("auth-session", optional = false) {
                 PlayerApi(repo).install(this)
+                GuildApi(repo).install(this)
+                EventApi(repo).install(this)
             }
             authenticate("auth-session", optional = true) {
+                AccountApi(repo).install(this)
                 get("/") {
                     call.respondHtml(HttpStatusCode.OK, HTML::index)
                 }

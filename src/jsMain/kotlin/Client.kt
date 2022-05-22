@@ -3,11 +3,12 @@ import org.reduxkotlin.*
 import react.create
 import react.dom.client.createRoot
 import reducers.ApplicationState
+import reducers.eventCalendarReducer
 import reducers.identityReducer
 
 fun main() {
     val appStore: Store<ApplicationState> = createStore(
-        combineReducers(identityReducer),
+        combineReducers(identityReducer, eventCalendarReducer),
         ApplicationState(),
         applyMiddleware(createThunkMiddleware())
     )

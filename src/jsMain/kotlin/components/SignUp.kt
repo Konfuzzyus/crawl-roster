@@ -1,9 +1,7 @@
 package components
 
-import api.signUpPlayer
+import reducers.signUpPlayer
 import com.benasher44.uuid.uuid4
-import csstype.HtmlAttributes
-import org.codecranachan.roster.Identity
 import org.codecranachan.roster.Player
 import org.reduxkotlin.Store
 import react.FC
@@ -11,8 +9,6 @@ import react.Props
 import react.dom.html.ReactHTML.button
 import react.dom.html.ReactHTML.div
 import react.dom.html.ReactHTML.input
-import react.dom.html.ReactHTML.s
-import react.useEffect
 import react.useState
 import reducers.ApplicationState
 

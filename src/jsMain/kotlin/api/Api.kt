@@ -7,25 +7,12 @@ import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
-import kotlinx.coroutines.MainScope
-import kotlinx.coroutines.launch
-import org.codecranachan.roster.Identity
-import org.codecranachan.roster.Player
-import org.codecranachan.roster.PlayerListing
-import org.reduxkotlin.Thunk
-import reducers.ApplicationState
-import reducers.IdentifyUserAction
-
-private val scope = MainScope()
+import org.codecranachan.roster.*
 
 val client = HttpClient(Js) {
     install(ContentNegotiation) {
         json()
     }
-}
-
-suspend fun fetchPlayers(): PlayerListing {
-    return client.get("/api/v1/players").body()
 }
 
 suspend fun addPlayer(player: Player) {
@@ -43,17 +30,29 @@ suspend fun fetchUserId(): Identity? {
     }
 }
 
-fun updateUserId(): Thunk<ApplicationState> = { dispatch, _, _ ->
-    scope.launch {
-        val result = fetchUserId()
-        dispatch(IdentifyUserAction(result))
+suspend fun fetchDiscordAccountInfo(): DiscordUserInfo? {
+    return try {
+        client.get("/api/v1/me/discord").body()
+    } catch (e: Exception) {
+        null
     }
 }
 
-fun signUpPlayer(p: Player): Thunk<ApplicationState> = { dispatch, _, _ ->
-    scope.launch {
-        addPlayer(p)
-        val result = fetchUserId()
-        dispatch(IdentifyUserAction(result))
+suspend fun fetchLinkedGuilds(): List<Guild> {
+    return try {
+        client.get("/api/v1/guilds").body()
+    } catch (e: Exception) {
+        listOf()
     }
+}
+
+suspend fun addLinkedGuild(guild: Guild) {
+    client.post("/api/v1/guilds") {
+        contentType(ContentType.Application.Json)
+        setBody(guild)
+    }
+}
+
+suspend fun fetchEvents(guild: Guild): List<Event> {
+    return client.get("/api/v1/guilds/${guild.id}/events").body()
 }

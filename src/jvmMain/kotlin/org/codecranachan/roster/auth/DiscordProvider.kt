@@ -5,15 +5,6 @@ import io.ktor.client.request.*
 import org.codecranachan.roster.*
 
 @kotlinx.serialization.Serializable
-data class DiscordUser(
-    val id: String,
-    val username: String,
-    val avatar: String,
-    val discriminator: String,
-    val public_flags: Int,
-)
-
-@kotlinx.serialization.Serializable
 data class DiscordAuthorizationInfo(
     val scopes: List<String>,
     val expires: String,
@@ -34,7 +25,7 @@ fun createDiscordOidProvider() = OpenIdProvider(
         userinfo_endpoint = "https://discord.com/api/oauth2/@me",
         revocation_endpoint = "https://discord.com/api/oauth2/token/revoke",
     ),
-    listOf("identify"),
+    listOf("identify", "guilds"),
 ) { principal, provider ->
     val info: DiscordAuthorizationInfo = RosterServer.httpClient.get(provider.conf.userinfo_endpoint) {
         bearerAuth(principal.accessToken)

@@ -1,13 +1,16 @@
+create table LinkedGuilds (
+    id UUID not null primary key,
+    name varchar(100) not null,
+    discord_id varchar(100) not null unique
+);
+
 create table Players (
     id UUID not null primary key,
     player_name varchar(100) null,
-    discord_name varchar(100) null,
-    discord_id varchar(100) null,
-    google_id varchar(100) null
-);
 
-create table DungeonMasters (
-    id UUID not null primary key
+    discord_name varchar(100) null,
+    discord_id varchar(100) null unique,
+    google_id varchar(100) null unique
 );
 
 create table PlayerCharacters (
@@ -16,7 +19,10 @@ create table PlayerCharacters (
 
 create table Events (
     id UUID not null primary key,
-    event_date DATE not null
+    event_date DATE not null,
+    guild_id UUID not null,
+
+    foreign key (guild_id) references LinkedGuilds(id)
 );
 
 create table EventRegistrations (
@@ -33,7 +39,7 @@ create table GameTableOfferings (
     dungeon_master_id UUID not null,
 
     foreign key (event_id) references Events(id),
-    foreign key (dungeon_master_id) references DungeonMasters(id)
+    foreign key (dungeon_master_id) references Players(id)
 );
 
 create table GameTableRegistrations (

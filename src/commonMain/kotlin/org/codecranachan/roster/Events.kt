@@ -6,14 +6,11 @@ import kotlinx.datetime.LocalDate
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class EventListing(
-    val events: List<Event>
-)
-
-@Serializable
 data class Event(
     @Serializable(with = UuidSerializer::class)
     val id: Uuid = uuid4(),
+    @Serializable(with = UuidSerializer::class)
+    val guildId: Uuid = uuid4(),
     val date: LocalDate,
     val registeredPlayers: List<Player> = listOf(),
 )
@@ -23,7 +20,7 @@ data class EventRegistration(
     @Serializable(with = UuidSerializer::class)
     val id: Uuid = uuid4(),
     @Serializable(with = UuidSerializer::class)
-    val event_id: Uuid = uuid4(),
+    val eventId: Uuid = uuid4(),
     @Serializable(with = UuidSerializer::class)
-    val player_id: Uuid = uuid4()
+    val playerId: Uuid = uuid4()
 )
