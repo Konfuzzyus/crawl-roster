@@ -11,6 +11,7 @@ import io.ktor.server.html.*
 import io.ktor.server.http.content.*
 import io.ktor.server.netty.*
 import io.ktor.server.plugins.contentnegotiation.*
+import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import kotlinx.html.*
 import kotlinx.serialization.json.Json
@@ -83,6 +84,9 @@ suspend fun main() {
                 get("/") {
                     call.respondHtml(HttpStatusCode.OK, HTML::index)
                 }
+            }
+            static("/") {
+                resource("/favicon.ico","favicon.ico")
             }
             static("/static") {
                 resources()

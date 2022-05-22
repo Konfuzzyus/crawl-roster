@@ -1,16 +1,18 @@
 package components
 
-import api.fetchLinkedGuilds
-import kotlinx.coroutines.MainScope
-import kotlinx.coroutines.launch
 import org.codecranachan.roster.Guild
 import org.reduxkotlin.Store
 import react.FC
 import react.Props
 import react.dom.html.ReactHTML.div
+import react.dom.html.ReactHTML.label
+import react.dom.html.ReactHTML.option
+import react.dom.html.ReactHTML.select
 import react.useEffectOnce
 import react.useState
 import reducers.ApplicationState
+import reducers.selectGuild
+import reducers.updateLinkedGuilds
 
 external interface GuildSelectorProps : Props {
     var store: Store<ApplicationState>
@@ -18,31 +20,42 @@ external interface GuildSelectorProps : Props {
 }
 
 val GuildSelector = FC<GuildSelectorProps> { props ->
-    val (linkedGuilds, setLinkedGuilds) = useState<List<Guild>?>(null)
     val selectedGuild = props.selectedGuild
+    val (linkedGuilds, setLinkedGuilds) = useState(props.store.state.server.linkedGuilds)
 
     useEffectOnce {
-        MainScope().launch {
-            setLinkedGuilds(fetchLinkedGuilds() ?: listOf())
-        }
+        val unsubscribe = props.store.subscribe { setLinkedGuilds(props.store.state.server.linkedGuilds) }
+        props.store.dispatch(updateLinkedGuilds())
+        cleanup(unsubscribe)
     }
 
     div {
-        if (selectedGuild == null) {
-            if (linkedGuilds == null) {
-                +"Waiting for linked guilds to load"
+        if (linkedGuilds == null) {
+            +"Waiting for linked guilds to load"
+        } else {
+            if (linkedGuilds.isEmpty()) {
+                +"No guilds have been linked with this server - How about you link one of yours right now!"
+                GuildLinker {
+                    store = props.store
+                }
             } else {
-                if (linkedGuilds.isEmpty()) {
-                    +"No guilds have been linked. Link one."
-                    GuildLinker {
-                        store = props.store
+                label {
+                    +"Showing event calendar for "
+                    select {
+                        value = selectedGuild?.name
+                        onChange = { e ->
+                            val g = linkedGuilds.find { it.id.toString() == e.currentTarget.value }
+                            if (g != null) props.store.dispatch(selectGuild(g))
+                        }
+                        linkedGuilds.forEach {
+                            option {
+                                value = it.id.toString()
+                                +it.name
+                            }
+                        }
                     }
-                } else {
-                    +"List of linked guilds goes here"
                 }
             }
-        } else {
-            +"Listing Events in ${selectedGuild.name}"
         }
     }
 }

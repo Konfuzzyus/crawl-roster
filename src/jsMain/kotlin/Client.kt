@@ -2,17 +2,10 @@ import kotlinx.browser.document
 import org.reduxkotlin.*
 import react.create
 import react.dom.client.createRoot
-import reducers.ApplicationState
-import reducers.eventCalendarReducer
-import reducers.identityReducer
+import reducers.*
 
 fun main() {
-    val appStore: Store<ApplicationState> = createStore(
-        combineReducers(identityReducer, eventCalendarReducer),
-        ApplicationState(),
-        applyMiddleware(createThunkMiddleware())
-    )
-
+    val appStore = createApplicationStore()
     val container = document.getElementById("root")!!
     val root = createRoot(container)
     root.render(

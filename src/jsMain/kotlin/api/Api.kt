@@ -56,3 +56,10 @@ suspend fun addLinkedGuild(guild: Guild) {
 suspend fun fetchEvents(guild: Guild): List<Event> {
     return client.get("/api/v1/guilds/${guild.id}/events").body()
 }
+
+suspend fun addEvent(e: Event) {
+    client.post("/api/v1/events") {
+        contentType(ContentType.Application.Json)
+        setBody(e)
+    }
+}

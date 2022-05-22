@@ -1,12 +1,14 @@
 package components
 
-import org.codecranachan.roster.Event
+import kotlinx.datetime.internal.JSJoda.DateTimeFormatter
 import org.codecranachan.roster.Guild
 import org.codecranachan.roster.Player
 import org.reduxkotlin.Store
 import react.FC
 import react.Props
 import react.dom.html.ReactHTML.div
+import react.dom.html.ReactHTML.li
+import react.dom.html.ReactHTML.ol
 import react.useEffectOnce
 import react.useState
 import reducers.ApplicationState
@@ -33,9 +35,17 @@ val EventCalendar = FC<EventCalendarProps> { props ->
             if (events.isEmpty()) {
                 +"No events found"
             } else {
-                events.forEachIndexed { idx, it ->
-                    +"#$idx ${it.date}: ${it.registeredPlayers.size} registered"
+                ol {
+                    events.forEach {
+                        li {
+                            +"${it.date.dayOfWeek.name}, ${it.date} - ${it.registeredPlayers.size} players registered"
+                        }
+                    }
                 }
+            }
+            SubmitEvent {
+                store = props.store
+                guild = props.guild
             }
         }
 

@@ -14,7 +14,7 @@ fun Repository.fetchEventsByGuild(id: Uuid): List<Event> {
     return withJooq {
         selectFrom(EVENTS)
             .where(EVENTS.GUILD_ID.eq(id))
-            .orderBy(EVENTS.EVENT_DATE.desc())
+            .orderBy(EVENTS.EVENT_DATE.asc())
             .fetch()
             .toList().map { it.asModel() }
     }
