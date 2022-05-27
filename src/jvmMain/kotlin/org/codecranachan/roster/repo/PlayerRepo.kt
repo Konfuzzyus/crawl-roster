@@ -35,6 +35,7 @@ fun Repository.addPlayer(player: Player, discordIdentity: UserIdentity?, googleI
         val record = PlayersRecord(
             player.id,
             player.name,
+            discordIdentity?.pictureUrl,
             discordIdentity?.name,
             discordIdentity?.id,
             googleIdentity?.id
@@ -49,7 +50,8 @@ fun Repository.setPlayerDiscordInfo(playerId: Uuid, identity: UserIdentity) {
             .set(
                 mapOf(
                     PLAYERS.DISCORD_ID to identity.id,
-                    PLAYERS.DISCORD_NAME to identity.name
+                    PLAYERS.DISCORD_NAME to identity.name,
+                    PLAYERS.DISCORD_AVATAR to identity.pictureUrl,
                 )
             )
             .where(PLAYERS.ID.eq(playerId))
@@ -67,5 +69,5 @@ fun Repository.setPlayerGoogleInfo(playerId: Uuid, identity: UserIdentity) {
 }
 
 fun PlayersRecord.asModel(): Player {
-    return Player(id, playerName, discordName)
+    return Player(id, playerName, discordName, discordAvatar)
 }

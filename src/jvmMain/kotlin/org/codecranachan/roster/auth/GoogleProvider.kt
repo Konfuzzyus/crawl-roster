@@ -4,7 +4,6 @@ import io.ktor.client.call.*
 import io.ktor.client.request.*
 import org.codecranachan.roster.ClientCredentials
 import org.codecranachan.roster.OpenIdProvider
-import org.codecranachan.roster.RosterServer
 import org.codecranachan.roster.UserIdentity
 
 const val googleOidProviderName = "google"

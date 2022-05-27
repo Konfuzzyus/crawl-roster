@@ -1,37 +1,70 @@
+import components.Account
 import components.Identity
 import components.RosterWidget
-import org.reduxkotlin.Store
-import react.FC
-import react.Props
-import react.dom.html.ReactHTML.div
-import react.useEffectOnce
-import react.useState
-import reducers.ApplicationState
+import mui.material.*
+import mui.material.styles.TypographyVariant
+import mui.system.responsive
+import react.*
+import reducers.StoreContext
 import reducers.updateUserId
 
 external interface AppProps : Props {
     var version: String
-    var store: Store<ApplicationState>
 }
 
 val App = FC<AppProps> { props ->
-    val (isLoaded, setIsLoaded) = useState(props.store.state.identity.isLoaded)
+    val store = useContext(StoreContext)
+    val (isLoaded, setIsLoaded) = useState(store.state.identity.isLoaded)
+    val (userIdentity, setUserIdentity) = useState(store.state.identity.data)
 
     useEffectOnce {
-        val unsubscribe = props.store.subscribe { setIsLoaded(props.store.state.identity.isLoaded) }
-        props.store.dispatch(updateUserId())
+        val unsubscribe = store.subscribe {
+            setIsLoaded(store.state.identity.isLoaded)
+            setUserIdentity(store.state.identity.data)
+        }
+        store.dispatch(updateUserId())
         cleanup(unsubscribe)
     }
 
-    div {
-        div {
-            +"Crawl-Roster ${props.version}"
-        }
-        if (isLoaded) {
-            Identity { store = props.store }
-            RosterWidget { store = props.store }
-        } else {
-            +"Checking your login information, hold on..."
+    Container {
+        maxWidth = "lg"
+        Grid {
+            container = true
+            spacing = responsive(2)
+            Grid {
+                item = true
+                xs = 8
+
+                Typography {
+                    variant = TypographyVariant.h5
+                    +"Crawl-Roster ${props.version}"
+                }
+            }
+            Grid {
+                item = true
+                xs = 4
+
+                if (isLoaded) {
+                    Stack {
+                        direction = responsive(StackDirection.column)
+                        Identity { }
+                        Account {
+                            profile = userIdentity?.profile
+                        }
+                    }
+                } else {
+                    CircularProgress { }
+                }
+            }
+            Grid {
+                item = true
+                xs = 12
+                if (isLoaded) {
+                    RosterWidget { }
+                } else {
+                    CircularProgress { }
+                }
+            }
         }
     }
 

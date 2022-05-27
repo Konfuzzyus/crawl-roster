@@ -1,46 +1,29 @@
 package components
 
-import org.reduxkotlin.Store
-import react.FC
-import react.Props
-import react.dom.html.ReactHTML.div
-import react.useEffectOnce
-import react.useState
-import reducers.ApplicationState
+import mui.material.Paper
+import mui.system.Box
+import react.*
+import reducers.StoreContext
 
-external interface RosterWidgetProps : Props {
-    var store: Store<ApplicationState>
-}
-
-val RosterWidget = FC<RosterWidgetProps> { props ->
-    val (userIdentity, setUserIdentity) = useState(props.store.state.identity.data)
-    val (currentGuild, setCurrentGuild) = useState(props.store.state.calendar.selectedGuild)
+val RosterWidget = FC<Props> {
+    val myStore = useContext(StoreContext)
+    val (userIdentity, setUserIdentity) = useState(myStore.state.identity.data)
+    val (currentGuild, setCurrentGuild) = useState(myStore.state.calendar.selectedGuild)
 
     useEffectOnce {
-        val unsubscribe = props.store.subscribe {
-            setUserIdentity(props.store.state.identity.data)
-            setCurrentGuild(props.store.state.calendar.selectedGuild)
+        val unsubscribe = myStore.subscribe {
+            setUserIdentity(myStore.state.identity.data)
+            setCurrentGuild(myStore.state.calendar.selectedGuild)
         }
         cleanup(unsubscribe)
     }
-
-    if (userIdentity == null) {
-        div {
+    Paper {
+        if (userIdentity == null) {
             +"Greetings, traveler. You'll have to log in to continue."
-        }
-    } else {
-        div {
-            SignUp {
-                store = props.store
-                profile = userIdentity.profile
-            }
-            GuildSelector {
-                store = props.store
-                selectedGuild = currentGuild
-            }
+        } else {
+            GuildSelector { }
             if (userIdentity.profile != null && currentGuild != null) {
                 EventCalendar {
-                    store = props.store
                     profile = userIdentity.profile
                     guild = currentGuild
                 }

@@ -13,7 +13,7 @@ data class Event(
     val guildId: Uuid = uuid4(),
     val date: LocalDate,
     val registeredPlayers: List<Player> = listOf(),
-    val hostedTables: List<PlayTable> = listOf()
+    val hostedTables: List<Table> = listOf()
 )
 
 @Serializable
@@ -24,4 +24,14 @@ data class EventRegistration(
     val eventId: Uuid = uuid4(),
     @Serializable(with = UuidSerializer::class)
     val playerId: Uuid = uuid4()
+)
+
+@Serializable
+data class TableHosting(
+    @Serializable(with = UuidSerializer::class)
+    val id: Uuid = uuid4(),
+    @Serializable(with = UuidSerializer::class)
+    val eventId: Uuid = uuid4(),
+    @Serializable(with = UuidSerializer::class)
+    val dungeonMasterId: Uuid = uuid4()
 )

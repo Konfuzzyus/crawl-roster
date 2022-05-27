@@ -109,10 +109,13 @@ kotlin {
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.kotlinCoroutines}")
                 implementation("org.reduxkotlin:redux-kotlin:${Versions.kotlinRedux}")
                 implementation("org.reduxkotlin:redux-kotlin-thunk:${Versions.kotlinRedux}")
-                implementation(project.dependencies.enforcedPlatform("org.jetbrains.kotlin-wrappers:kotlin-wrappers-bom:1.0.0-pre.337"))
+
+                implementation(project.dependencies.enforcedPlatform("org.jetbrains.kotlin-wrappers:kotlin-wrappers-bom:1.0.0-pre.340"))
                 implementation("org.jetbrains.kotlin-wrappers:kotlin-react")
                 implementation("org.jetbrains.kotlin-wrappers:kotlin-react-dom")
-                implementation("org.jetbrains.kotlin-wrappers:kotlin-react-router-dom")
+                implementation("org.jetbrains.kotlin-wrappers:kotlin-emotion")
+                implementation("org.jetbrains.kotlin-wrappers:kotlin-mui")
+                implementation("org.jetbrains.kotlin-wrappers:kotlin-mui-icons")
             }
         }
         val jsTest by getting
@@ -180,6 +183,7 @@ tasks.named("compileKotlinJvm") {
 
 application {
     mainClass.set("${project.group}.roster.ServerKt")
+    applicationDefaultJvmArgs = listOf("-Dio.ktor.development=true")
 }
 
 tasks.named<Copy>("jvmProcessResources") {

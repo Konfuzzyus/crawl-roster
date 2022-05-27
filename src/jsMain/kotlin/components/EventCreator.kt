@@ -5,49 +5,70 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.todayAt
+import mui.icons.material.AddCircle
+import mui.material.*
 import org.codecranachan.roster.Event
 import org.codecranachan.roster.Guild
-import org.codecranachan.roster.Player
-import org.reduxkotlin.Store
-import react.FC
-import react.Props
-import react.dom.events.ChangeEvent
-import react.dom.html.InputType
-import react.dom.html.ReactHTML
-import react.dom.html.ReactHTML.form
-import react.dom.html.ReactHTML.input
-import react.useState
-import reducers.ApplicationState
+import org.w3c.dom.HTMLInputElement
+import react.*
+import reducers.StoreContext
 import reducers.createEvent
 
 
 external interface SubmitEventProps : Props {
-    var store: Store<ApplicationState>
     var guild: Guild
 }
 
 val SubmitEvent = FC<SubmitEventProps> { props ->
+    val store = useContext(StoreContext)
+    val (isOpen, setIsOpen) = useState(false)
     val (selectedDate, setSelectedDate) = useState(Clock.System.todayAt(TimeZone.currentSystemDefault()))
 
-    form {
-        onSubmit = {e ->
-            e.preventDefault()
-            props.store.dispatch(createEvent(Event(
-                uuid4(),
-                props.guild.id,
-                selectedDate,
-                listOf()
-            )))
+    Divider {
+        Chip {
+            icon = AddCircle.create()
+            label = ReactNode("Add Event")
+            onClick = { setIsOpen(true) }
         }
-        input {
-            type = InputType.date
-            value = selectedDate.toString()
-            required = true
-            onChange = {e -> setSelectedDate(LocalDate.parse(e.currentTarget.value))}
+    }
+    Dialog {
+        open = isOpen
+        onClose = { _, _ -> setIsOpen(false) }
+        DialogTitle {
+            +"Create new event"
         }
-        input {
-            type = InputType.submit
-            value = "Create Event"
+        DialogContent {
+            InputLabel {
+                +"Event Date"
+            }
+            Input {
+                autoFocus = true
+                type = "date"
+                value = selectedDate.toString()
+                required = true
+                onChange = {
+                    val t = it.target as HTMLInputElement
+                    setSelectedDate(LocalDate.parse(t.value))
+                }
+            }
+        }
+        DialogActions {
+            Button {
+                onClick = {
+                    store.dispatch(
+                        createEvent(
+                            Event(
+                                uuid4(),
+                                props.guild.id,
+                                selectedDate,
+                                listOf()
+                            )
+                        )
+                    )
+                    onClick = { setIsOpen(false) }
+                }
+                +"Add"
+            }
         }
     }
 }

@@ -50,24 +50,14 @@ fun selectGuild(g: Guild): Thunk<ApplicationState> = { dispatch, _, _ ->
     }
 }
 
-fun createEvent(e: Event): Thunk<ApplicationState> = { dispatch, getState, _ ->
+fun createEvent(e: Event): Thunk<ApplicationState> = { dispatch, _, _ ->
     scope.launch {
         addEvent(e)
         dispatch(updateEvents())
     }
 }
 
-fun unsubscribePlayer(e: Event): Thunk<ApplicationState> = { dispatch, getState, _ ->
-    scope.launch {
-        val player = getState().identity.data?.profile
-        if (player != null) {
-            removeEventRegistration(e, player)
-            dispatch(updateEvents())
-        }
-    }
-}
-
-fun subscribePlayer(e: Event): Thunk<ApplicationState> = { dispatch, getState, _ ->
+fun registerPlayer(e: Event): Thunk<ApplicationState> = { dispatch, getState, _ ->
     scope.launch {
         val player = getState().identity.data?.profile
         if (player != null) {
@@ -77,7 +67,17 @@ fun subscribePlayer(e: Event): Thunk<ApplicationState> = { dispatch, getState, _
     }
 }
 
-fun updateEvents() : Thunk<ApplicationState> = { dispatch, getState, _ ->
+fun unregisterPlayer(e: Event): Thunk<ApplicationState> = { dispatch, getState, _ ->
+    scope.launch {
+        val player = getState().identity.data?.profile
+        if (player != null) {
+            removeEventRegistration(e, player)
+            dispatch(updateEvents())
+        }
+    }
+}
+
+fun updateEvents(): Thunk<ApplicationState> = { dispatch, getState, _ ->
     scope.launch {
         val calendar = getState().calendar
         if (calendar.selectedGuild != null) {
@@ -86,3 +86,24 @@ fun updateEvents() : Thunk<ApplicationState> = { dispatch, getState, _ ->
         }
     }
 }
+
+fun registerTable(e: Event): Thunk<ApplicationState> = { dispatch, getState, _ ->
+    scope.launch {
+        val dm = getState().identity.data?.profile
+        if (dm != null) {
+            addTableHosting(e, dm)
+            dispatch(updateEvents())
+        }
+    }
+}
+
+fun unregisterTable(e: Event): Thunk<ApplicationState> = { dispatch, getState, _ ->
+    scope.launch {
+        val dm = getState().identity.data?.profile
+        if (dm != null) {
+            removeTableHosting(e, dm)
+            dispatch(updateEvents())
+        }
+    }
+}
+

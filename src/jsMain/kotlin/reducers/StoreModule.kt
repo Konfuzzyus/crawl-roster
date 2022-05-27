@@ -1,6 +1,9 @@
 package reducers
 
 import org.reduxkotlin.*
+import react.FC
+import react.PropsWithChildren
+import react.createContext
 
 data class ApplicationState(
     val identity: IdentityState = IdentityState(),
@@ -14,4 +17,12 @@ fun createApplicationStore(): Store<ApplicationState> {
         ApplicationState(),
         applyMiddleware(createThunkMiddleware())
     )
+}
+
+val StoreContext = createContext<Store<ApplicationState>>()
+
+val StoreModule = FC<PropsWithChildren> { props ->
+    StoreContext(createApplicationStore()) {
+        +props.children
+    }
 }

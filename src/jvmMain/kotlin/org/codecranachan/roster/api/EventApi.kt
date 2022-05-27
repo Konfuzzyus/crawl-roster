@@ -8,6 +8,7 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import org.codecranachan.roster.Event
 import org.codecranachan.roster.EventRegistration
+import org.codecranachan.roster.TableHosting
 import org.codecranachan.roster.repo.*
 
 class EventApi(private val repository: Repository) {
@@ -33,8 +34,12 @@ class EventApi(private val repository: Repository) {
             post("/api/v1/events/{evtId}/registrations") {
                 val evtId = Uuid.fromString(call.parameters["evtId"])
                 val reg = call.receive<EventRegistration>()
-                repository.addEventRegistration(EventRegistration(reg.id, evtId, reg.playerId))
-                call.respond(HttpStatusCode.Created)
+                if (repository.isHostingForEvent(reg.playerId, evtId)) {
+                    call.respond(HttpStatusCode.Conflict)
+                } else {
+                    repository.addEventRegistration(EventRegistration(reg.id, evtId, reg.playerId))
+                    call.respond(HttpStatusCode.Created)
+                }
             }
 
             delete("/api/v1/events/{evtId}/registrations/{plrId}") {
@@ -43,6 +48,26 @@ class EventApi(private val repository: Repository) {
                 repository.removeEventRegistration(evtId, plrId)
                 call.respond(HttpStatusCode.OK)
             }
+
+            post("/api/v1/events/{evtId}/tables") {
+                val evtId = Uuid.fromString(call.parameters["evtId"])
+                val tbl = call.receive<TableHosting>()
+                if (repository.isRegisteredForEvent(tbl.dungeonMasterId, evtId)) {
+                    call.respond(HttpStatusCode.Conflict)
+                } else {
+                    repository.addHostedTable(TableHosting(tbl.id, evtId, tbl.dungeonMasterId))
+                    call.respond(HttpStatusCode.Created)
+                }
+            }
+
+            delete("/api/v1/events/{evtId}/tables/{dmId}") {
+                val evtId = Uuid.fromString(call.parameters["evtId"])
+                val dmId = Uuid.fromString(call.parameters["dmId"])
+                repository.removeHostedTable(evtId, dmId)
+                call.respond(HttpStatusCode.OK)
+            }
+
         }
+
     }
 }

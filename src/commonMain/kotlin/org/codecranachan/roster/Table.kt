@@ -5,8 +5,8 @@ import com.benasher44.uuid.uuid4
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class PlayTable(
+data class Table(
     @Serializable(with = UuidSerializer::class)
     val id: Uuid = uuid4(),
-    val adventure: String
+    val dungeonMaster: Player
 )

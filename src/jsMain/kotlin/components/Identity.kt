@@ -1,39 +1,39 @@
 package components
 
-import org.reduxkotlin.Store
-import react.FC
-import react.Props
-import react.dom.html.ReactHTML.a
-import react.dom.html.ReactHTML.div
-import react.useEffect
-import react.useState
-import reducers.ApplicationState
+import kotlinx.browser.window
+import mui.icons.material.Login
+import mui.icons.material.Logout
+import mui.material.Avatar
+import mui.material.Chip
+import mui.material.ChipVariant
+import react.*
+import reducers.StoreContext
 
-external interface IdentityProps : Props {
-    var store: Store<ApplicationState>
-}
-
-val Identity = FC<IdentityProps> { props ->
-    val (profile, setProfile) = useState(props.store.state.identity.data)
+val Identity = FC<Props> {
+    val store = useContext(StoreContext)
+    val (profile, setProfile) = useState(store.state.identity.data)
 
     useEffect {
-        val unsubscribe = props.store.subscribe { setProfile(props.store.state.identity.data) }
+        val unsubscribe = store.subscribe { setProfile(store.state.identity.data) }
         cleanup(unsubscribe)
     }
     if (profile == null) {
-        div {
-            a {
-                href = "/auth/login"
-                +"Proceed to Login"
-            }
+        Chip {
+            label = ReactNode("Login")
+            variant = ChipVariant.outlined
+            onClick = { window.location.replace("/auth/discord/login") }
+            icon = Login.create()
         }
     } else {
-        div {
-            +"Logged in as ${profile.name} - "
-            a {
-                href = "/auth/logout"
-                +"Logout"
+        Chip {
+            avatar = Avatar.create {
+                alt = profile.name
+                src = profile.profile?.avatarUrl
             }
+            label = ReactNode(profile.name)
+            variant = ChipVariant.outlined
+            onDelete = { window.location.replace("/auth/logout") }
+            deleteIcon = Logout.create()
         }
     }
 }
