@@ -1,7 +1,6 @@
 package api
 
 import com.benasher44.uuid.uuid4
-import csstype.HtmlAttributes
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.engine.js.*
@@ -10,7 +9,6 @@ import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import org.codecranachan.roster.*
-import react.dom.html.ReactHTML.p
 
 val client = HttpClient(Js) {
     install(ContentNegotiation) {
@@ -71,6 +69,13 @@ suspend fun addEventRegistration(e: Event, p: Player) {
     client.post("/api/v1/events/${e.id}/registrations") {
         contentType(ContentType.Application.Json)
         setBody(EventRegistration(uuid4(), e.id, p.id))
+    }
+}
+
+suspend fun updateEventRegistration(e: Event, p: Player, t: Table?) {
+    client.patch("/api/v1/events/${e.id}/registrations/${p.id}") {
+        contentType(ContentType.Application.Json)
+        setBody(EventRegistration(uuid4(), e.id, p.id, t?.id))
     }
 }
 

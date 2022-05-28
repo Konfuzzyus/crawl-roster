@@ -6,6 +6,7 @@ import kotlinx.coroutines.launch
 import org.codecranachan.roster.Event
 import org.codecranachan.roster.Guild
 import org.codecranachan.roster.Player
+import org.codecranachan.roster.Table
 import org.reduxkotlin.Thunk
 
 private val scope = MainScope()
@@ -107,3 +108,12 @@ fun unregisterTable(e: Event): Thunk<ApplicationState> = { dispatch, getState, _
     }
 }
 
+fun joinTable(e: Event, t: Table?): Thunk<ApplicationState> = { dispatch, getState, _ ->
+    scope.launch {
+        val p = getState().identity.data?.profile
+        if (p != null) {
+            updateEventRegistration(e, p, t)
+            dispatch(updateEvents())
+        }
+    }
+}

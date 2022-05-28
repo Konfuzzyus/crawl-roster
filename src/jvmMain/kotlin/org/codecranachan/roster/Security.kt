@@ -24,7 +24,7 @@ import kotlin.time.toDuration
 data class UserIdentity(
     val id: String,
     val name: String,
-    val pictureUrl: String?
+    val pictureUrl: String? = null
 )
 
 data class UserSession(

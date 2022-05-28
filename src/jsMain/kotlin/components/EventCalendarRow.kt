@@ -49,10 +49,9 @@ val EventCalendarBodyRow = FC<EventCalendarRowProps> { props ->
         }
     } else {
         TableRow {
-            val isRegistered =
-                store.state.identity.data?.profile?.id.let { id -> event.registeredPlayers.any { it.id == id } }
-            val isHosting =
-                store.state.identity.data?.profile?.id.let { id -> event.hostedTables.any { it.dungeonMaster.id == id } }
+            val me = store.state.identity.data?.profile
+            val isRegistered = me?.let { event.isRegistered(it) } == true
+            val isHosting = me?.let { event.isHosting(it) } == true
             TableCell {
                 IconButton {
                     size = Size.small
@@ -64,10 +63,10 @@ val EventCalendarBodyRow = FC<EventCalendarRowProps> { props ->
                 +"${event.date.dayOfWeek.name}, ${event.date}"
             }
             TableCell {
-                +"${event.registeredPlayers.size}"
+                +"${event.playerCount()}"
             }
             TableCell {
-                +"${event.hostedTables.size}"
+                +"${event.tableCount()}"
             }
             TableCell {
                 ButtonGroup {
@@ -75,19 +74,19 @@ val EventCalendarBodyRow = FC<EventCalendarRowProps> { props ->
                         isRegistered -> {
                             Button {
                                 onClick = { store.dispatch(unregisterPlayer(event)) }
-                                +"Register"
+                                +"Cancel"
                             }
                         }
                         isHosting -> {
                             Button {
                                 onClick = { store.dispatch(unregisterTable(event)) }
-                                +"Cancel Table"
+                                +"Cancel"
                             }
                         }
                         else -> {
                             Button {
                                 onClick = { store.dispatch(registerPlayer(event)) }
-                                +"Cancel Registration"
+                                +"Register"
                             }
                             Button {
                                 onClick = { store.dispatch(registerTable(event)) }

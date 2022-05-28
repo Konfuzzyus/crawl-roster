@@ -42,12 +42,21 @@ class EventApi(private val repository: Repository) {
                 }
             }
 
+            patch("/api/v1/events/{evtId}/registrations/{plrId}") {
+                val evtId = Uuid.fromString(call.parameters["evtId"])
+                val plrId = Uuid.fromString(call.parameters["plrId"])
+                val reg = call.receive<EventRegistration>()
+                repository.updateEventRegistration(evtId, plrId, reg.tableId)
+                call.respond(HttpStatusCode.OK)
+            }
+
             delete("/api/v1/events/{evtId}/registrations/{plrId}") {
                 val evtId = Uuid.fromString(call.parameters["evtId"])
                 val plrId = Uuid.fromString(call.parameters["plrId"])
                 repository.removeEventRegistration(evtId, plrId)
                 call.respond(HttpStatusCode.OK)
             }
+
 
             post("/api/v1/events/{evtId}/tables") {
                 val evtId = Uuid.fromString(call.parameters["evtId"])

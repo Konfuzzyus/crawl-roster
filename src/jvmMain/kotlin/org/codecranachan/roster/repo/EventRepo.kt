@@ -3,44 +3,84 @@ package org.codecranachan.roster.repo
 import com.benasher44.uuid.Uuid
 import kotlinx.datetime.toJavaLocalDate
 import kotlinx.datetime.toKotlinLocalDate
-import kotlinx.html.Entities
 import org.codecranachan.roster.*
 import org.codecranachan.roster.jooq.Tables.*
 import org.codecranachan.roster.jooq.tables.records.EventregistrationsRecord
 import org.codecranachan.roster.jooq.tables.records.EventsRecord
 import org.codecranachan.roster.jooq.tables.records.HostedtablesRecord
 import org.jooq.Condition
+import org.jooq.Record
+import org.jooq.Result
+
+private fun Repository.fetchTables(condition: Condition): Map<Uuid, Result<Record>> {
+    return withJooq {
+        select()
+            .from(EVENTS)
+            .join(HOSTEDTABLES).on(HOSTEDTABLES.EVENT_ID.eq(EVENTS.ID))
+            .join(PLAYERS).on(HOSTEDTABLES.DUNGEON_MASTER_ID.eq(EVENTS.ID))
+            .where(condition)
+            .fetchGroups(EVENTS.ID)
+    }
+}
+
+private fun Repository.fetchRegistrations(condition: Condition): Map<Uuid, Result<Record>> {
+    return withJooq {
+        select()
+            .from(EVENTS)
+            .leftJoin(EVENTREGISTRATIONS).on(EVENTREGISTRATIONS.EVENT_ID.eq(EVENTS.ID))
+            .leftJoin(PLAYERS).on(EVENTREGISTRATIONS.PLAYER_ID.eq(PLAYERS.ID))
+            .where(condition)
+            .fetchGroups(EVENTS.ID)
+    }
+}
 
 fun Repository.fetchEventsWhere(condition: Condition): List<Event> {
     val dms = PLAYERS.`as`("dms")
     val pcs = PLAYERS.`as`("pcs")
 
+    val fields =
+        arrayOf(*EVENTS.fields(), *EVENTREGISTRATIONS.fields(), *HOSTEDTABLES.fields(), *pcs.fields(), *dms.fields())
+
     return withJooq {
-        select()
+        val regSelect = select(*fields)
             .from(EVENTS)
             .leftJoin(EVENTREGISTRATIONS).on(EVENTREGISTRATIONS.EVENT_ID.eq(EVENTS.ID))
-            .leftJoin(HOSTEDTABLES).on(HOSTEDTABLES.EVENT_ID.eq(EVENTS.ID))
+            .leftJoin(HOSTEDTABLES).on(HOSTEDTABLES.ID.eq(EVENTREGISTRATIONS.TABLE_ID))
             .leftJoin(pcs).on(EVENTREGISTRATIONS.PLAYER_ID.eq(pcs.ID))
             .leftJoin(dms).on(HOSTEDTABLES.DUNGEON_MASTER_ID.eq(dms.ID))
             .where(condition)
+        val tblSelect = select(*fields)
+            .from(EVENTS)
+            .join(HOSTEDTABLES).on(HOSTEDTABLES.EVENT_ID.eq(EVENTS.ID))
+            .leftJoin(EVENTREGISTRATIONS).on(HOSTEDTABLES.ID.eq(EVENTREGISTRATIONS.ID))
+            .leftJoin(pcs).on(EVENTREGISTRATIONS.PLAYER_ID.eq(pcs.ID))
+            .leftJoin(dms).on(HOSTEDTABLES.DUNGEON_MASTER_ID.eq(dms.ID))
+            .where(
+                EVENTREGISTRATIONS.ID.isNull,
+                condition
+            )
+
+        regSelect.union(tblSelect)
             .fetchGroups(EVENTS.ID)
-            .map { (id, rows) ->
+            .map { (id, results) ->
                 Event(
                     id,
-                    rows.first()[EVENTS.GUILD_ID],
-                    rows.first()[EVENTS.EVENT_DATE].toKotlinLocalDate(),
-                    rows.filter { it[pcs.ID] != null }
-                        .map { Player(it[pcs.ID], it[pcs.PLAYER_NAME], it[pcs.DISCORD_NAME]) }.distinct(),
-                    rows.filter { it[HOSTEDTABLES.ID] != null }.map {
-                        Table(
-                            it[HOSTEDTABLES.ID],
-                            Player(
-                                it[dms.ID],
-                                it[dms.PLAYER_NAME],
-                                it[dms.DISCORD_NAME]
+                    results.first()[EVENTS.GUILD_ID],
+                    results.first()[EVENTS.EVENT_DATE].toKotlinLocalDate(),
+                    results.groupBy {
+                        if (it[HOSTEDTABLES.ID] == null) {
+                            null
+                        } else {
+                            Table(
+                                it[HOSTEDTABLES.ID],
+                                Player(it[dms.ID], it[dms.PLAYER_NAME], it[dms.DISCORD_NAME])
                             )
-                        )
-                    }.distinct()
+                        }
+                    }.mapValues { e ->
+                        val rows = e.value
+                        rows.filter { it[pcs.ID] != null }
+                            .map { Player(it[pcs.ID], it[pcs.PLAYER_NAME], it[pcs.DISCORD_NAME]) }.distinct()
+                    }
                 )
             }
     }
@@ -95,6 +135,18 @@ fun Repository.addEventRegistration(reg: EventRegistration) {
 fun Repository.removeEventRegistration(eventId: Uuid, playerId: Uuid) {
     return withJooq {
         deleteFrom(EVENTREGISTRATIONS)
+            .where(
+                EVENTREGISTRATIONS.EVENT_ID.eq(eventId),
+                EVENTREGISTRATIONS.PLAYER_ID.eq(playerId),
+            )
+            .execute()
+    }
+}
+
+fun Repository.updateEventRegistration(eventId: Uuid, playerId: Uuid, tableId: Uuid?) {
+    return withJooq {
+        update(EVENTREGISTRATIONS)
+            .set(EVENTREGISTRATIONS.TABLE_ID, tableId)
             .where(
                 EVENTREGISTRATIONS.EVENT_ID.eq(eventId),
                 EVENTREGISTRATIONS.PLAYER_ID.eq(playerId),

@@ -60,12 +60,11 @@ val SubmitEvent = FC<SubmitEventProps> { props ->
                             Event(
                                 uuid4(),
                                 props.guild.id,
-                                selectedDate,
-                                listOf()
+                                selectedDate
                             )
                         )
                     )
-                    onClick = { setIsOpen(false) }
+                    setIsOpen(false)
                 }
                 +"Add"
             }

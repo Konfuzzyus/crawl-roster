@@ -22,6 +22,7 @@ import org.codecranachan.roster.api.GuildApi
 import org.codecranachan.roster.api.PlayerApi
 import org.codecranachan.roster.auth.createDiscordOidProvider
 import org.codecranachan.roster.auth.createGoogleOidProvider
+import org.codecranachan.roster.repo.FakeRepoData
 import org.codecranachan.roster.repo.Repository
 
 fun HTML.index() {
@@ -77,6 +78,7 @@ class RosterServer {
             println("--- RUNNING ---")
             println("---   DEV   ---")
             println("---  MOUDE  ---")
+            FakeRepoData(repo).insert()
         }
         val watchPaths = if (isDev) listOf("classes", "resources") else listOf()
 

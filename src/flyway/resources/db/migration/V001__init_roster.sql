@@ -40,10 +40,11 @@ create table EventRegistrations (
 
 create table HostedTables (
     id UUID not null primary key,
-    event_id UUID null,
+    event_id UUID not null,
     dungeon_master_id UUID not null,
 
     foreign key (event_id) references Events(id),
     foreign key (dungeon_master_id) references Players(id),
     unique (event_id, dungeon_master_id)
 );
+
