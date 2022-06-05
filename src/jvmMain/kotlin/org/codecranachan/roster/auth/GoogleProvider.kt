@@ -8,12 +8,9 @@ import org.codecranachan.roster.UserIdentity
 
 const val googleOidProviderName = "google"
 
-suspend fun createGoogleOidProvider() = OpenIdProvider(
+suspend fun createGoogleOidProvider(credentials: ClientCredentials) = OpenIdProvider(
     googleOidProviderName,
-    ClientCredentials(
-        id = "1019714989830-94g4bdinitqv5gd5ugvndqqbjc2l4v7j.apps.googleusercontent.com",
-        secret = "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"
-    ),
+    credentials,
     RosterServer.httpClient.get("https://accounts.google.com/.well-known/openid-configuration").body(),
     listOf("https://www.googleapis.com/auth/userinfo.profile")
 ) { principal, provider ->

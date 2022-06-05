@@ -1,13 +1,12 @@
 package org.codecranachan.roster.repo
 
+import Configuration
 import org.flywaydb.core.Flyway
 import org.jooq.DSLContext
 import org.jooq.SQLDialect
 import org.jooq.impl.DSL
 import java.sql.Connection
 import java.sql.DriverManager
-
-private const val databaseUrl = "jdbc:h2:mem:test;DB_CLOSE_DELAY=-1"
 
 class Repository {
     companion object {
@@ -25,12 +24,12 @@ class Repository {
     }
 
     private fun getConnection(): Connection {
-        return DriverManager.getConnection(databaseUrl)
+        return DriverManager.getConnection(Configuration.jdbcUri)
     }
 
     fun migrate() {
         val flyway = Flyway.configure()
-            .dataSource(databaseUrl, null, null)
+            .dataSource(Configuration.jdbcUri, null, null)
             .schemas("ROSTER")
             .createSchemas(true)
             .load()

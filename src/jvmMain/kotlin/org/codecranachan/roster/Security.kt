@@ -1,5 +1,6 @@
 package org.codecranachan.roster
 
+import Configuration
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
@@ -92,12 +93,6 @@ data class OpenIdProvider(
     )
 }
 
-object SessionSecrets {
-    private val secretEncryptKey = hex("00112233445566778899aabbccddeeff")
-    private val secretSignKey = hex("6819b57a326945c1968f45236589")
-    val transformer = SessionTransportTransformerEncrypt(secretEncryptKey, secretSignKey)
-}
-
 class AuthenticationSettings(private val rootUrl: String, private val providers: List<OpenIdProvider>) {
 
     private val sessionExiprationTime = 7.toDuration(DurationUnit.DAYS)
@@ -109,7 +104,7 @@ class AuthenticationSettings(private val rootUrl: String, private val providers:
                     cookie.path = "/"
                     cookie.maxAgeInSeconds = sessionExiprationTime.inWholeSeconds
                     cookie.extensions["SameSite"] = "lax"
-                    transform(SessionSecrets.transformer)
+                    transform(Configuration.sessionTransformer)
                 }
             }
             install(Authentication) {

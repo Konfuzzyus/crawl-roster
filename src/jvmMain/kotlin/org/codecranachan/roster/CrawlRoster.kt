@@ -13,15 +13,17 @@ import io.ktor.server.http.content.*
 import io.ktor.server.netty.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import io.ktor.server.sessions.*
+import io.ktor.util.*
 import kotlinx.html.*
 import kotlinx.serialization.json.Json
 import org.codecranachan.roster.AuthenticationSettings
+import org.codecranachan.roster.ClientCredentials
 import org.codecranachan.roster.api.AccountApi
 import org.codecranachan.roster.api.EventApi
 import org.codecranachan.roster.api.GuildApi
 import org.codecranachan.roster.api.PlayerApi
 import org.codecranachan.roster.auth.createDiscordOidProvider
-import org.codecranachan.roster.auth.createGoogleOidProvider
 import org.codecranachan.roster.repo.FakeRepoData
 import org.codecranachan.roster.repo.Repository
 
@@ -41,6 +43,29 @@ fun HTML.index() {
     }
 }
 
+object Configuration {
+    private val env = System.getenv()
+
+    val devMode = env["ROSTER_DEV_MODE"] == "true"
+    val rootUrl = env["ROSTER_ROOT_URL"] ?: "http://localhost:8080"
+    val jdbcUri = env["ROSTER_JDBC_URI"] ?: "jdbc:h2:mem:test;DB_CLOSE_DELAY=-1"
+    val googleCredentials = getClientCreds("GOOGLE")
+    val discordCredentials = getClientCreds("DISCORD")
+
+    private val sessionEncryptKey = env["ROSTER_SESSION_ENCRYPT_KEY"] ?: "79EBA26C10A7A6D8B22864DB05987369"
+    private val sessionSignKey = env["ROSTER_SESSION_SIGN_KEY"] ?: "2FFBBF335042E92C09B988DF4BC040A5"
+    val sessionTransformer = SessionTransportTransformerEncrypt(hex(sessionEncryptKey), hex(sessionSignKey))
+
+    private fun getClientCreds(prefix: String): ClientCredentials? {
+        val id = env["${prefix}_CLIENT_ID"]
+        val secret = env["${prefix}_CLIENT_SECRET"]
+        return if (id != null && secret != null) {
+            ClientCredentials(id, secret)
+        } else {
+            null
+        }
+    }
+}
 
 class RosterServer {
     companion object {
@@ -66,23 +91,19 @@ class RosterServer {
         repo.migrate()
 
         val auth = AuthenticationSettings(
-            "http://localhost:8080",
+            Configuration.rootUrl,
             listOf(
-                createDiscordOidProvider(),
-                createGoogleOidProvider()
+                createDiscordOidProvider(Configuration.discordCredentials!!)
             )
         )
 
-        val isDev = System.getProperties()["io.ktor.development"] == "true"
-        if (isDev) {
-            println("--- RUNNING ---")
-            println("---   DEV   ---")
-            println("---  MOUDE  ---")
+        if (Configuration.devMode) {
+            println("--- EDNA MODE ---")
             FakeRepoData(repo).insert()
         }
-        val watchPaths = if (isDev) listOf("classes", "resources") else listOf()
+        val watchPaths = if (Configuration.devMode) listOf("classes", "resources") else listOf()
 
-        embeddedServer(Netty, port = 8080, host = "127.0.0.1", watchPaths = watchPaths) {
+        embeddedServer(Netty, port = 8080, watchPaths = watchPaths) {
             install(io.ktor.server.plugins.contentnegotiation.ContentNegotiation) {
                 json()
             }
@@ -103,7 +124,7 @@ class RosterServer {
                 static("/") {
                     resource("/favicon.ico", "favicon.ico")
                 }
-                if (isDev) {
+                if (Configuration.devMode) {
                     get("/static/{file...}") {
                         val file = call.parameters["file"]
                         val proxyCall = httpClient.get("http://localhost:8081/$file")

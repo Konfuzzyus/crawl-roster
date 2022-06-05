@@ -42,6 +42,11 @@ create table HostedTables (
     id UUID not null primary key,
     event_id UUID not null,
     dungeon_master_id UUID not null,
+    module varchar(100) null,
+    min_players integer null,
+    max_players integer null,
+    min_character_level integer null,
+    max_character_level integer null,
 
     foreign key (event_id) references Events(id),
     foreign key (dungeon_master_id) references Players(id),

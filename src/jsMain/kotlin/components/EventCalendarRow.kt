@@ -100,7 +100,7 @@ val EventCalendarBodyRow = FC<EventCalendarRowProps> { props ->
 
         TableRow {
             TableCell {
-                colSpan = 4
+                colSpan = 5
                 sx {
                     paddingBottom = 0.px
                     paddingTop = 0.px

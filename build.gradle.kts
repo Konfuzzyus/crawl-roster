@@ -21,7 +21,7 @@ plugins {
 }
 
 group = "org.codecranachan"
-version = "1.0-SNAPSHOT"
+version = "0.1"
 
 object Versions {
     const val kotlinWrappers = "18.1.0-pre.337"
@@ -46,7 +46,7 @@ repositories {
 kotlin {
     jvm {
         compilations.all {
-            kotlinOptions.jvmTarget = "11"
+            kotlinOptions.jvmTarget = "17"
         }
         withJava()
         testRuns["test"].executionTask.configure {
@@ -183,7 +183,6 @@ tasks.named("compileKotlinJvm") {
 
 application {
     mainClass.set("${project.group}.roster.ServerKt")
-    applicationDefaultJvmArgs = listOf("-Dio.ktor.development=true")
 }
 
 tasks.named<Copy>("jvmProcessResources") {

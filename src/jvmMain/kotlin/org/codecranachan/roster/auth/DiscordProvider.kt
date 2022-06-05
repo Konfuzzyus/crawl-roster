@@ -13,12 +13,9 @@ data class DiscordAuthorizationInfo(
 
 const val discordOidProviderName = "discord"
 
-fun createDiscordOidProvider() = OpenIdProvider(
+fun createDiscordOidProvider(credentials: ClientCredentials) = OpenIdProvider(
     discordOidProviderName,
-    ClientCredentials(
-        id = "976931433903960074",
-        secret = "xb0sP7Zwz8VjWuMA8MPqkmYLVILH5dFU"
-    ),
+    credentials,
     OpenIdConfiguration(
         authorization_endpoint = "https://discord.com/api/oauth2/authorize",
         token_endpoint = "https://discord.com/api/oauth2/token",

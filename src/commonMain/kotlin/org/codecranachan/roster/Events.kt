@@ -29,6 +29,10 @@ data class Event(
     fun tableCount(): Int {
         return roster.keys.filterNotNull().size
     }
+
+    fun getHostedTable(p: Player): Table? {
+        return roster.keys.filterNotNull().find { it.dungeonMaster.id == p.id }
+    }
 }
 
 @Serializable

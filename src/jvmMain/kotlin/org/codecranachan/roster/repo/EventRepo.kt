@@ -186,6 +186,6 @@ fun Event.asRecord(): EventsRecord {
 
 fun TableHosting.asRecord(): HostedtablesRecord {
     return HostedtablesRecord(
-        id, eventId, dungeonMasterId
+        id, eventId, dungeonMasterId, null, null, null, null, null
     )
 }
