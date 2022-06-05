@@ -13,17 +13,17 @@ class PlayerTest {
     @Test
     fun testSerialize() {
         val id = uuid4()
-        val p = Player(id, "handle")
+        val p = Player(id, "myName")
         val s = Json.encodeToString(p)
-        assertEquals("""{"id":"$id","handle":"handle"}""", s)
+        assertEquals("""{"id":"$id","name":"myName"}""", s)
     }
 
     @Test
     fun testDeserialize() {
         val id = uuid4()
-        val s = """{"id":"$id","handle":"handle"}"""
+        val s = """{"id":"$id","name":"myName"}"""
         val p = Json.decodeFromString<Player>(s)
-        assertEquals(Player(id, "handle"), p)
+        assertEquals(Player(id, "myName"), p)
     }
 
 }
