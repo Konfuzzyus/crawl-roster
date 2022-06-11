@@ -52,7 +52,7 @@ class PlayerApi(private val repository: Repository) {
                 val session = call.sessions.get<UserSession>()
                 val existingPlayer = when (session?.providerName) {
                     googleOidProviderName -> repository.fetchPlayerByGoogleId(session.user.id)
-                    discordOidProviderName -> repository.fetchPlayerByGoogleId(session.user.id)
+                    discordOidProviderName -> repository.fetchPlayerByDiscordId(session.user.id)
                     else -> {
                         call.respond(HttpStatusCode.Unauthorized)
                         return@post

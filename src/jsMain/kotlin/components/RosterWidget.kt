@@ -28,6 +28,7 @@ val RosterWidget = FC<Props> {
                     guild = currentGuild
                 }
             }
+            TableEditor { }
         }
     }
 }

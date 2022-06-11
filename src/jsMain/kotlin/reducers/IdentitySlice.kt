@@ -8,14 +8,14 @@ data class IdentityState(
     val isLoaded: Boolean = false
 )
 
-data class IdentifyUserAction(val profile: Identity?)
-class LogoutUserAction
+data class UserIdentified(val profile: Identity?)
+class UserLoggedOut
 
 val identityReducer: Reducer<ApplicationState> = { s: ApplicationState, a: Any ->
     val old = s.identity
     val new = when (a) {
-        is IdentifyUserAction -> old.copy(data = a.profile, isLoaded = true)
-        is LogoutUserAction -> old.copy(data = null)
+        is UserIdentified -> old.copy(data = a.profile, isLoaded = true)
+        is UserLoggedOut -> old.copy(data = null)
         else -> old
     }
     s.copy(identity = new)

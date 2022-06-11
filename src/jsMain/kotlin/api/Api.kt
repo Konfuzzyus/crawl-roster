@@ -1,5 +1,6 @@
 package api
 
+import com.benasher44.uuid.Uuid
 import com.benasher44.uuid.uuid4
 import io.ktor.client.*
 import io.ktor.client.call.*
@@ -93,4 +94,11 @@ suspend fun addTableHosting(e: Event, dm: Player) {
 
 suspend fun removeTableHosting(e: Event, dm: Player) {
     client.delete("/api/v1/events/${e.id}/tables/${dm.id}")
+}
+
+suspend fun updateTableHosting(id: Uuid, details: TableDetails) {
+    client.patch("/api/v1/tables/${id}") {
+        contentType(ContentType.Application.Json)
+        setBody(details)
+    }
 }

@@ -5,7 +5,7 @@ import org.codecranachan.roster.Guild
 import org.reduxkotlin.Reducer
 
 data class RosterServerState(
-    val linkedGuilds: List<Guild>? = null,
+    val linkedGuilds: List<Guild>? = null
 )
 
 data class LinkedGuildsUpdated(val guilds: List<Guild>)

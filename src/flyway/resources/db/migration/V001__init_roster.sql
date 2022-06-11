@@ -1,3 +1,5 @@
+create type TableLanguage as enum ('SwissGerman', 'English', 'German', 'Italian', 'French', 'Romansh');
+
 create table LinkedGuilds (
     id UUID not null primary key,
     name varchar(100) not null,
@@ -23,7 +25,8 @@ create table Events (
     event_date DATE not null,
     guild_id UUID not null,
 
-    foreign key (guild_id) references LinkedGuilds(id)
+    foreign key (guild_id) references LinkedGuilds(id),
+    unique (event_date)
 );
 
 create table EventRegistrations (
@@ -42,11 +45,14 @@ create table HostedTables (
     id UUID not null primary key,
     event_id UUID not null,
     dungeon_master_id UUID not null,
-    module varchar(100) null,
-    min_players integer null,
-    max_players integer null,
-    min_character_level integer null,
-    max_character_level integer null,
+    adventure_title varchar(100) null,
+    adventure_description varchar(3000) null,
+    module_designation varchar(32) null,
+    table_language TableLanguage not null,
+    min_players integer not null,
+    max_players integer not null,
+    min_character_level integer not null,
+    max_character_level integer not null,
 
     foreign key (event_id) references Events(id),
     foreign key (dungeon_master_id) references Players(id),

@@ -1,12 +1,10 @@
 package reducers
 
 import api.*
+import com.benasher44.uuid.Uuid
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
-import org.codecranachan.roster.Event
-import org.codecranachan.roster.Guild
-import org.codecranachan.roster.Player
-import org.codecranachan.roster.Table
+import org.codecranachan.roster.*
 import org.reduxkotlin.Thunk
 
 private val scope = MainScope()
@@ -14,7 +12,7 @@ private val scope = MainScope()
 fun updateUserId(): Thunk<ApplicationState> = { dispatch, _, _ ->
     scope.launch {
         val result = fetchUserId()
-        dispatch(IdentifyUserAction(result))
+        dispatch(UserIdentified(result))
     }
 }
 
@@ -22,7 +20,7 @@ fun signUpPlayer(p: Player): Thunk<ApplicationState> = { dispatch, _, _ ->
     scope.launch {
         addPlayer(p)
         val result = fetchUserId()
-        dispatch(IdentifyUserAction(result))
+        dispatch(UserIdentified(result))
     }
 }
 
@@ -115,5 +113,12 @@ fun joinTable(e: Event, t: Table?): Thunk<ApplicationState> = { dispatch, getSta
             updateEventRegistration(e, p, t)
             dispatch(updateEvents())
         }
+    }
+}
+
+fun updateTableDetails(tableId: Uuid, details: TableDetails): Thunk<ApplicationState> = { dispatch, getState, _ ->
+    scope.launch {
+        updateTableHosting(tableId, details)
+        dispatch(updateEvents())
     }
 }

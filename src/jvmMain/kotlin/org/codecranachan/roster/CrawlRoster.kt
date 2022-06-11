@@ -19,10 +19,7 @@ import kotlinx.html.*
 import kotlinx.serialization.json.Json
 import org.codecranachan.roster.AuthenticationSettings
 import org.codecranachan.roster.ClientCredentials
-import org.codecranachan.roster.api.AccountApi
-import org.codecranachan.roster.api.EventApi
-import org.codecranachan.roster.api.GuildApi
-import org.codecranachan.roster.api.PlayerApi
+import org.codecranachan.roster.api.*
 import org.codecranachan.roster.auth.createDiscordOidProvider
 import org.codecranachan.roster.repo.FakeRepoData
 import org.codecranachan.roster.repo.Repository
@@ -114,6 +111,7 @@ class RosterServer {
                     PlayerApi(repo).install(this)
                     GuildApi(repo).install(this)
                     EventApi(repo).install(this)
+                    TableApi(repo).install(this)
                 }
                 authenticate("auth-session", optional = true) {
                     AccountApi(repo).install(this)

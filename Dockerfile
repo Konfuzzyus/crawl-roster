@@ -10,5 +10,6 @@ FROM eclipse-temurin:17-jre-alpine
 RUN mkdir /dist
 COPY --from=builder /home/gradle/project/build/distributions/crawl-roster-0.1.tar /dist
 RUN tar -xf /dist/crawl-roster-0.1.tar -C /
+RUN rm -rf /dist
 EXPOSE 8080
 ENTRYPOINT ["/crawl-roster-0.1/bin/crawl-roster"]
