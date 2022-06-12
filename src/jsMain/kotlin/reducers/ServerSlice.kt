@@ -1,6 +1,5 @@
 package reducers
 
-import org.codecranachan.roster.Event
 import org.codecranachan.roster.Guild
 import org.reduxkotlin.Reducer
 

@@ -4,7 +4,11 @@ import mui.material.PaletteMode
 import mui.material.styles.Theme
 import mui.material.styles.ThemeProvider
 import mui.material.styles.createTheme
-import react.*
+import react.FC
+import react.PropsWithChildren
+import react.StateInstance
+import react.createContext
+import react.useState
 
 typealias ThemeState = StateInstance<Theme>
 

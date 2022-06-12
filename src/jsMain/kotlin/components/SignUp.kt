@@ -1,15 +1,22 @@
 package components
 
 import com.benasher44.uuid.uuid4
-import csstype.HtmlAttributes
 import csstype.JustifyContent
-import mui.material.*
+import mui.material.Button
+import mui.material.Chip
+import mui.material.Stack
+import mui.material.StackDirection
+import mui.material.TextField
 import mui.system.responsive
 import mui.system.sx
 import org.codecranachan.roster.Player
 import org.w3c.dom.HTMLInputElement
-import react.*
+import react.FC
+import react.Props
+import react.ReactNode
 import react.dom.onChange
+import react.useContext
+import react.useState
 import reducers.StoreContext
 import reducers.signUpPlayer
 

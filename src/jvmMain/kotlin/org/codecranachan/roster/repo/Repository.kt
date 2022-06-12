@@ -28,11 +28,21 @@ class Repository {
     }
 
     fun migrate() {
-        val flyway = Flyway.configure()
-            .dataSource(Configuration.jdbcUri, null, null)
-            .schemas("ROSTER")
-            .createSchemas(true)
+        val flyway = baseFlyway().load()
+        flyway.migrate()
+    }
+
+    fun reset() {
+        val flyway = baseFlyway()
+            .cleanDisabled(false)
+            .cleanOnValidationError(true)
             .load()
         flyway.migrate()
     }
+
+    private fun baseFlyway() = Flyway.configure()
+        .dataSource(Configuration.jdbcUri, null, null)
+        .schemas("ROSTER")
+        .createSchemas(true)
+
 }

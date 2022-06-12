@@ -9,7 +9,16 @@ import io.ktor.server.routing.*
 import org.codecranachan.roster.Event
 import org.codecranachan.roster.EventRegistration
 import org.codecranachan.roster.TableHosting
-import org.codecranachan.roster.repo.*
+import org.codecranachan.roster.repo.Repository
+import org.codecranachan.roster.repo.addEvent
+import org.codecranachan.roster.repo.addEventRegistration
+import org.codecranachan.roster.repo.addHostedTable
+import org.codecranachan.roster.repo.fetchEvent
+import org.codecranachan.roster.repo.isHostingForEvent
+import org.codecranachan.roster.repo.isRegisteredForEvent
+import org.codecranachan.roster.repo.removeEventRegistration
+import org.codecranachan.roster.repo.removeHostedTable
+import org.codecranachan.roster.repo.updateEventRegistration
 
 class EventApi(private val repository: Repository) {
 

@@ -8,12 +8,17 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.sessions.*
 import org.codecranachan.roster.EventRegistration
-import org.codecranachan.roster.Identity
 import org.codecranachan.roster.Player
 import org.codecranachan.roster.UserSession
 import org.codecranachan.roster.auth.discordOidProviderName
 import org.codecranachan.roster.auth.googleOidProviderName
-import org.codecranachan.roster.repo.*
+import org.codecranachan.roster.repo.Repository
+import org.codecranachan.roster.repo.addEventRegistration
+import org.codecranachan.roster.repo.addPlayer
+import org.codecranachan.roster.repo.fetchAllPlayers
+import org.codecranachan.roster.repo.fetchPlayer
+import org.codecranachan.roster.repo.fetchPlayerByDiscordId
+import org.codecranachan.roster.repo.fetchPlayerByGoogleId
 
 class PlayerApi(private val repository: Repository) {
 

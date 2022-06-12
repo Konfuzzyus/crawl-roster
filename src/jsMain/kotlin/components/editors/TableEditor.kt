@@ -1,18 +1,34 @@
-package components
+package components.editors
 
 import com.benasher44.uuid.Uuid
 import mui.icons.material.Cancel
 import mui.icons.material.Save
-import mui.material.*
+import mui.material.Button
+import mui.material.Dialog
+import mui.material.DialogActions
+import mui.material.DialogContent
+import mui.material.DialogTitle
+import mui.material.FormControlMargin
+import mui.material.MenuItem
+import mui.material.Stack
+import mui.material.StackDirection
+import mui.material.TextField
 import mui.system.responsive
 import org.codecranachan.roster.Table
 import org.codecranachan.roster.TableDetails
 import org.codecranachan.roster.TableLanguage
 import org.w3c.dom.HTMLInputElement
-import react.*
+import react.FC
+import react.Props
+import react.ReactNode
+import react.create
 import react.dom.events.ChangeEvent
 import react.dom.html.InputType
 import react.dom.onChange
+import react.key
+import react.useContext
+import react.useEffectOnce
+import react.useState
 import reducers.EditorClosed
 import reducers.StoreContext
 import reducers.updateTableDetails
@@ -76,9 +92,6 @@ val TableEditor = FC<Props> {
         }
 
         DialogContent {
-            DialogContentText {
-                +"Edit the details of your hosted table below."
-            }
             Stack {
                 direction = responsive(StackDirection.column)
                 TextField {
@@ -114,7 +127,6 @@ val TableEditor = FC<Props> {
                         val e = it.unsafeCast<ChangeEvent<HTMLInputElement>>()
                         setDesignation(e.target.value)
                     }
-                    helperText = ReactNode("Leave empty for homebrew adventures")
                 }
                 TextField {
                     margin = FormControlMargin.dense

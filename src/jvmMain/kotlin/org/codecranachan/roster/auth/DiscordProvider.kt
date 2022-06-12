@@ -1,8 +1,13 @@
 package org.codecranachan.roster.auth
 
+import RosterServer
 import io.ktor.client.call.*
 import io.ktor.client.request.*
-import org.codecranachan.roster.*
+import org.codecranachan.roster.ClientCredentials
+import org.codecranachan.roster.DiscordUser
+import org.codecranachan.roster.OpenIdConfiguration
+import org.codecranachan.roster.OpenIdProvider
+import org.codecranachan.roster.UserIdentity
 
 @kotlinx.serialization.Serializable
 data class DiscordAuthorizationInfo(

@@ -6,11 +6,24 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.todayAt
 import mui.icons.material.AddCircle
-import mui.material.*
+import mui.material.Button
+import mui.material.Chip
+import mui.material.Dialog
+import mui.material.DialogActions
+import mui.material.DialogContent
+import mui.material.DialogTitle
+import mui.material.Divider
+import mui.material.Input
+import mui.material.InputLabel
 import org.codecranachan.roster.Event
 import org.codecranachan.roster.Guild
 import org.w3c.dom.HTMLInputElement
-import react.*
+import react.FC
+import react.Props
+import react.ReactNode
+import react.create
+import react.useContext
+import react.useState
 import reducers.StoreContext
 import reducers.createEvent
 

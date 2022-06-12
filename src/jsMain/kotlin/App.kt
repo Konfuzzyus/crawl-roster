@@ -1,10 +1,19 @@
 import components.Account
 import components.Identity
 import components.RosterWidget
-import mui.material.*
+import mui.material.CircularProgress
+import mui.material.Container
+import mui.material.Grid
+import mui.material.Stack
+import mui.material.StackDirection
+import mui.material.Typography
 import mui.material.styles.TypographyVariant
 import mui.system.responsive
-import react.*
+import react.FC
+import react.Props
+import react.useContext
+import react.useEffectOnce
+import react.useState
 import reducers.StoreContext
 import reducers.updateUserId
 
@@ -36,7 +45,7 @@ val App = FC<AppProps> { props ->
                 xs = 8
 
                 Typography {
-                    variant = TypographyVariant.h5
+                    variant = TypographyVariant.h4
                     +"Crawl-Roster ${props.version}"
                 }
             }

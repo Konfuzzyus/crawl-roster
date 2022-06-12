@@ -23,11 +23,5 @@ data class Table(
     val dungeonMaster: Player,
     val details: TableDetails = TableDetails()
 ) {
-    fun getName(): String {
-        return if (details.adventureTitle == null) {
-            "${dungeonMaster.getAlias()}'s table"
-        } else {
-            "${details.adventureTitle} hosted by ${dungeonMaster.getAlias()}"
-        }
-    }
+    fun getName(): String = "${dungeonMaster.getAlias()}'s Table"
 }

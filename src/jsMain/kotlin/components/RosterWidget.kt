@@ -1,8 +1,12 @@
 package components
 
+import components.editors.TableEditor
 import mui.material.Paper
-import mui.system.Box
-import react.*
+import react.FC
+import react.Props
+import react.useContext
+import react.useEffectOnce
+import react.useState
 import reducers.StoreContext
 
 val RosterWidget = FC<Props> {

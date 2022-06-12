@@ -9,7 +9,15 @@ import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
-import org.codecranachan.roster.*
+import org.codecranachan.roster.DiscordUserInfo
+import org.codecranachan.roster.Event
+import org.codecranachan.roster.EventRegistration
+import org.codecranachan.roster.Guild
+import org.codecranachan.roster.Identity
+import org.codecranachan.roster.Player
+import org.codecranachan.roster.Table
+import org.codecranachan.roster.TableDetails
+import org.codecranachan.roster.TableHosting
 
 val client = HttpClient(Js) {
     install(ContentNegotiation) {

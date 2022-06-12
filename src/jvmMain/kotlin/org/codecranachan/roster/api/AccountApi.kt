@@ -1,12 +1,17 @@
 package org.codecranachan.roster.api
 
+import RosterServer
 import io.ktor.client.call.*
 import io.ktor.client.request.*
 import io.ktor.server.application.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.sessions.*
-import org.codecranachan.roster.*
+import org.codecranachan.roster.DiscordGuild
+import org.codecranachan.roster.DiscordUser
+import org.codecranachan.roster.DiscordUserInfo
+import org.codecranachan.roster.Identity
+import org.codecranachan.roster.UserSession
 import org.codecranachan.roster.auth.discordOidProviderName
 import org.codecranachan.roster.auth.googleOidProviderName
 import org.codecranachan.roster.repo.Repository

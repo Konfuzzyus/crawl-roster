@@ -1,7 +1,16 @@
 package org.codecranachan.roster.repo
 
-import kotlinx.datetime.*
-import org.codecranachan.roster.*
+import kotlinx.datetime.Clock
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.plus
+import kotlinx.datetime.todayAt
+import org.codecranachan.roster.Event
+import org.codecranachan.roster.EventRegistration
+import org.codecranachan.roster.Guild
+import org.codecranachan.roster.Player
+import org.codecranachan.roster.TableHosting
+import org.codecranachan.roster.UserIdentity
 
 class FakeRepoData(val repo: Repository) {
 

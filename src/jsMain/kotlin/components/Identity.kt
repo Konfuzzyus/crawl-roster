@@ -6,7 +6,13 @@ import mui.icons.material.Logout
 import mui.material.Avatar
 import mui.material.Chip
 import mui.material.ChipVariant
-import react.*
+import react.FC
+import react.Props
+import react.ReactNode
+import react.create
+import react.useContext
+import react.useEffect
+import react.useState
 import reducers.StoreContext
 
 val Identity = FC<Props> {

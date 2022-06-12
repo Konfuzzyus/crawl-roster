@@ -7,7 +7,10 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import org.codecranachan.roster.Guild
-import org.codecranachan.roster.repo.*
+import org.codecranachan.roster.repo.Repository
+import org.codecranachan.roster.repo.addLinkedGuild
+import org.codecranachan.roster.repo.fetchEventsByGuild
+import org.codecranachan.roster.repo.fetchLinkedGuilds
 
 class GuildApi(private val repository: Repository) {
 

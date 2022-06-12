@@ -1,16 +1,17 @@
 package components
 
-import csstype.*
-import emotion.react.useTheme
+import csstype.Padding
+import csstype.px
 import mui.icons.material.ErrorOutline
 import mui.material.Chip
-import mui.material.Stack
-import mui.material.StackDirection
 import mui.system.Box
-import mui.system.responsive
 import mui.system.sx
 import org.codecranachan.roster.Event
-import react.*
+import react.FC
+import react.Props
+import react.ReactNode
+import react.create
+import react.useContext
 import reducers.StoreContext
 
 external interface EventDetailsProps : Props {
@@ -36,13 +37,9 @@ val EventDetails = FC<EventDetailsProps> { props ->
                 label = ReactNode("No one has registered for this event")
             }
         } else {
-            Stack {
-                spacing = responsive(5.px)
-                direction = responsive(StackDirection.row)
-                EventLineup {
-                    event = props.event
-                    me = profile
-                }
+            EventLineup {
+                event = props.event
+                me = profile
             }
         }
     }

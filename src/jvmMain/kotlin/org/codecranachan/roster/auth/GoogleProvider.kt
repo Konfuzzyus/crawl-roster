@@ -1,5 +1,6 @@
 package org.codecranachan.roster.auth
 
+import RosterServer
 import io.ktor.client.call.*
 import io.ktor.client.request.*
 import org.codecranachan.roster.ClientCredentials

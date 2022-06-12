@@ -3,8 +3,17 @@ package org.codecranachan.roster.repo
 import com.benasher44.uuid.Uuid
 import kotlinx.datetime.toJavaLocalDate
 import kotlinx.datetime.toKotlinLocalDate
-import org.codecranachan.roster.*
-import org.codecranachan.roster.jooq.Tables.*
+import org.codecranachan.roster.Event
+import org.codecranachan.roster.EventRegistration
+import org.codecranachan.roster.Player
+import org.codecranachan.roster.Table
+import org.codecranachan.roster.TableDetails
+import org.codecranachan.roster.TableHosting
+import org.codecranachan.roster.TableLanguage
+import org.codecranachan.roster.jooq.Tables.EVENTREGISTRATIONS
+import org.codecranachan.roster.jooq.Tables.EVENTS
+import org.codecranachan.roster.jooq.Tables.HOSTEDTABLES
+import org.codecranachan.roster.jooq.Tables.PLAYERS
 import org.codecranachan.roster.jooq.enums.Tablelanguage
 import org.codecranachan.roster.jooq.tables.records.EventregistrationsRecord
 import org.codecranachan.roster.jooq.tables.records.EventsRecord
@@ -12,6 +21,7 @@ import org.codecranachan.roster.jooq.tables.records.HostedtablesRecord
 import org.jooq.Condition
 import org.jooq.Record
 import org.jooq.Result
+import java.time.OffsetDateTime
 
 
 private fun Repository.fetchTables(condition: Condition): Map<Uuid, Result<Record>> {
@@ -48,7 +58,7 @@ fun Repository.fetchEventsWhere(condition: Condition): List<Event> {
                 EVENTREGISTRATIONS.ID.isNull, condition
             )
 
-        regSelect.union(tblSelect).fetchGroups(EVENTS.ID).map { (id, results) ->
+        regSelect.union(tblSelect).orderBy(EVENTS.EVENT_DATE.asc()).fetchGroups(EVENTS.ID).map { (id, results) ->
             Event(id,
                 results.first()[EVENTS.GUILD_ID],
                 results.first()[EVENTS.EVENT_DATE].toKotlinLocalDate(),
@@ -58,7 +68,7 @@ fun Repository.fetchEventsWhere(condition: Condition): List<Event> {
                     } else {
                         Table(
                             it[HOSTEDTABLES.ID],
-                            Player(it[dms.ID], it[dms.PLAYER_NAME], it[dms.DISCORD_NAME]),
+                            Player(it[dms.ID], it[dms.PLAYER_NAME], it[dms.DISCORD_NAME], it[dms.DISCORD_AVATAR]),
                             TableDetails(
                                 it[HOSTEDTABLES.ADVENTURE_TITLE],
                                 it[HOSTEDTABLES.ADVENTURE_DESCRIPTION],
@@ -72,7 +82,7 @@ fun Repository.fetchEventsWhere(condition: Condition): List<Event> {
                 }.mapValues { e ->
                     val rows = e.value
                     rows.filter { it[pcs.ID] != null }
-                        .map { Player(it[pcs.ID], it[pcs.PLAYER_NAME], it[pcs.DISCORD_NAME]) }.distinct()
+                        .map { Player(it[pcs.ID], it[pcs.PLAYER_NAME], it[pcs.DISCORD_NAME], it[pcs.DISCORD_AVATAR]) }.distinct()
                 })
         }
     }
@@ -153,7 +163,7 @@ fun Repository.fetchTable(id: Uuid): Table {
             .where(HOSTEDTABLES.ID.eq(id)).fetchSingle().map {
                 Table(
                     it[HOSTEDTABLES.ID],
-                    Player(it[PLAYERS.ID], it[PLAYERS.PLAYER_NAME], it[PLAYERS.DISCORD_NAME]),
+                    Player(it[PLAYERS.ID], it[PLAYERS.PLAYER_NAME], it[PLAYERS.DISCORD_NAME], it[PLAYERS.DISCORD_AVATAR]),
                     TableDetails(
                         it[HOSTEDTABLES.ADVENTURE_TITLE],
                         it[HOSTEDTABLES.ADVENTURE_DESCRIPTION],
@@ -183,7 +193,7 @@ fun Repository.updateHostedTable(id: Uuid, details: TableDetails) {
 }
 
 fun EventRegistration.asRecord(): EventregistrationsRecord {
-    return EventregistrationsRecord(id, eventId, playerId, null, null)
+    return EventregistrationsRecord(id, eventId, playerId, null, null, OffsetDateTime.now())
 }
 
 fun EventsRecord.asModel(): Event {

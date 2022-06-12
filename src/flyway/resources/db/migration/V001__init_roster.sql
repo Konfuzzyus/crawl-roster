@@ -9,11 +9,11 @@ create table LinkedGuilds (
 create table Players (
     id UUID not null primary key,
     player_name varchar(100) null,
+    languages varchar(255) null,
 
-    discord_avatar varchar(255) null,
+    discord_id varchar(100) not null unique,
     discord_name varchar(100) null,
-    discord_id varchar(100) null unique,
-    google_id varchar(100) null unique
+    discord_avatar varchar(255) null
 );
 
 create table PlayerCharacters (
@@ -35,6 +35,7 @@ create table EventRegistrations (
     player_id UUID not null,
     player_character_id UUID null,
     table_id UUID null,
+    registration_time timestamp(0) with time zone not null,
 
     foreign key (event_id) references Events(id),
     foreign key (player_id) references Players(id),

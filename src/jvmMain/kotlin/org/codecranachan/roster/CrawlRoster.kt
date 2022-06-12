@@ -15,11 +15,22 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.sessions.*
 import io.ktor.util.*
-import kotlinx.html.*
+import kotlinx.html.HTML
+import kotlinx.html.body
+import kotlinx.html.div
+import kotlinx.html.head
+import kotlinx.html.id
+import kotlinx.html.meta
+import kotlinx.html.script
+import kotlinx.html.title
 import kotlinx.serialization.json.Json
 import org.codecranachan.roster.AuthenticationSettings
 import org.codecranachan.roster.ClientCredentials
-import org.codecranachan.roster.api.*
+import org.codecranachan.roster.api.AccountApi
+import org.codecranachan.roster.api.EventApi
+import org.codecranachan.roster.api.GuildApi
+import org.codecranachan.roster.api.PlayerApi
+import org.codecranachan.roster.api.TableApi
 import org.codecranachan.roster.auth.createDiscordOidProvider
 import org.codecranachan.roster.repo.FakeRepoData
 import org.codecranachan.roster.repo.Repository
@@ -68,37 +79,38 @@ class RosterServer {
     companion object {
         val httpClient = HttpClient(CIO) {
             install(ContentNegotiation) {
-                json(
-                    Json {
-                        encodeDefaults = true
-                        isLenient = true
-                        allowSpecialFloatingPointValues = true
-                        allowStructuredMapKeys = true
-                        prettyPrint = false
-                        useArrayPolymorphism = false
-                        ignoreUnknownKeys = true
-                    }
-                )
+                json(Json {
+                    encodeDefaults = true
+                    isLenient = true
+                    allowSpecialFloatingPointValues = true
+                    allowStructuredMapKeys = true
+                    prettyPrint = false
+                    useArrayPolymorphism = false
+                    ignoreUnknownKeys = true
+                })
             }
         }
     }
 
     suspend fun start() {
-        val repo = Repository()
-        repo.migrate()
-
         val auth = AuthenticationSettings(
-            Configuration.rootUrl,
-            listOf(
+            Configuration.rootUrl, listOf(
                 createDiscordOidProvider(Configuration.discordCredentials!!)
             )
         )
+        val repo = Repository()
 
-        if (Configuration.devMode) {
+        val watchPaths = if (Configuration.devMode) {
             println("--- EDNA MODE ---")
+            repo.reset()
             FakeRepoData(repo).insert()
+
+            listOf("classes", "resources")
+        } else {
+            repo.migrate()
+
+            listOf()
         }
-        val watchPaths = if (Configuration.devMode) listOf("classes", "resources") else listOf()
 
         embeddedServer(Netty, port = 8080, watchPaths = watchPaths) {
             install(io.ktor.server.plugins.contentnegotiation.ContentNegotiation) {

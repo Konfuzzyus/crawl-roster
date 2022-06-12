@@ -1,4 +1,8 @@
-import com.rohanprabhu.gradle.plugins.kdjooq.*
+import com.rohanprabhu.gradle.plugins.kdjooq.database
+import com.rohanprabhu.gradle.plugins.kdjooq.generator
+import com.rohanprabhu.gradle.plugins.kdjooq.jdbc
+import com.rohanprabhu.gradle.plugins.kdjooq.jooqCodegenConfiguration
+import com.rohanprabhu.gradle.plugins.kdjooq.target
 import org.flywaydb.gradle.task.FlywayMigrateTask
 
 buildscript {
@@ -12,7 +16,7 @@ buildscript {
 }
 
 plugins {
-    val kotlin = "1.6.21"
+    val kotlin = "1.7.0"
     kotlin("multiplatform") version kotlin
     kotlin("plugin.serialization") version kotlin
     id("org.flywaydb.flyway") version "8.5.10"
@@ -24,15 +28,17 @@ group = "org.codecranachan"
 version = "0.1"
 
 object Versions {
-    const val kotlinWrappers = "18.1.0-pre.337"
+    const val kotlinReact = "18.1.0-pre.343"
+    const val kotlinMui = "5.8.0-pre.343"
+    const val kotlinEmotion = "11.9.0-pre.343"
     const val kotlinCoroutines = "1.6.1"
     const val kotlinSerialization = "1.3.3"
     const val kotlinDateTime = "0.3.2"
     const val kotlinRedux = "0.5.5"
-    const val ktor = "2.0.1"
+    const val ktor = "2.0.2"
     const val jooq = "3.16.6"
     const val h2db = "2.1.212"
-    const val flyway = "8.5.10"
+    const val flyway = "8.5.12"
     const val logback = "1.2.11"
     const val uuid = "0.4.0"
     const val jose4j = "0.7.12"
@@ -103,19 +109,17 @@ kotlin {
         val jsMain by getting {
             dependencies {
                 implementation("io.ktor:ktor-serialization-kotlinx-json:${Versions.ktor}")
-                implementation("io.ktor:ktor-client-core:${Versions.ktor}")
-                implementation("io.ktor:ktor-client-js:${Versions.ktor}")
+                implementation("io.ktor:ktor-client-core-js:${Versions.ktor}")
                 implementation("io.ktor:ktor-client-content-negotiation:${Versions.ktor}")
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.kotlinCoroutines}")
-                implementation("org.reduxkotlin:redux-kotlin:${Versions.kotlinRedux}")
-                implementation("org.reduxkotlin:redux-kotlin-thunk:${Versions.kotlinRedux}")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core-js:${Versions.kotlinCoroutines}")
+                implementation("org.reduxkotlin:redux-kotlin-js:${Versions.kotlinRedux}")
+                implementation("org.reduxkotlin:redux-kotlin-thunk-js:${Versions.kotlinRedux}")
 
-                implementation(project.dependencies.enforcedPlatform("org.jetbrains.kotlin-wrappers:kotlin-wrappers-bom:1.0.0-pre.340"))
-                implementation("org.jetbrains.kotlin-wrappers:kotlin-react")
-                implementation("org.jetbrains.kotlin-wrappers:kotlin-react-dom")
-                implementation("org.jetbrains.kotlin-wrappers:kotlin-emotion")
-                implementation("org.jetbrains.kotlin-wrappers:kotlin-mui")
-                implementation("org.jetbrains.kotlin-wrappers:kotlin-mui-icons")
+                implementation("org.jetbrains.kotlin-wrappers:kotlin-react:${Versions.kotlinReact}")
+                implementation("org.jetbrains.kotlin-wrappers:kotlin-react-dom:${Versions.kotlinReact}")
+                implementation("org.jetbrains.kotlin-wrappers:kotlin-emotion:${Versions.kotlinEmotion}")
+                implementation("org.jetbrains.kotlin-wrappers:kotlin-mui:${Versions.kotlinMui}")
+                implementation("org.jetbrains.kotlin-wrappers:kotlin-mui-icons:${Versions.kotlinMui}")
             }
         }
         val jsTest by getting

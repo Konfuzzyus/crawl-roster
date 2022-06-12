@@ -13,7 +13,13 @@ import mui.material.Link
 import mui.system.Box
 import org.codecranachan.roster.DiscordGuild
 import org.codecranachan.roster.Guild
-import react.*
+import react.FC
+import react.Props
+import react.ReactNode
+import react.create
+import react.useContext
+import react.useEffectOnce
+import react.useState
 import reducers.StoreContext
 import reducers.linkGuild
 

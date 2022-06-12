@@ -1,13 +1,33 @@
 package components
 
 import com.benasher44.uuid.Uuid
+import components.events.PlaySessionOccupancyIndicator
 import csstype.px
 import mui.icons.material.KeyboardArrowDown
 import mui.icons.material.KeyboardArrowUp
-import mui.material.*
+import mui.material.Button
+import mui.material.ButtonGroup
+import mui.material.Collapse
+import mui.material.IconButton
+import mui.material.Size
+import mui.material.Stack
+import mui.material.StackDirection
+import mui.material.TableCell
+import mui.material.TableRow
+import mui.material.Typography
+import mui.material.styles.TypographyVariant
+import mui.system.responsive
 import mui.system.sx
-import react.*
-import reducers.*
+import react.FC
+import react.Props
+import react.useContext
+import react.useEffectOnce
+import react.useState
+import reducers.StoreContext
+import reducers.registerPlayer
+import reducers.registerTable
+import reducers.unregisterPlayer
+import reducers.unregisterTable
 
 val EventCalendarHeaderRow = FC<Props> {
     TableRow {
@@ -60,13 +80,24 @@ val EventCalendarBodyRow = FC<EventCalendarRowProps> { props ->
                 }
             }
             TableCell {
-                +"${event.date.dayOfWeek.name}, ${event.date}"
+                Typography {
+                    variant = TypographyVariant.h6
+                    +event.getFormattedDate()
+                }
             }
             TableCell {
-                +"${event.playerCount()}"
+                +"${event.playerCount()} of ${event.tableSpace()}"
             }
             TableCell {
-                +"${event.tableCount()}"
+                Stack {
+                    direction = responsive(StackDirection.row)
+                    spacing = responsive(2)
+                    event.tables().forEach {
+                        PlaySessionOccupancyIndicator {
+                            occupancy = it
+                        }
+                    }
+                }
             }
             TableCell {
                 ButtonGroup {
@@ -74,13 +105,13 @@ val EventCalendarBodyRow = FC<EventCalendarRowProps> { props ->
                         isRegistered -> {
                             Button {
                                 onClick = { store.dispatch(unregisterPlayer(event)) }
-                                +"Cancel"
+                                +"Cancel Registration"
                             }
                         }
                         isHosting -> {
                             Button {
                                 onClick = { store.dispatch(unregisterTable(event)) }
-                                +"Cancel"
+                                +"Cancel Table"
                             }
                         }
                         else -> {

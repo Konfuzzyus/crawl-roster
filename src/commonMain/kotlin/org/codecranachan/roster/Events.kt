@@ -3,8 +3,25 @@ package org.codecranachan.roster
 import com.benasher44.uuid.Uuid
 import com.benasher44.uuid.uuid4
 import kotlinx.datetime.LocalDate
-import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.Serializable
+
+enum class TableState {
+    Full,
+    Ready,
+    Understrength,
+    Empty
+}
+
+data class TableOccupancy(val table: Table, val players: List<Player>) {
+    fun getState(): TableState {
+        return when {
+            players.isEmpty() -> TableState.Empty
+            players.size >= table.details.playerRange.last -> TableState.Full
+            players.size <= table.details.playerRange.first -> TableState.Understrength
+            else -> TableState.Ready
+        }
+    }
+}
 
 @Serializable
 data class Event(
@@ -27,13 +44,25 @@ data class Event(
         return roster.values.map { it.size }.reduce(Int::plus)
     }
 
-    fun tableCount(): Int {
-        return roster.keys.filterNotNull().size
+    fun tableSpace(): Int {
+        val tables = tables()
+        return if (tables.isEmpty()) 0 else tables.map { it.table.details.playerRange.last }.reduce(Int::plus)
+    }
+
+    fun tables(): List<TableOccupancy> {
+        return roster.entries.filter { it.key != null }.map { TableOccupancy(it.key!!, it.value) }
     }
 
     fun getHostedTable(p: Player): Table? {
         return roster.keys.filterNotNull().find { it.dungeonMaster.id == p.id }
     }
+
+    fun getFormattedDate(): String {
+        return "${date.dayOfWeek.name.substring(0..2)} - ${date.dayOfMonth}. ${
+            date.month.name.lowercase().replaceFirstChar { it.titlecase() }
+        }, ${date.year}"
+    }
+
 }
 
 @Serializable
