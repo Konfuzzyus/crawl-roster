@@ -1,4 +1,3 @@
-import components.Account
 import components.Identity
 import components.RosterWidget
 import mui.material.CircularProgress
@@ -24,12 +23,10 @@ external interface AppProps : Props {
 val App = FC<AppProps> { props ->
     val store = useContext(StoreContext)
     val (isLoaded, setIsLoaded) = useState(store.state.identity.isLoaded)
-    val (userIdentity, setUserIdentity) = useState(store.state.identity.data)
 
     useEffectOnce {
         val unsubscribe = store.subscribe {
             setIsLoaded(store.state.identity.isLoaded)
-            setUserIdentity(store.state.identity.data)
         }
         store.dispatch(updateUserId())
         cleanup(unsubscribe)
@@ -57,9 +54,6 @@ val App = FC<AppProps> { props ->
                     Stack {
                         direction = responsive(StackDirection.column)
                         Identity { }
-                        Account {
-                            profile = userIdentity?.profile
-                        }
                     }
                 } else {
                     CircularProgress { }

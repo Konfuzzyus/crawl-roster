@@ -6,6 +6,7 @@ import kotlinx.datetime.toKotlinLocalDate
 import org.codecranachan.roster.Event
 import org.codecranachan.roster.EventRegistration
 import org.codecranachan.roster.Player
+import org.codecranachan.roster.PlayerDetails
 import org.codecranachan.roster.Table
 import org.codecranachan.roster.TableDetails
 import org.codecranachan.roster.TableHosting
@@ -15,6 +16,8 @@ import org.codecranachan.roster.jooq.Tables.EVENTS
 import org.codecranachan.roster.jooq.Tables.HOSTEDTABLES
 import org.codecranachan.roster.jooq.Tables.PLAYERS
 import org.codecranachan.roster.jooq.enums.Tablelanguage
+import org.codecranachan.roster.jooq.tables.Hostedtables
+import org.codecranachan.roster.jooq.tables.Players
 import org.codecranachan.roster.jooq.tables.records.EventregistrationsRecord
 import org.codecranachan.roster.jooq.tables.records.EventsRecord
 import org.codecranachan.roster.jooq.tables.records.HostedtablesRecord
@@ -68,21 +71,13 @@ fun Repository.fetchEventsWhere(condition: Condition): List<Event> {
                     } else {
                         Table(
                             it[HOSTEDTABLES.ID],
-                            Player(it[dms.ID], it[dms.PLAYER_NAME], it[dms.DISCORD_NAME], it[dms.DISCORD_AVATAR]),
-                            TableDetails(
-                                it[HOSTEDTABLES.ADVENTURE_TITLE],
-                                it[HOSTEDTABLES.ADVENTURE_DESCRIPTION],
-                                it[HOSTEDTABLES.MODULE_DESIGNATION],
-                                TableLanguage.valueOf(it[HOSTEDTABLES.TABLE_LANGUAGE].name),
-                                it[HOSTEDTABLES.MIN_PLAYERS]..it[HOSTEDTABLES.MAX_PLAYERS],
-                                it[HOSTEDTABLES.MIN_CHARACTER_LEVEL]..it[HOSTEDTABLES.MAX_CHARACTER_LEVEL]
-                            )
+                            playerFromRecord(it, dms),
+                            tableDetailsFromRecord(it, HOSTEDTABLES)
                         )
                     }
                 }.mapValues { e ->
                     val rows = e.value
-                    rows.filter { it[pcs.ID] != null }
-                        .map { Player(it[pcs.ID], it[pcs.PLAYER_NAME], it[pcs.DISCORD_NAME], it[pcs.DISCORD_AVATAR]) }.distinct()
+                    rows.filter { it[pcs.ID] != null }.map { playerFromRecord(it, pcs) }.distinct()
                 })
         }
     }
@@ -163,15 +158,8 @@ fun Repository.fetchTable(id: Uuid): Table {
             .where(HOSTEDTABLES.ID.eq(id)).fetchSingle().map {
                 Table(
                     it[HOSTEDTABLES.ID],
-                    Player(it[PLAYERS.ID], it[PLAYERS.PLAYER_NAME], it[PLAYERS.DISCORD_NAME], it[PLAYERS.DISCORD_AVATAR]),
-                    TableDetails(
-                        it[HOSTEDTABLES.ADVENTURE_TITLE],
-                        it[HOSTEDTABLES.ADVENTURE_DESCRIPTION],
-                        it[HOSTEDTABLES.MODULE_DESIGNATION],
-                        TableLanguage.valueOf(it[HOSTEDTABLES.TABLE_LANGUAGE].name),
-                        it[HOSTEDTABLES.MIN_PLAYERS]..it[HOSTEDTABLES.MAX_PLAYERS],
-                        it[HOSTEDTABLES.MIN_CHARACTER_LEVEL]..it[HOSTEDTABLES.MAX_CHARACTER_LEVEL]
-                    )
+                    playerFromRecord(it, PLAYERS),
+                    tableDetailsFromRecord(it, HOSTEDTABLES)
                 )
             }
     }
@@ -192,19 +180,42 @@ fun Repository.updateHostedTable(id: Uuid, details: TableDetails) {
     }
 }
 
-fun EventRegistration.asRecord(): EventregistrationsRecord {
+private fun playerFromRecord(r: Record, t: Players): Player {
+    return Player(
+        r[t.ID],
+        r[t.DISCORD_NAME],
+        r[t.DISCORD_AVATAR],
+        PlayerDetails(
+            r[t.PLAYER_NAME],
+            Repository.decodeLanguages(r[t.LANGUAGES])
+        )
+    )
+}
+
+private fun tableDetailsFromRecord(r: Record, t: Hostedtables): TableDetails {
+    return TableDetails(
+        r[t.ADVENTURE_TITLE],
+        r[t.ADVENTURE_DESCRIPTION],
+        r[t.MODULE_DESIGNATION],
+        TableLanguage.valueOf(r[t.TABLE_LANGUAGE].name),
+        r[t.MIN_PLAYERS]..r[t.MAX_PLAYERS],
+        r[t.MIN_CHARACTER_LEVEL]..r[t.MAX_CHARACTER_LEVEL]
+    )
+}
+
+private fun EventRegistration.asRecord(): EventregistrationsRecord {
     return EventregistrationsRecord(id, eventId, playerId, null, null, OffsetDateTime.now())
 }
 
-fun EventsRecord.asModel(): Event {
+private fun EventsRecord.asModel(): Event {
     return Event(id, guildId, eventDate.toKotlinLocalDate())
 }
 
-fun Event.asRecord(): EventsRecord {
+private fun Event.asRecord(): EventsRecord {
     return EventsRecord(id, date.toJavaLocalDate(), guildId)
 }
 
-fun TableHosting.asRecord(): HostedtablesRecord {
+private fun TableHosting.asRecord(): HostedtablesRecord {
     return HostedtablesRecord(
         id, eventId, dungeonMasterId, null, null, null, Tablelanguage.SwissGerman, 3, 7, 1, 4
     )

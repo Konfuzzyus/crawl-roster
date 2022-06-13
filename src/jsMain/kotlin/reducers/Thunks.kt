@@ -3,7 +3,6 @@ package reducers
 import api.addEvent
 import api.addEventRegistration
 import api.addLinkedGuild
-import api.addPlayer
 import api.addTableHosting
 import api.fetchEvents
 import api.fetchLinkedGuilds
@@ -11,13 +10,14 @@ import api.fetchUserId
 import api.removeEventRegistration
 import api.removeTableHosting
 import api.updateEventRegistration
+import api.updatePlayer
 import api.updateTableHosting
 import com.benasher44.uuid.Uuid
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
 import org.codecranachan.roster.Event
 import org.codecranachan.roster.Guild
-import org.codecranachan.roster.Player
+import org.codecranachan.roster.PlayerDetails
 import org.codecranachan.roster.Table
 import org.codecranachan.roster.TableDetails
 import org.reduxkotlin.Thunk
@@ -26,14 +26,6 @@ private val scope = MainScope()
 
 fun updateUserId(): Thunk<ApplicationState> = { dispatch, _, _ ->
     scope.launch {
-        val result = fetchUserId()
-        dispatch(UserIdentified(result))
-    }
-}
-
-fun signUpPlayer(p: Player): Thunk<ApplicationState> = { dispatch, _, _ ->
-    scope.launch {
-        addPlayer(p)
         val result = fetchUserId()
         dispatch(UserIdentified(result))
     }
@@ -131,9 +123,17 @@ fun joinTable(e: Event, t: Table?): Thunk<ApplicationState> = { dispatch, getSta
     }
 }
 
-fun updateTableDetails(tableId: Uuid, details: TableDetails): Thunk<ApplicationState> = { dispatch, getState, _ ->
+fun updateTableDetails(tableId: Uuid, details: TableDetails): Thunk<ApplicationState> = { dispatch, _, _ ->
     scope.launch {
         updateTableHosting(tableId, details)
+        dispatch(updateEvents())
+    }
+}
+
+fun updatePlayerDetails(details: PlayerDetails): Thunk<ApplicationState> = { dispatch, _, _ ->
+    scope.launch {
+        updatePlayer(details)
+        dispatch(updateUserId())
         dispatch(updateEvents())
     }
 }

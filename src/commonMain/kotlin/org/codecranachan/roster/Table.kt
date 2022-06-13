@@ -9,7 +9,7 @@ data class TableDetails(
     val adventureTitle: String? = null,
     val adventureDescription: String? = null,
     val moduleDesignation: String? = null,
-    val language: TableLanguage = TableLanguage.SwissGerman,
+    val language: TableLanguage = TableLanguage.English,
     @Serializable(with = IntRangeSerializer::class)
     val playerRange: IntRange = 3..7,
     @Serializable(with = IntRangeSerializer::class)
@@ -23,5 +23,5 @@ data class Table(
     val dungeonMaster: Player,
     val details: TableDetails = TableDetails()
 ) {
-    fun getName(): String = "${dungeonMaster.getAlias()}'s Table"
+    fun getName(): String = "${dungeonMaster.discordHandle}'s Table"
 }

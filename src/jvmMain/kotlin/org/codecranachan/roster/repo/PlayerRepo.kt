@@ -1,16 +1,13 @@
 package org.codecranachan.roster.repo
 
 import com.benasher44.uuid.Uuid
+import com.benasher44.uuid.uuid4
 import org.codecranachan.roster.Player
+import org.codecranachan.roster.PlayerDetails
+import org.codecranachan.roster.TableLanguage
 import org.codecranachan.roster.UserIdentity
 import org.codecranachan.roster.jooq.Tables.PLAYERS
 import org.codecranachan.roster.jooq.tables.records.PlayersRecord
-
-fun Repository.fetchPlayerByGoogleId(id: String): Player? {
-    return withJooq {
-        selectFrom(PLAYERS).where(PLAYERS.GOOGLE_ID.eq(id)).fetchOne()?.asModel()
-    }
-}
 
 fun Repository.fetchPlayerByDiscordId(id: String): Player? {
     return withJooq {
@@ -18,56 +15,38 @@ fun Repository.fetchPlayerByDiscordId(id: String): Player? {
     }
 }
 
-fun Repository.fetchAllPlayers(): List<Player> {
+fun Repository.addPlayer(discordIdentity: UserIdentity?): Player {
     return withJooq {
-        selectFrom(PLAYERS).fetch().toList().map { it.asModel() }
-    }
-}
-
-fun Repository.fetchPlayer(id: Uuid): PlayersRecord? {
-    return withJooq {
-        selectFrom(PLAYERS).where(PLAYERS.ID.eq(id)).fetchOne()
-    }
-}
-
-fun Repository.addPlayer(player: Player, discordIdentity: UserIdentity?, googleIdentity: UserIdentity?) {
-    withJooq {
         val record = PlayersRecord(
-            player.id,
-            player.name,
-            discordIdentity?.pictureUrl,
-            discordIdentity?.name,
+            uuid4(),
+            "Anonymous",
+            Repository.encodeLanguages(listOf(TableLanguage.English)),
             discordIdentity?.id,
-            googleIdentity?.id
+            discordIdentity?.name,
+            discordIdentity?.pictureUrl
         )
         insertInto(PLAYERS).set(record).execute()
+        record.asModel()
     }
 }
 
-fun Repository.setPlayerDiscordInfo(playerId: Uuid, identity: UserIdentity) {
-    withJooq {
-        update(PLAYERS)
-            .set(
-                mapOf(
-                    PLAYERS.DISCORD_ID to identity.id,
-                    PLAYERS.DISCORD_NAME to identity.name,
-                    PLAYERS.DISCORD_AVATAR to identity.pictureUrl,
-                )
-            )
-            .where(PLAYERS.ID.eq(playerId))
-            .execute()
-    }
-}
-
-fun Repository.setPlayerGoogleInfo(playerId: Uuid, identity: UserIdentity) {
-    withJooq {
-        update(PLAYERS)
-            .set(mapOf(PLAYERS.GOOGLE_ID to identity.id))
-            .where(PLAYERS.ID.eq(playerId))
-            .execute()
+fun Repository.updatePlayer(id: Uuid, playerDetails: PlayerDetails) {
+    return withJooq {
+        selectFrom(PLAYERS).where(PLAYERS.ID.eq(id)).fetchSingle().apply {
+            playerName = playerDetails.name
+            languages = Repository.encodeLanguages(playerDetails.languages)
+        }.store()
     }
 }
 
 fun PlayersRecord.asModel(): Player {
-    return Player(id, playerName, discordName, discordAvatar)
+    return Player(
+        id,
+        discordName,
+        discordAvatar,
+        PlayerDetails(
+            playerName,
+            Repository.decodeLanguages(languages)
+        )
+    )
 }

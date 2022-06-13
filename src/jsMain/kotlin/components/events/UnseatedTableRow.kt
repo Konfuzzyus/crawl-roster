@@ -70,7 +70,7 @@ val UnseatedRow = FC<UnseatedRowProps> { props ->
                 props.players.forEach {
                     Avatar {
                         src = it.avatarUrl
-                        alt = it.name
+                        alt = it.details.name
                     }
                 }
             }

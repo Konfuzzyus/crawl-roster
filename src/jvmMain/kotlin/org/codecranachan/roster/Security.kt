@@ -2,6 +2,7 @@ package org.codecranachan.roster
 
 import Configuration
 import RosterServer
+import com.benasher44.uuid.Uuid
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
@@ -14,11 +15,9 @@ import kotlinx.datetime.Instant
 import kotlinx.html.a
 import kotlinx.html.body
 import kotlinx.html.p
-import org.jose4j.jwa.AlgorithmConstraints
-import org.jose4j.jwk.HttpsJwks
-import org.jose4j.jws.AlgorithmIdentifiers
-import org.jose4j.jwt.consumer.JwtConsumerBuilder
-import org.jose4j.keys.resolvers.HttpsJwksVerificationKeyResolver
+import org.codecranachan.roster.repo.Repository
+import org.codecranachan.roster.repo.addPlayer
+import org.codecranachan.roster.repo.fetchPlayerByDiscordId
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
@@ -32,6 +31,7 @@ data class UserSession(
     val providerName: String,
     val accessToken: String,
     val user: UserIdentity,
+    val playerId: Uuid,
     val expiresIn: Long
 ) : Principal
 
@@ -70,18 +70,6 @@ data class OpenIdProvider(
     val scopes: List<String>,
     val identitySupplier: IdentityRetrievalStrategy
 ) {
-    private val _httpsJwksKeyResolver = HttpsJwksVerificationKeyResolver(HttpsJwks(conf.jwks_uri))
-
-    val jwtConsumer = JwtConsumerBuilder()
-        .setVerificationKeyResolver(_httpsJwksKeyResolver)
-        .setJwsAlgorithmConstraints(
-            AlgorithmConstraints.ConstraintType.PERMIT,
-            AlgorithmIdentifiers.RSA_USING_SHA256
-        )
-        .setExpectedIssuer(conf.issuer)
-        .setExpectedAudience(cred.id)
-        .build()
-
     val settings = OAuthServerSettings.OAuth2ServerSettings(
         name = conf.issuer,
         authorizeUrl = conf.authorization_endpoint,
@@ -93,7 +81,11 @@ data class OpenIdProvider(
     )
 }
 
-class AuthenticationSettings(private val rootUrl: String, private val providers: List<OpenIdProvider>) {
+class AuthenticationSettings(
+    private val rootUrl: String,
+    private val providers: List<OpenIdProvider>,
+    private val repository: Repository
+) {
 
     private val sessionExiprationTime = 7.toDuration(DurationUnit.DAYS)
 
@@ -139,11 +131,18 @@ class AuthenticationSettings(private val rootUrl: String, private val providers:
                     get("/auth/${oidProvider.name}/callback") {
                         val principal: OAuthAccessTokenResponse.OAuth2? = call.principal()
                         val user = oidProvider.identitySupplier(principal!!, oidProvider)
+
+                        var player = repository.fetchPlayerByDiscordId(user.id)
+                        if (player == null) {
+                            player = repository.addPlayer(user)
+                        }
+
                         call.sessions.set(
                             UserSession(
                                 oidProvider.name,
                                 principal.accessToken,
                                 user,
+                                player.id,
                                 principal.expiresIn
                             )
                         )

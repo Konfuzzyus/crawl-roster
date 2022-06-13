@@ -13,8 +13,6 @@ import org.codecranachan.roster.Player
 import org.codecranachan.roster.TableOccupancy
 import react.FC
 import react.Props
-import react.useContext
-import reducers.StoreContext
 
 external interface EventLineupProps : Props {
     var event: Event
@@ -22,8 +20,6 @@ external interface EventLineupProps : Props {
 }
 
 val EventLineup = FC<EventLineupProps> { props ->
-    val store = useContext(StoreContext)
-
     TableContainer {
         Table {
             size = Size.small
@@ -43,15 +39,13 @@ val EventLineup = FC<EventLineupProps> { props ->
                         }
                     }
 
-                    val table = entry.key
-
                     val players = entry.value
 
                     players.forEachIndexed { idx, player ->
                         TableRow {
                             if (idx == 0) TableCell { rowSpan = players.size }
                             TableCell {
-                                +"${player.name}"
+                                +player.details.name
                             }
                             TableCell {
                                 +"${player.discordHandle}"

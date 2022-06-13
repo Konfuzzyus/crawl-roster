@@ -29,7 +29,6 @@ import org.codecranachan.roster.ClientCredentials
 import org.codecranachan.roster.api.AccountApi
 import org.codecranachan.roster.api.EventApi
 import org.codecranachan.roster.api.GuildApi
-import org.codecranachan.roster.api.PlayerApi
 import org.codecranachan.roster.api.TableApi
 import org.codecranachan.roster.auth.createDiscordOidProvider
 import org.codecranachan.roster.repo.FakeRepoData
@@ -57,7 +56,6 @@ object Configuration {
     val devMode = env["ROSTER_DEV_MODE"] == "true"
     val rootUrl = env["ROSTER_ROOT_URL"] ?: "http://localhost:8080"
     val jdbcUri = env["ROSTER_JDBC_URI"] ?: "jdbc:h2:mem:test;DB_CLOSE_DELAY=-1"
-    val googleCredentials = getClientCreds("GOOGLE")
     val discordCredentials = getClientCreds("DISCORD")
 
     private val sessionEncryptKey = env["ROSTER_SESSION_ENCRYPT_KEY"] ?: "79EBA26C10A7A6D8B22864DB05987369"
@@ -93,11 +91,6 @@ class RosterServer {
     }
 
     suspend fun start() {
-        val auth = AuthenticationSettings(
-            Configuration.rootUrl, listOf(
-                createDiscordOidProvider(Configuration.discordCredentials!!)
-            )
-        )
         val repo = Repository()
 
         val watchPaths = if (Configuration.devMode) {
@@ -112,6 +105,13 @@ class RosterServer {
             listOf()
         }
 
+        val auth = AuthenticationSettings(
+            Configuration.rootUrl, listOf(
+                createDiscordOidProvider(Configuration.discordCredentials!!)
+            ),
+            repo
+        )
+
         embeddedServer(Netty, port = 8080, watchPaths = watchPaths) {
             install(io.ktor.server.plugins.contentnegotiation.ContentNegotiation) {
                 json()
@@ -120,7 +120,6 @@ class RosterServer {
             routing {
                 auth.install(this)
                 authenticate("auth-session", optional = false) {
-                    PlayerApi(repo).install(this)
                     GuildApi(repo).install(this)
                     EventApi(repo).install(this)
                     TableApi(repo).install(this)
@@ -138,7 +137,7 @@ class RosterServer {
                     get("/static/{file...}") {
                         val file = call.parameters["file"]
                         val proxyCall = httpClient.get("http://localhost:8081/$file")
-                        var contentType = proxyCall.headers["Content-Type"]?.let(ContentType::parse)
+                        val contentType = proxyCall.headers["Content-Type"]?.let(ContentType::parse)
                             ?: ContentType.Application.OctetStream
                         call.respondBytes(proxyCall.readBytes(), contentType)
                     }

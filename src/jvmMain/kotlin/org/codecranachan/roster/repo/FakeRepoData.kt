@@ -29,9 +29,7 @@ class FakeRepoData(val repo: Repository) {
         }
         // Make some players
         val players = (0..8).map {
-            val p = makePlayer(it)
-            repo.addPlayer(p, UserIdentity("DiscordId$it", p.discordHandle!!), null)
-            p
+            repo.addPlayer(UserIdentity("DiscordId$it", "DiscordHandle$it"))
         }
         // Make some tables
         val tables = (0..3).map {
@@ -57,10 +55,6 @@ class FakeRepoData(val repo: Repository) {
 
     private fun makeGuild(i: Int): Guild {
         return Guild(name = "GuildName$i", discordId = "DiscordId$i")
-    }
-
-    private fun makePlayer(i: Int): Player {
-        return Player(name = "PlayerName$i", discordHandle = "DiscordHandle$i")
     }
 
     private fun makeEvent(i: Int, g: Guild): Event {

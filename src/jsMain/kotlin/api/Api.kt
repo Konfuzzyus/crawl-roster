@@ -15,6 +15,7 @@ import org.codecranachan.roster.EventRegistration
 import org.codecranachan.roster.Guild
 import org.codecranachan.roster.Identity
 import org.codecranachan.roster.Player
+import org.codecranachan.roster.PlayerDetails
 import org.codecranachan.roster.Table
 import org.codecranachan.roster.TableDetails
 import org.codecranachan.roster.TableHosting
@@ -25,10 +26,10 @@ val client = HttpClient(Js) {
     }
 }
 
-suspend fun addPlayer(player: Player) {
-    client.post("/api/v1/players") {
+suspend fun updatePlayer(details: PlayerDetails) {
+    client.patch("/api/v1/me") {
         contentType(ContentType.Application.Json)
-        setBody(player)
+        setBody(details)
     }
 }
 

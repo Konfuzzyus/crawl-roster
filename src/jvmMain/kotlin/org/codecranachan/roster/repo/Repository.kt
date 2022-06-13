@@ -1,6 +1,7 @@
 package org.codecranachan.roster.repo
 
 import Configuration
+import org.codecranachan.roster.TableLanguage
 import org.flywaydb.core.Flyway
 import org.jooq.DSLContext
 import org.jooq.SQLDialect
@@ -14,6 +15,14 @@ class Repository {
             // Deactivate jooq spam
             System.setProperty("org.jooq.no-tips", "true")
             System.setProperty("org.jooq.no-logo", "true")
+        }
+
+        fun encodeLanguages(languages: List<TableLanguage>): String {
+            return languages.joinToString(",") { it.short }
+        }
+
+        fun decodeLanguages(text: String): List<TableLanguage> {
+            return text.split(",").map { TableLanguage.ofShort(it) }
         }
     }
 

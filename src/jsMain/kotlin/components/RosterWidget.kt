@@ -1,5 +1,6 @@
 package components
 
+import components.editors.PlayerEditor
 import components.editors.TableEditor
 import mui.material.Paper
 import react.FC
@@ -33,6 +34,7 @@ val RosterWidget = FC<Props> {
                 }
             }
             TableEditor { }
+            PlayerEditor { }
         }
     }
 }
