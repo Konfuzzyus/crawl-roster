@@ -31,7 +31,7 @@ val EventDetails = FC<EventDetailsProps> { props ->
                 icon = ErrorOutline.create()
                 label = ReactNode("Please sign up first")
             }
-        } else if (props.event.roster.isEmpty()) {
+        } else if (props.event.playerCount() == 0) {
             Chip {
                 icon = ErrorOutline.create()
                 label = ReactNode("No one has registered for this event")

@@ -5,6 +5,7 @@ import kotlinx.datetime.toJavaLocalDate
 import kotlinx.datetime.toKotlinLocalDate
 import org.codecranachan.roster.Event
 import org.codecranachan.roster.EventRegistration
+import org.codecranachan.roster.PlaySession
 import org.codecranachan.roster.Player
 import org.codecranachan.roster.PlayerDetails
 import org.codecranachan.roster.Table
@@ -61,24 +62,33 @@ fun Repository.fetchEventsWhere(condition: Condition): List<Event> {
                 EVENTREGISTRATIONS.ID.isNull, condition
             )
 
-        regSelect.union(tblSelect).orderBy(EVENTS.EVENT_DATE.asc()).fetchGroups(EVENTS.ID).map { (id, results) ->
+        regSelect.union(tblSelect).orderBy(EVENTS.EVENT_DATE.asc(), EVENTREGISTRATIONS.REGISTRATION_TIME.asc())
+            .fetchGroups(EVENTS.ID).map { (id, results) ->
+            val byTables = results.groupBy {
+                if (it[HOSTEDTABLES.ID] == null) {
+                    null
+                } else {
+                    Table(
+                        it[HOSTEDTABLES.ID],
+                        playerFromRecord(it, dms),
+                        tableDetailsFromRecord(it, HOSTEDTABLES)
+                    )
+                }
+            }
             Event(id,
                 results.first()[EVENTS.GUILD_ID],
                 results.first()[EVENTS.EVENT_DATE].toKotlinLocalDate(),
-                results.groupBy {
-                    if (it[HOSTEDTABLES.ID] == null) {
-                        null
-                    } else {
-                        Table(
-                            it[HOSTEDTABLES.ID],
-                            playerFromRecord(it, dms),
-                            tableDetailsFromRecord(it, HOSTEDTABLES)
-                        )
-                    }
-                }.mapValues { e ->
+                byTables.filterKeys { it != null }.map { e ->
                     val rows = e.value
+                    PlaySession(
+                        e.key!!,
+                        rows.filter { it[pcs.ID] != null }.map { playerFromRecord(it, pcs) }.distinct()
+                    )
+                },
+                byTables[null]?.let { rows ->
                     rows.filter { it[pcs.ID] != null }.map { playerFromRecord(it, pcs) }.distinct()
-                })
+                } ?: listOf()
+            )
         }
     }
 }

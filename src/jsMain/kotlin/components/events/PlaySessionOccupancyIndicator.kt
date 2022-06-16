@@ -2,12 +2,12 @@ package components.events
 
 import mui.material.Badge
 import mui.material.BadgeOverlap
-import org.codecranachan.roster.TableOccupancy
+import org.codecranachan.roster.PlaySession
 import react.FC
 import react.Props
 
 external interface PlaySessionOccupancyIndicatorProps : Props {
-    var occupancy: TableOccupancy
+    var occupancy: PlaySession
 }
 
 val PlaySessionOccupancyIndicator = FC<PlaySessionOccupancyIndicatorProps> { props ->

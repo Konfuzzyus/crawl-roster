@@ -12,7 +12,8 @@ enum class TableState {
     Empty
 }
 
-data class TableOccupancy(val table: Table, val players: List<Player>) {
+@Serializable
+data class PlaySession(val table: Table, val players: List<Player>) {
     fun getState(): TableState {
         return when {
             players.isEmpty() -> TableState.Empty
@@ -21,6 +22,15 @@ data class TableOccupancy(val table: Table, val players: List<Player>) {
             else -> TableState.Ready
         }
     }
+
+    fun isPlayer(player: Player): Boolean {
+        return players.contains(player)
+    }
+
+    fun isDungeonMaster(player: Player): Boolean {
+        return table.dungeonMaster == player
+    }
+
 }
 
 @Serializable
@@ -30,31 +40,35 @@ data class Event(
     @Serializable(with = UuidSerializer::class)
     val guildId: Uuid,
     val date: LocalDate,
-    val roster: Map<Table?, List<Player>> = mapOf()
+    val sessions: List<PlaySession> = listOf(),
+    val unseated: List<Player> = listOf()
 ) {
     fun isRegistered(p: Player): Boolean {
-        return roster.values.any { it.map(Player::id).contains(p.id) }
+        return sessions.any { it.isPlayer(p) } || unseated.contains(p)
     }
 
     fun isHosting(p: Player): Boolean {
-        return roster.keys.filterNotNull().map { it.dungeonMaster.id }.contains(p.id)
+        return sessions.any { it.isDungeonMaster(p) }
+    }
+
+    fun seatedPlayerCount(): Int {
+        return sessions.sumOf { it.players.size }
     }
 
     fun playerCount(): Int {
-        return roster.values.map { it.size }.reduce(Int::plus)
+        return seatedPlayerCount() + unseated.size
     }
 
     fun tableSpace(): Int {
-        val tables = tables()
-        return if (tables.isEmpty()) 0 else tables.map { it.table.details.playerRange.last }.reduce(Int::plus)
+        return sessions.sumOf { it.table.details.playerRange.last }
     }
 
-    fun tables(): List<TableOccupancy> {
-        return roster.entries.filter { it.key != null }.map { TableOccupancy(it.key!!, it.value) }
+    fun openSeatCount(): Int {
+        return maxOf(0, tableSpace() - seatedPlayerCount())
     }
 
     fun getHostedTable(p: Player): Table? {
-        return roster.keys.filterNotNull().find { it.dungeonMaster.id == p.id }
+        return sessions.map { it.table }.find { it.dungeonMaster.id == p.id }
     }
 
     fun getFormattedDate(): String {

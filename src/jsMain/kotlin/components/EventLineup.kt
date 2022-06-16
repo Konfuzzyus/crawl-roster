@@ -2,15 +2,17 @@ package components
 
 import components.events.SeatedTableRow
 import components.events.UnseatedRow
+import mui.material.Divider
+import mui.material.DividerTextAlign
 import mui.material.Size
 import mui.material.Table
 import mui.material.TableBody
 import mui.material.TableCell
 import mui.material.TableContainer
 import mui.material.TableRow
+import mui.material.Typography
 import org.codecranachan.roster.Event
 import org.codecranachan.roster.Player
-import org.codecranachan.roster.TableOccupancy
 import react.FC
 import react.Props
 
@@ -24,37 +26,71 @@ val EventLineup = FC<EventLineupProps> { props ->
         Table {
             size = Size.small
             TableBody {
-                props.event.roster.forEach { entry ->
-                    if (entry.key == null) {
-                        UnseatedRow {
-                            event = props.event
-                            me = props.me
-                            players = entry.value
-                        }
-                    } else {
-                        SeatedTableRow {
-                            event = props.event
-                            me = props.me
-                            occupancy = TableOccupancy(entry.key!!, entry.value)
-                        }
+                props.event.sessions.forEach { session ->
+                    SeatedTableRow {
+                        event = props.event
+                        me = props.me
+                        occupancy = session
                     }
+                    PlayerRows {
+                        me = props.me
+                        players = session.players
+                        capacity = session.table.details.playerRange.last
+                    }
+                }
 
-                    val players = entry.value
+                UnseatedRow {
+                    event = props.event
+                    me = props.me
+                }
+                PlayerRows {
+                    me = props.me
+                    players = props.event.unseated
+                    capacity = props.event.openSeatCount()
+                }
+            }
+        }
+    }
+}
 
-                    players.forEachIndexed { idx, player ->
-                        TableRow {
-                            if (idx == 0) TableCell { rowSpan = players.size }
-                            TableCell {
-                                +player.details.name
-                            }
-                            TableCell {
-                                +"${player.discordHandle}"
-                            }
-                            TableCell { }
+external interface PlayerRowsProps : Props {
+    var me: Player
+    var players: List<Player>
+    var capacity: Int?
+}
+
+val PlayerRows = FC<PlayerRowsProps> { props ->
+    props.players.forEachIndexed { idx, player ->
+        if (idx == props.capacity) {
+            TableRow {
+                TableCell {
+                    colSpan = 4
+                    Divider {
+                        textAlign = DividerTextAlign.left
+                        Typography {
+                            +"WAITING LIST"
                         }
                     }
                 }
             }
+        }
+        TableRow {
+            val cap = props.capacity ?: Int.MAX_VALUE
+            val unseatedCount = minOf(props.players.size, cap)
+            val waitingCount = maxOf(0, props.players.size - cap)
+            when {
+                idx == 0 && unseatedCount > 0 -> TableCell { rowSpan = unseatedCount }
+                idx == props.capacity && waitingCount > 0 -> TableCell { rowSpan = waitingCount }
+                else -> {}
+            }
+            TableCell {
+                val p = if (props.me == player) "★" else ""
+                +"$p ${player.details.name}"
+            }
+            TableCell {
+                +player.discordHandle
+            }
+            TableCell { }
         }
     }
 }

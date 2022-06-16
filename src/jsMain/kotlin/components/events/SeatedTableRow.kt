@@ -11,8 +11,8 @@ import mui.material.Size
 import mui.material.TableCell
 import mui.material.TableRow
 import org.codecranachan.roster.Event
+import org.codecranachan.roster.PlaySession
 import org.codecranachan.roster.Player
-import org.codecranachan.roster.TableOccupancy
 import org.codecranachan.roster.TableState
 import react.FC
 import react.Props
@@ -26,7 +26,7 @@ import reducers.joinTable
 external interface SeatedTableRowProps : Props {
     var event: Event
     var me: Player
-    var occupancy: TableOccupancy
+    var occupancy: PlaySession
 }
 
 val SeatedTableRow = FC<SeatedTableRowProps> { props ->
@@ -81,7 +81,6 @@ val SeatedTableRow = FC<SeatedTableRowProps> { props ->
             colSpan = 2
             Seating {
                 seatedPlayers = players
-                totalSeats = table.details.playerRange
             }
         }
     }

@@ -1,5 +1,6 @@
 package components.events
 
+import mui.material.Avatar
 import mui.material.AvatarGroup
 import org.codecranachan.roster.Player
 import react.FC
@@ -7,22 +8,32 @@ import react.Props
 
 external interface SeatingProps : Props {
     var seatedPlayers: List<Player>
-    var totalSeats: IntRange
+    var totalSeats: IntRange?
 }
 
 val Seating = FC<SeatingProps> { props ->
+    val seatRange = props.totalSeats
     AvatarGroup {
         max = 12
-        (0..maxOf(props.seatedPlayers.size, props.totalSeats.last)).forEach { idx ->
-            mui.material.Avatar {
-                if (idx < props.seatedPlayers.size) {
-                    src = props.seatedPlayers[idx].avatarUrl
-                    alt = props.seatedPlayers[idx].details.name
-                } else {
-                    if (idx < props.totalSeats.first) {
-                        mui.icons.material.PriorityHigh {}
+        if (seatRange == null) {
+            props.seatedPlayers.forEach {
+                Avatar {
+                    src = it.avatarUrl
+                    alt = it.details.name
+                }
+            }
+        } else {
+            (0..maxOf(props.seatedPlayers.size, seatRange.last)).forEach { idx ->
+                Avatar {
+                    if (idx < props.seatedPlayers.size) {
+                        src = props.seatedPlayers[idx].avatarUrl
+                        alt = props.seatedPlayers[idx].details.name
                     } else {
-                        mui.icons.material.QuestionMark {}
+                        if (idx < seatRange.first) {
+                            mui.icons.material.PriorityHigh {}
+                        } else {
+                            mui.icons.material.QuestionMark {}
+                        }
                     }
                 }
             }
