@@ -4,9 +4,11 @@ package org.codecranachan.roster
 data class DiscordUser(
     val id: String,
     val username: String,
-    val avatar: String,
-    val discriminator: String
-)
+    val avatar: String? = null,
+    val discriminator: String = "0"
+) {
+    fun getAvatarUrl(): String? = avatar?.let { "https://cdn.discordapp.com/avatars/${id}/${it}" }
+}
 
 @kotlinx.serialization.Serializable
 data class DiscordGuild(
@@ -15,7 +17,13 @@ data class DiscordGuild(
     val icon: String,
     val owner: Boolean,
     val permissions: String
-)
+) {
+    companion object {
+        private const val ADMINISTRATOR_FLAG: Long = 0x8L
+    }
+
+    fun isAdmin(): Boolean = permissions.toLong().and(ADMINISTRATOR_FLAG) != 0L
+}
 
 
 @kotlinx.serialization.Serializable

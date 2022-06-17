@@ -16,19 +16,19 @@ import react.useEffectOnce
 import react.useState
 import reducers.StoreContext
 import reducers.selectGuild
-import reducers.updateLinkedGuilds
+import reducers.updateServerSettings
 
 val GuildSelector = FC<Props> {
     val store = useContext(StoreContext)
     val (selectedGuild, setSelectedGuild) = useState(store.state.calendar.selectedGuild)
-    val (linkedGuilds, setLinkedGuilds) = useState(store.state.server.linkedGuilds)
+    val (linkedGuilds, setLinkedGuilds) = useState(store.state.server.settings.guilds)
 
     useEffectOnce {
         val unsubscribe = store.subscribe {
             setSelectedGuild(store.state.calendar.selectedGuild)
-            setLinkedGuilds(store.state.server.linkedGuilds)
+            setLinkedGuilds(store.state.server.settings.guilds)
         }
-        store.dispatch(updateLinkedGuilds())
+        store.dispatch(updateServerSettings())
         cleanup(unsubscribe)
     }
 
@@ -38,7 +38,7 @@ val GuildSelector = FC<Props> {
             CircularProgress { }
         } else {
             if (linkedGuilds.isEmpty()) {
-                GuildLinker { }
+                +"No Guilds Linked"
             } else {
                 FormControl {
                     fullWidth = true

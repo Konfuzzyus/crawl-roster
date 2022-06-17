@@ -16,6 +16,7 @@ import org.codecranachan.roster.Guild
 import org.codecranachan.roster.Identity
 import org.codecranachan.roster.Player
 import org.codecranachan.roster.PlayerDetails
+import org.codecranachan.roster.Server
 import org.codecranachan.roster.Table
 import org.codecranachan.roster.TableDetails
 import org.codecranachan.roster.TableHosting
@@ -49,11 +50,11 @@ suspend fun fetchDiscordAccountInfo(): DiscordUserInfo? {
     }
 }
 
-suspend fun fetchLinkedGuilds(): List<Guild> {
+suspend fun fetchServerSettings(): Server {
     return try {
         client.get("/api/v1/guilds").body()
     } catch (e: Exception) {
-        listOf()
+        Server(0, emptyList())
     }
 }
 

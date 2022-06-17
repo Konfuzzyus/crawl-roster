@@ -7,7 +7,6 @@ import org.codecranachan.roster.ClientCredentials
 import org.codecranachan.roster.DiscordUser
 import org.codecranachan.roster.OpenIdConfiguration
 import org.codecranachan.roster.OpenIdProvider
-import org.codecranachan.roster.UserIdentity
 
 @kotlinx.serialization.Serializable
 data class DiscordAuthorizationInfo(
@@ -29,12 +28,7 @@ fun createDiscordOidProvider(credentials: ClientCredentials) = OpenIdProvider(
     ),
     listOf("identify", "guilds"),
 ) { principal, provider ->
-    val info: DiscordAuthorizationInfo = RosterServer.httpClient.get(provider.conf.userinfo_endpoint) {
+    RosterServer.httpClient.get(provider.conf.userinfo_endpoint) {
         bearerAuth(principal.accessToken)
     }.body()
-    UserIdentity(
-        info.user.id,
-        info.user.username,
-        "https://cdn.discordapp.com/avatars/${info.user.id}/${info.user.avatar}"
-    )
 }

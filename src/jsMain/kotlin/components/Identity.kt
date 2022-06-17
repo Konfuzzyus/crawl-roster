@@ -3,6 +3,7 @@ package components
 import kotlinx.browser.window
 import mui.icons.material.Login
 import mui.icons.material.Logout
+import mui.icons.material.ManageAccounts
 import mui.icons.material.Settings
 import mui.material.Avatar
 import mui.material.Chip
@@ -21,6 +22,7 @@ import react.useContext
 import react.useEffect
 import react.useState
 import reducers.PlayerEditorOpened
+import reducers.ServerEditorOpened
 import reducers.StoreContext
 import reducers.UserLoggedOut
 
@@ -67,8 +69,16 @@ val Identity = FC<Props> {
                     store.dispatch(PlayerEditorOpened(profile.profile!!))
                     handleClose(it)
                 }
-                ListItemIcon { Settings {} }
+                ListItemIcon { ManageAccounts {} }
                 ListItemText { +"Profile" }
+            }
+            MenuItem {
+                onClick = {
+                    store.dispatch(ServerEditorOpened(store.state.server.settings))
+                    handleClose(it)
+                }
+                ListItemIcon { Settings {} }
+                ListItemText { +"Guild Settings" }
             }
             MenuItem {
                 onClick = {

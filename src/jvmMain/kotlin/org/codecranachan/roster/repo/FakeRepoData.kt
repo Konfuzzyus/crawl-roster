@@ -5,12 +5,12 @@ import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.plus
 import kotlinx.datetime.todayAt
+import org.codecranachan.roster.DiscordUser
 import org.codecranachan.roster.Event
 import org.codecranachan.roster.EventRegistration
 import org.codecranachan.roster.Guild
 import org.codecranachan.roster.Player
 import org.codecranachan.roster.TableHosting
-import org.codecranachan.roster.UserIdentity
 
 class FakeRepoData(val repo: Repository) {
 
@@ -29,7 +29,7 @@ class FakeRepoData(val repo: Repository) {
         }
         // Make some players
         val players = (0..8).map {
-            repo.addPlayer(UserIdentity("DiscordId$it", "DiscordHandle$it"))
+            repo.addPlayer(DiscordUser("DiscordId$it", "DiscordHandle$it"))
         }
         // Make some tables
         val tables = (0..3).map {

@@ -2,10 +2,10 @@ package org.codecranachan.roster.repo
 
 import com.benasher44.uuid.Uuid
 import com.benasher44.uuid.uuid4
+import org.codecranachan.roster.DiscordUser
 import org.codecranachan.roster.Player
 import org.codecranachan.roster.PlayerDetails
 import org.codecranachan.roster.TableLanguage
-import org.codecranachan.roster.UserIdentity
 import org.codecranachan.roster.jooq.Tables.PLAYERS
 import org.codecranachan.roster.jooq.tables.records.PlayersRecord
 
@@ -15,15 +15,15 @@ fun Repository.fetchPlayerByDiscordId(id: String): Player? {
     }
 }
 
-fun Repository.addPlayer(discordIdentity: UserIdentity?): Player {
+fun Repository.addPlayer(discordIdentity: DiscordUser): Player {
     return withJooq {
         val record = PlayersRecord(
             uuid4(),
             "Anonymous",
             Repository.encodeLanguages(listOf(TableLanguage.English)),
-            discordIdentity?.id,
-            discordIdentity?.name,
-            discordIdentity?.pictureUrl
+            discordIdentity.id,
+            discordIdentity.username,
+            discordIdentity.getAvatarUrl()
         )
         insertInto(PLAYERS).set(record).execute()
         record.asModel()

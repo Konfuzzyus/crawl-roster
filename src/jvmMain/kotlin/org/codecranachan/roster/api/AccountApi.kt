@@ -1,16 +1,11 @@
 package org.codecranachan.roster.api
 
-import RosterServer
-import io.ktor.client.call.*
-import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.sessions.*
-import org.codecranachan.roster.DiscordGuild
-import org.codecranachan.roster.DiscordUser
 import org.codecranachan.roster.DiscordUserInfo
 import org.codecranachan.roster.Identity
 import org.codecranachan.roster.PlayerDetails
@@ -33,14 +28,16 @@ class AccountApi(private val repository: Repository) {
                 } else {
                     var profile = when (userSession.providerName) {
                         discordOidProviderName -> {
-                            repository.fetchPlayerByDiscordId(userSession.user.id) ?: repository.addPlayer(userSession.user)
+                            repository.fetchPlayerByDiscordId(userSession.authInfo.user.id) ?: repository.addPlayer(
+                                userSession.authInfo.user
+                            )
                         }
                         else -> null
                     }
 
                     call.respond(
                         Identity(
-                            userSession.user.name,
+                            userSession.authInfo.user.username,
                             profile
                         )
                     )
@@ -65,14 +62,7 @@ class AccountApi(private val repository: Repository) {
                     // not logged in
                     call.respond(Unit)
                 } else {
-                    val user: DiscordUser = RosterServer.httpClient.get("https://discord.com/api/users/@me") {
-                        bearerAuth(userSession.accessToken)
-                    }.body()
-                    val guilds: List<DiscordGuild> =
-                        RosterServer.httpClient.get("https://discord.com/api/users/@me/guilds") {
-                            bearerAuth(userSession.accessToken)
-                        }.body()
-                    call.respond(DiscordUserInfo(user, guilds))
+                    call.respond(DiscordUserInfo(userSession.authInfo.user, userSession.discordGuilds))
                 }
             }
         }

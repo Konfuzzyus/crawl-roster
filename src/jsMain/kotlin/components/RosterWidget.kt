@@ -1,6 +1,7 @@
 package components
 
 import components.editors.PlayerEditor
+import components.editors.ServerEditor
 import components.editors.TableEditor
 import mui.material.Paper
 import react.FC
@@ -33,6 +34,7 @@ val RosterWidget = FC<Props> {
                     guild = currentGuild
                 }
             }
+            ServerEditor { }
             TableEditor { }
             PlayerEditor { }
         }

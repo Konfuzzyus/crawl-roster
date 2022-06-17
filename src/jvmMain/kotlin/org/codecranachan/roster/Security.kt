@@ -3,6 +3,8 @@ package org.codecranachan.roster
 import Configuration
 import RosterServer
 import com.benasher44.uuid.Uuid
+import io.ktor.client.call.*
+import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
@@ -15,27 +17,27 @@ import kotlinx.datetime.Instant
 import kotlinx.html.a
 import kotlinx.html.body
 import kotlinx.html.p
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+import org.codecranachan.roster.auth.DiscordAuthorizationInfo
 import org.codecranachan.roster.repo.Repository
 import org.codecranachan.roster.repo.addPlayer
 import org.codecranachan.roster.repo.fetchPlayerByDiscordId
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
-data class UserIdentity(
-    val id: String,
-    val name: String,
-    val pictureUrl: String? = null
-)
-
+@Serializable
 data class UserSession(
     val providerName: String,
     val accessToken: String,
-    val user: UserIdentity,
+    val expiresIn: Long,
+    @Serializable(with = UuidSerializer::class)
     val playerId: Uuid,
-    val expiresIn: Long
+    val authInfo: DiscordAuthorizationInfo,
+    val discordGuilds: List<DiscordGuild>
 ) : Principal
 
-@kotlinx.serialization.Serializable
+@Serializable
 data class OpenIdConfiguration(
     val issuer: String = "",
     val authorization_endpoint: String,
@@ -60,7 +62,10 @@ data class ClientCredentials(
 )
 
 fun interface IdentityRetrievalStrategy {
-    suspend operator fun invoke(auth: OAuthAccessTokenResponse.OAuth2, provider: OpenIdProvider): UserIdentity
+    suspend operator fun invoke(
+        auth: OAuthAccessTokenResponse.OAuth2,
+        provider: OpenIdProvider
+    ): DiscordAuthorizationInfo
 }
 
 data class OpenIdProvider(
@@ -81,12 +86,21 @@ data class OpenIdProvider(
     )
 }
 
+class JsonSessionSerializer : SessionSerializer<UserSession> {
+    override fun deserialize(text: String): UserSession {
+        return Json.decodeFromString(UserSession.serializer(), text)
+    }
+
+    override fun serialize(session: UserSession): String {
+        return Json.encodeToString(UserSession.serializer(), session)
+    }
+}
+
 class AuthenticationSettings(
     private val rootUrl: String,
     private val providers: List<OpenIdProvider>,
     private val repository: Repository
 ) {
-
     private val sessionExiprationTime = 7.toDuration(DurationUnit.DAYS)
 
     fun install(app: Application) {
@@ -96,6 +110,7 @@ class AuthenticationSettings(
                     cookie.path = "/"
                     cookie.maxAgeInSeconds = sessionExiprationTime.inWholeSeconds
                     cookie.extensions["SameSite"] = "lax"
+                    serializer = JsonSessionSerializer()
                     transform(Configuration.sessionTransformer)
                 }
             }
@@ -130,20 +145,26 @@ class AuthenticationSettings(
                     get("/auth/${oidProvider.name}/login") { }
                     get("/auth/${oidProvider.name}/callback") {
                         val principal: OAuthAccessTokenResponse.OAuth2? = call.principal()
-                        val user = oidProvider.identitySupplier(principal!!, oidProvider)
+                        val authInfo = oidProvider.identitySupplier(principal!!, oidProvider)
 
-                        var player = repository.fetchPlayerByDiscordId(user.id)
+                        var player = repository.fetchPlayerByDiscordId(authInfo.user.id)
                         if (player == null) {
-                            player = repository.addPlayer(user)
+                            player = repository.addPlayer(authInfo.user)
                         }
+
+                        val guilds: List<DiscordGuild> =
+                            RosterServer.httpClient.get("https://discord.com/api/users/@me/guilds") {
+                                bearerAuth(principal.accessToken)
+                            }.body()
 
                         call.sessions.set(
                             UserSession(
                                 oidProvider.name,
                                 principal.accessToken,
-                                user,
+                                principal.expiresIn,
                                 player.id,
-                                principal.expiresIn
+                                authInfo,
+                                guilds
                             )
                         )
                         call.respondRedirect("/")

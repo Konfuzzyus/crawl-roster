@@ -1,5 +1,6 @@
 package org.codecranachan.roster.api
 
+import Configuration
 import com.benasher44.uuid.Uuid
 import io.ktor.http.*
 import io.ktor.server.application.*
@@ -7,6 +8,7 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import org.codecranachan.roster.Guild
+import org.codecranachan.roster.Server
 import org.codecranachan.roster.repo.Repository
 import org.codecranachan.roster.repo.addLinkedGuild
 import org.codecranachan.roster.repo.fetchEventsByGuild
@@ -22,7 +24,12 @@ class GuildApi(private val repository: Repository) {
             }
 
             get("/api/v1/guilds") {
-                call.respond(repository.fetchLinkedGuilds())
+                call.respond(
+                    Server(
+                        Configuration.guildLimit,
+                        repository.fetchLinkedGuilds()
+                    )
+                )
             }
 
             post("/api/v1/guilds") {

@@ -5,7 +5,7 @@ import api.addEventRegistration
 import api.addLinkedGuild
 import api.addTableHosting
 import api.fetchEvents
-import api.fetchLinkedGuilds
+import api.fetchServerSettings
 import api.fetchUserId
 import api.removeEventRegistration
 import api.removeTableHosting
@@ -31,12 +31,12 @@ fun updateUserId(): Thunk<ApplicationState> = { dispatch, _, _ ->
     }
 }
 
-fun updateLinkedGuilds(): Thunk<ApplicationState> = { dispatch, getState, _ ->
+fun updateServerSettings(): Thunk<ApplicationState> = { dispatch, getState, _ ->
     scope.launch {
-        val guilds = fetchLinkedGuilds()
-        dispatch(LinkedGuildsUpdated(guilds))
-        if (guilds.isNotEmpty() && getState().calendar.selectedGuild == null) {
-            dispatch(selectGuild(guilds[0]))
+        val settings = fetchServerSettings()
+        dispatch(ServerSettingsUpdated(settings))
+        if (settings.guilds.isNotEmpty() && getState().calendar.selectedGuild == null) {
+            dispatch(selectGuild(settings.guilds[0]))
         }
     }
 }
@@ -45,7 +45,7 @@ fun linkGuild(g: Guild): Thunk<ApplicationState> = { dispatch, _, _ ->
     scope.launch {
         addLinkedGuild(g)
         dispatch(selectGuild(g))
-        dispatch(updateLinkedGuilds())
+        dispatch(updateServerSettings())
     }
 }
 
