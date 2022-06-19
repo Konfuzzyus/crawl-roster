@@ -7,7 +7,6 @@ import mui.material.TableBody
 import mui.material.TableContainer
 import mui.material.TableHead
 import org.codecranachan.roster.Guild
-import org.codecranachan.roster.Player
 import react.FC
 import react.Props
 import react.useContext
@@ -17,12 +16,12 @@ import reducers.StoreContext
 
 external interface EventCalendarProps : Props {
     var guild: Guild
-    var profile: Player
 }
 
 val EventCalendar = FC<EventCalendarProps> { props ->
     val store = useContext(StoreContext)
     val (events, setEvents) = useState(store.state.calendar.events)
+    val account = store.state.identity.discord
 
     useEffectOnce {
         val unsubscribe = store.subscribe { setEvents(store.state.calendar.events) }
@@ -48,8 +47,10 @@ val EventCalendar = FC<EventCalendarProps> { props ->
                     }
                 }
             }
-            SubmitEvent {
-                guild = props.guild
+            if (account?.hasAdminRightsFor(props.guild) == true) {
+                SubmitEvent {
+                    guild = props.guild
+                }
             }
         }
     }

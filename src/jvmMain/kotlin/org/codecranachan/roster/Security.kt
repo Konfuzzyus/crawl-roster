@@ -35,7 +35,9 @@ data class UserSession(
     val playerId: Uuid,
     val authInfo: DiscordAuthorizationInfo,
     val discordGuilds: List<DiscordGuild>
-) : Principal
+) : Principal {
+    fun getDiscordUserInfo() = DiscordUserInfo(authInfo.user, discordGuilds)
+}
 
 @Serializable
 data class OpenIdConfiguration(

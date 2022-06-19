@@ -6,14 +6,17 @@ import io.ktor.server.application.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import io.ktor.server.sessions.*
 import org.codecranachan.roster.Event
 import org.codecranachan.roster.EventRegistration
 import org.codecranachan.roster.TableHosting
+import org.codecranachan.roster.UserSession
 import org.codecranachan.roster.repo.Repository
 import org.codecranachan.roster.repo.addEvent
 import org.codecranachan.roster.repo.addEventRegistration
 import org.codecranachan.roster.repo.addHostedTable
 import org.codecranachan.roster.repo.fetchEvent
+import org.codecranachan.roster.repo.fetchGuild
 import org.codecranachan.roster.repo.isHostingForEvent
 import org.codecranachan.roster.repo.isRegisteredForEvent
 import org.codecranachan.roster.repo.removeEventRegistration
@@ -35,54 +38,109 @@ class EventApi(private val repository: Repository) {
             }
 
             post("/api/v1/events") {
-                val event = call.receive<Event>()
-                repository.addEvent(event)
-                call.respond(HttpStatusCode.Created)
+                val userSession = call.sessions.get<UserSession>()
+                if (userSession == null) {
+                    call.respond(HttpStatusCode.Unauthorized)
+                } else {
+                    val event = call.receive<Event>()
+                    val guild = repository.fetchGuild(event.guildId)
+                    if (guild?.let { userSession.getDiscordUserInfo().hasAdminRightsFor(it) } == true) {
+                        repository.addEvent(event)
+                        call.respond(HttpStatusCode.Created)
+                    } else {
+                        call.respond(HttpStatusCode.Forbidden)
+                    }
+                }
             }
 
             post("/api/v1/events/{evtId}/registrations") {
-                val evtId = Uuid.fromString(call.parameters["evtId"])
-                val reg = call.receive<EventRegistration>()
-                if (repository.isHostingForEvent(reg.playerId, evtId)) {
-                    call.respond(HttpStatusCode.Conflict)
+                val userSession = call.sessions.get<UserSession>()
+                if (userSession == null) {
+                    call.respond(HttpStatusCode.Unauthorized)
                 } else {
-                    repository.addEventRegistration(EventRegistration(reg.id, evtId, reg.playerId))
-                    call.respond(HttpStatusCode.Created)
+                    val evtId = Uuid.fromString(call.parameters["evtId"])
+                    val reg = call.receive<EventRegistration>()
+                    if (reg.playerId == userSession.playerId) {
+                        if (repository.isHostingForEvent(reg.playerId, evtId)) {
+                            call.respond(HttpStatusCode.Conflict)
+                        } else {
+                            repository.addEventRegistration(EventRegistration(reg.id, evtId, reg.playerId))
+                            call.respond(HttpStatusCode.Created)
+                        }
+                    } else {
+                        call.respond(HttpStatusCode.Forbidden)
+                    }
                 }
             }
 
             patch("/api/v1/events/{evtId}/registrations/{plrId}") {
-                val evtId = Uuid.fromString(call.parameters["evtId"])
-                val plrId = Uuid.fromString(call.parameters["plrId"])
-                val reg = call.receive<EventRegistration>()
-                repository.updateEventRegistration(evtId, plrId, reg.tableId)
-                call.respond(HttpStatusCode.OK)
+                val userSession = call.sessions.get<UserSession>()
+                if (userSession == null) {
+                    call.respond(HttpStatusCode.Unauthorized)
+                } else {
+                    val evtId = Uuid.fromString(call.parameters["evtId"])
+                    val plrId = Uuid.fromString(call.parameters["plrId"])
+                    val reg = call.receive<EventRegistration>()
+                    if (plrId == userSession.playerId) {
+                        repository.updateEventRegistration(evtId, plrId, reg.tableId)
+                        call.respond(HttpStatusCode.OK)
+                    } else {
+                        call.respond(HttpStatusCode.Forbidden)
+                    }
+                }
             }
 
             delete("/api/v1/events/{evtId}/registrations/{plrId}") {
-                val evtId = Uuid.fromString(call.parameters["evtId"])
-                val plrId = Uuid.fromString(call.parameters["plrId"])
-                repository.removeEventRegistration(evtId, plrId)
-                call.respond(HttpStatusCode.OK)
+                val userSession = call.sessions.get<UserSession>()
+                if (userSession == null) {
+                    call.respond(HttpStatusCode.Unauthorized)
+                } else {
+                    val evtId = Uuid.fromString(call.parameters["evtId"])
+                    val plrId = Uuid.fromString(call.parameters["plrId"])
+                    if (plrId == userSession.playerId) {
+                        repository.removeEventRegistration(evtId, plrId)
+                        call.respond(HttpStatusCode.OK)
+                    } else {
+                        call.respond(HttpStatusCode.Forbidden)
+                    }
+                }
             }
 
 
             post("/api/v1/events/{evtId}/tables") {
-                val evtId = Uuid.fromString(call.parameters["evtId"])
-                val tbl = call.receive<TableHosting>()
-                if (repository.isRegisteredForEvent(tbl.dungeonMasterId, evtId)) {
-                    call.respond(HttpStatusCode.Conflict)
+                val userSession = call.sessions.get<UserSession>()
+                if (userSession == null) {
+                    call.respond(HttpStatusCode.Unauthorized)
                 } else {
-                    repository.addHostedTable(TableHosting(tbl.id, evtId, tbl.dungeonMasterId))
-                    call.respond(HttpStatusCode.Created)
+                    val evtId = Uuid.fromString(call.parameters["evtId"])
+                    val tbl = call.receive<TableHosting>()
+                    if (tbl.dungeonMasterId == userSession.playerId) {
+                        if (repository.isRegisteredForEvent(tbl.dungeonMasterId, evtId)) {
+                            call.respond(HttpStatusCode.Conflict)
+                        } else {
+                            repository.addHostedTable(TableHosting(tbl.id, evtId, tbl.dungeonMasterId))
+                            call.respond(HttpStatusCode.Created)
+                        }
+                    } else {
+                        call.respond(HttpStatusCode.Forbidden)
+                    }
                 }
             }
 
             delete("/api/v1/events/{evtId}/tables/{dmId}") {
-                val evtId = Uuid.fromString(call.parameters["evtId"])
-                val dmId = Uuid.fromString(call.parameters["dmId"])
-                repository.removeHostedTable(evtId, dmId)
-                call.respond(HttpStatusCode.OK)
+                val userSession = call.sessions.get<UserSession>()
+                if (userSession == null) {
+                    call.respond(HttpStatusCode.Unauthorized)
+                } else {
+                    val evtId = Uuid.fromString(call.parameters["evtId"])
+                    val dmId = Uuid.fromString(call.parameters["dmId"])
+                    if (dmId == userSession.playerId) {
+                        repository.removeHostedTable(evtId, dmId)
+                        call.respond(HttpStatusCode.OK)
+                    } else {
+                        call.respond(HttpStatusCode.Forbidden)
+                    }
+                }
             }
 
         }

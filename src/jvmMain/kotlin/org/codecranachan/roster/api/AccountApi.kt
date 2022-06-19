@@ -7,7 +7,6 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.sessions.*
 import org.codecranachan.roster.DiscordUserInfo
-import org.codecranachan.roster.Identity
 import org.codecranachan.roster.PlayerDetails
 import org.codecranachan.roster.UserSession
 import org.codecranachan.roster.auth.discordOidProviderName
@@ -26,23 +25,12 @@ class AccountApi(private val repository: Repository) {
                     // not logged in
                     call.respond(Unit)
                 } else {
-                    var profile = when (userSession.providerName) {
-                        discordOidProviderName -> {
-                            repository.fetchPlayerByDiscordId(userSession.authInfo.user.id) ?: repository.addPlayer(
-                                userSession.authInfo.user
-                            )
-                        }
-                        else -> null
-                    }
-
-                    call.respond(
-                        Identity(
-                            userSession.authInfo.user.username,
-                            profile
-                        )
-                    )
+                    val player = repository.fetchPlayerByDiscordId(userSession.authInfo.user.id)
+                        ?: repository.addPlayer(userSession.authInfo.user)
+                    call.respond(player)
                 }
             }
+
 
             patch("/api/v1/me") {
                 val userSession = call.sessions.get<UserSession>()
@@ -59,8 +47,7 @@ class AccountApi(private val repository: Repository) {
             get("/api/v1/me/discord") {
                 val userSession = call.sessions.get<UserSession>()
                 if (userSession == null || userSession.providerName != discordOidProviderName) {
-                    // not logged in
-                    call.respond(Unit)
+                    call.respond(HttpStatusCode.Unauthorized)
                 } else {
                     call.respond(DiscordUserInfo(userSession.authInfo.user, userSession.discordGuilds))
                 }

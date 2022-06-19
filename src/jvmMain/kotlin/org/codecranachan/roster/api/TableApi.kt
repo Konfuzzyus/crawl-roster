@@ -6,8 +6,11 @@ import io.ktor.server.application.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import io.ktor.server.sessions.*
 import org.codecranachan.roster.TableDetails
+import org.codecranachan.roster.UserSession
 import org.codecranachan.roster.repo.Repository
+import org.codecranachan.roster.repo.fetchTable
 import org.codecranachan.roster.repo.updateHostedTable
 
 class TableApi(private val repository: Repository) {
@@ -15,10 +18,20 @@ class TableApi(private val repository: Repository) {
     fun install(r: Route) {
         with(r) {
             patch("/api/v1/tables/{id}") {
-                val id = Uuid.fromString(call.parameters["id"])
-                val details = call.receive<TableDetails>()
-                repository.updateHostedTable(id, details)
-                call.respond(HttpStatusCode.OK)
+                val userSession = call.sessions.get<UserSession>()
+                if (userSession == null) {
+                    call.respond(HttpStatusCode.Unauthorized)
+                } else {
+                    val id = Uuid.fromString(call.parameters["id"])
+                    val details = call.receive<TableDetails>()
+                    val table = repository.fetchTable(id)
+                    if (table?.let { it.dungeonMaster.id } == userSession.playerId) {
+                        repository.updateHostedTable(id, details)
+                        call.respond(HttpStatusCode.OK)
+                    } else {
+                        call.respond(HttpStatusCode.Forbidden)
+                    }
+                }
             }
         }
     }

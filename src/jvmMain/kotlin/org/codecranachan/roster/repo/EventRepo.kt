@@ -162,10 +162,10 @@ fun Repository.removeHostedTable(eventId: Uuid, dmId: Uuid) {
     }
 }
 
-fun Repository.fetchTable(id: Uuid): Table {
+fun Repository.fetchTable(id: Uuid): Table? {
     return withJooq {
         select().from(HOSTEDTABLES).join(PLAYERS).on(HOSTEDTABLES.DUNGEON_MASTER_ID.eq(EVENTS.ID))
-            .where(HOSTEDTABLES.ID.eq(id)).fetchSingle().map {
+            .where(HOSTEDTABLES.ID.eq(id)).fetchOne()?.map {
                 Table(
                     it[HOSTEDTABLES.ID],
                     playerFromRecord(it, PLAYERS),

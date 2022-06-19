@@ -4,9 +4,10 @@ import api.addEvent
 import api.addEventRegistration
 import api.addLinkedGuild
 import api.addTableHosting
+import api.fetchDiscordAccountInfo
 import api.fetchEvents
+import api.fetchPlayerInfo
 import api.fetchServerSettings
-import api.fetchUserId
 import api.removeEventRegistration
 import api.removeTableHosting
 import api.updateEventRegistration
@@ -26,8 +27,9 @@ private val scope = MainScope()
 
 fun updateUserId(): Thunk<ApplicationState> = { dispatch, _, _ ->
     scope.launch {
-        val result = fetchUserId()
-        dispatch(UserIdentified(result))
+        val player = fetchPlayerInfo()
+        val discord = fetchDiscordAccountInfo()
+        dispatch(UserIdentified(discord, player))
     }
 }
 
@@ -65,7 +67,7 @@ fun createEvent(e: Event): Thunk<ApplicationState> = { dispatch, _, _ ->
 
 fun registerPlayer(e: Event): Thunk<ApplicationState> = { dispatch, getState, _ ->
     scope.launch {
-        val player = getState().identity.data?.profile
+        val player = getState().identity.player
         if (player != null) {
             addEventRegistration(e, player)
             dispatch(updateEvents())
@@ -75,7 +77,7 @@ fun registerPlayer(e: Event): Thunk<ApplicationState> = { dispatch, getState, _ 
 
 fun unregisterPlayer(e: Event): Thunk<ApplicationState> = { dispatch, getState, _ ->
     scope.launch {
-        val player = getState().identity.data?.profile
+        val player = getState().identity.player
         if (player != null) {
             removeEventRegistration(e, player)
             dispatch(updateEvents())
@@ -95,7 +97,7 @@ fun updateEvents(): Thunk<ApplicationState> = { dispatch, getState, _ ->
 
 fun registerTable(e: Event): Thunk<ApplicationState> = { dispatch, getState, _ ->
     scope.launch {
-        val dm = getState().identity.data?.profile
+        val dm = getState().identity.player
         if (dm != null) {
             addTableHosting(e, dm)
             dispatch(updateEvents())
@@ -105,7 +107,7 @@ fun registerTable(e: Event): Thunk<ApplicationState> = { dispatch, getState, _ -
 
 fun unregisterTable(e: Event): Thunk<ApplicationState> = { dispatch, getState, _ ->
     scope.launch {
-        val dm = getState().identity.data?.profile
+        val dm = getState().identity.player
         if (dm != null) {
             removeTableHosting(e, dm)
             dispatch(updateEvents())
@@ -115,7 +117,7 @@ fun unregisterTable(e: Event): Thunk<ApplicationState> = { dispatch, getState, _
 
 fun joinTable(e: Event, t: Table?): Thunk<ApplicationState> = { dispatch, getState, _ ->
     scope.launch {
-        val p = getState().identity.data?.profile
+        val p = getState().identity.player
         if (p != null) {
             updateEventRegistration(e, p, t)
             dispatch(updateEvents())

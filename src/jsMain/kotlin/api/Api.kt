@@ -13,7 +13,6 @@ import org.codecranachan.roster.DiscordUserInfo
 import org.codecranachan.roster.Event
 import org.codecranachan.roster.EventRegistration
 import org.codecranachan.roster.Guild
-import org.codecranachan.roster.Identity
 import org.codecranachan.roster.Player
 import org.codecranachan.roster.PlayerDetails
 import org.codecranachan.roster.Server
@@ -34,7 +33,7 @@ suspend fun updatePlayer(details: PlayerDetails) {
     }
 }
 
-suspend fun fetchUserId(): Identity? {
+suspend fun fetchPlayerInfo(): Player? {
     return try {
         client.get("/api/v1/me").body()
     } catch (e: Exception) {

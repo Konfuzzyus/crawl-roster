@@ -7,12 +7,10 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.todayAt
 import mui.icons.material.AddCircle
 import mui.material.Button
-import mui.material.Chip
 import mui.material.Dialog
 import mui.material.DialogActions
 import mui.material.DialogContent
 import mui.material.DialogTitle
-import mui.material.Divider
 import mui.material.Input
 import mui.material.InputLabel
 import org.codecranachan.roster.Event
@@ -20,7 +18,6 @@ import org.codecranachan.roster.Guild
 import org.w3c.dom.HTMLInputElement
 import react.FC
 import react.Props
-import react.ReactNode
 import react.create
 import react.useContext
 import react.useState
@@ -37,12 +34,10 @@ val SubmitEvent = FC<SubmitEventProps> { props ->
     val (isOpen, setIsOpen) = useState(false)
     val (selectedDate, setSelectedDate) = useState(Clock.System.todayAt(TimeZone.currentSystemDefault()))
 
-    Divider {
-        Chip {
-            icon = AddCircle.create()
-            label = ReactNode("Add Event")
-            onClick = { setIsOpen(true) }
-        }
+    Button {
+        startIcon = AddCircle.create()
+        +"Create Event"
+        onClick = { setIsOpen(true) }
     }
     Dialog {
         open = isOpen
