@@ -40,7 +40,9 @@ class GuildApi(private val repository: Repository) {
                     call.respond(HttpStatusCode.Unauthorized)
                 } else {
                     val guild: Guild = call.receive()
-                    if (userSession.getDiscordUserInfo().hasAdminRightsFor(guild)) {
+                    if (repository.fetchLinkedGuilds().size >= Configuration.guildLimit) {
+                        call.respond(HttpStatusCode.Conflict)
+                    } else if (userSession.getDiscordUserInfo().hasAdminRightsFor(guild)) {
                         repository.addLinkedGuild(guild)
                         call.respond(HttpStatusCode.OK)
                     } else {

@@ -10,9 +10,7 @@ fun main() {
     root.render(
         StoreModule.create() {
             ThemeModule {
-                App {
-                    version = "1.0.0"
-                }
+                App { }
             }
         }
     )

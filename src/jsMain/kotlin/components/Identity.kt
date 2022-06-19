@@ -53,7 +53,7 @@ val Identity = FC<Props> {
                 alt = profile.details.name
                 src = profile.avatarUrl
             }
-            label = ReactNode(profile.details.name)
+            label = ReactNode(profile.discordHandle)
             variant = ChipVariant.outlined
             onClick = { anchor = it.currentTarget }
         }

@@ -16,11 +16,7 @@ import react.useState
 import reducers.StoreContext
 import reducers.updateUserId
 
-external interface AppProps : Props {
-    var version: String
-}
-
-val App = FC<AppProps> { props ->
+val App = FC<Props> {
     val store = useContext(StoreContext)
     val (isLoaded, setIsLoaded) = useState(store.state.identity.isLoaded)
 
@@ -43,7 +39,7 @@ val App = FC<AppProps> { props ->
 
                 Typography {
                     variant = TypographyVariant.h4
-                    +"Crawl-Roster ${props.version}"
+                    +"Crawl-Roster"
                 }
             }
             Grid {
