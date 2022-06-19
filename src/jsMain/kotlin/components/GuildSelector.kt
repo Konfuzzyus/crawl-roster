@@ -1,7 +1,6 @@
 package components
 
 import csstype.px
-import mui.material.CircularProgress
 import mui.material.FormControl
 import mui.material.InputLabel
 import mui.material.MenuItem
@@ -34,33 +33,29 @@ val GuildSelector = FC<Props> {
 
     Box {
         sx { minWidth = 120.px }
-        if (linkedGuilds == null) {
-            CircularProgress { }
+        if (linkedGuilds.isEmpty()) {
+            +"There are no guilds attuned to this server"
         } else {
-            if (linkedGuilds.isEmpty()) {
-                +"No Guilds Linked"
-            } else {
-                FormControl {
-                    fullWidth = true
-                    InputLabel {
-                        id = "guild-select-label"
-                        +"Guild"
+            FormControl {
+                fullWidth = true
+                InputLabel {
+                    id = "guild-select-label"
+                    +"Guild"
+                }
+                Select {
+                    id = "guild-select"
+                    labelId = "guild-select-label"
+                    value = selectedGuild?.id.unsafeCast<Nothing?>()
+                    label = ReactNode("Guild")
+                    onChange = { e, _ ->
+                        val g = linkedGuilds.find { it.id.toString() == e.target.value }
+                        if (g != null) store.dispatch(selectGuild(g))
                     }
-                    Select {
-                        id = "guild-select"
-                        labelId = "guild-select-label"
-                        value = selectedGuild?.id.unsafeCast<Nothing?>()
-                        label = ReactNode("Guild")
-                        onChange = { e, _ ->
-                            val g = linkedGuilds.find { it.id.toString() == e.target.value }
-                            if (g != null) store.dispatch(selectGuild(g))
-                        }
 
-                        linkedGuilds.forEach {
-                            MenuItem {
-                                value = it.id.toString()
-                                +it.name
-                            }
+                    linkedGuilds.forEach {
+                        MenuItem {
+                            value = it.id.toString()
+                            +it.name
                         }
                     }
                 }
