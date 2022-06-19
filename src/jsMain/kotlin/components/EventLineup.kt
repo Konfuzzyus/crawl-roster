@@ -32,7 +32,7 @@ val EventLineup = FC<EventLineupProps> { props ->
                         me = props.me
                         occupancy = session
                     }
-                    PlayerRows {
+                    PlayerRow {
                         me = props.me
                         players = session.players
                         capacity = session.table.details.playerRange.last
@@ -43,7 +43,7 @@ val EventLineup = FC<EventLineupProps> { props ->
                     event = props.event
                     me = props.me
                 }
-                PlayerRows {
+                PlayerRow {
                     me = props.me
                     players = props.event.unseated
                     capacity = props.event.openSeatCount()
@@ -53,13 +53,13 @@ val EventLineup = FC<EventLineupProps> { props ->
     }
 }
 
-external interface PlayerRowsProps : Props {
+external interface PlayerRowProps : Props {
     var me: Player
     var players: List<Player>
     var capacity: Int?
 }
 
-val PlayerRows = FC<PlayerRowsProps> { props ->
+val PlayerRow = FC<PlayerRowProps> { props ->
     props.players.forEachIndexed { idx, player ->
         if (idx == props.capacity) {
             TableRow {
@@ -85,11 +85,9 @@ val PlayerRows = FC<PlayerRowsProps> { props ->
             }
             TableCell {
                 val p = if (props.me == player) "★" else ""
-                +"$p ${player.details.name}"
+                +"$p ${player.details.name} (${player.discordHandle})"
             }
-            TableCell {
-                +player.discordHandle
-            }
+            TableCell { }
             TableCell { }
         }
     }

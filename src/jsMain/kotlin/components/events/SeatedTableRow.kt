@@ -8,8 +8,14 @@ import mui.material.Chip
 import mui.material.ChipColor
 import mui.material.ChipVariant
 import mui.material.Size
+import mui.material.Stack
+import mui.material.StackDirection
 import mui.material.TableCell
 import mui.material.TableRow
+import mui.material.Tooltip
+import mui.material.Typography
+import mui.material.styles.TypographyVariant
+import mui.system.responsive
 import org.codecranachan.roster.Event
 import org.codecranachan.roster.PlaySession
 import org.codecranachan.roster.Player
@@ -78,7 +84,22 @@ val SeatedTableRow = FC<SeatedTableRowProps> { props ->
             }
         }
         TableCell {
-            colSpan = 2
+            Tooltip {
+                title = ReactNode(table.details.adventureDescription ?: "The DM did not provide a detailed description.")
+                Stack {
+                    direction = responsive(StackDirection.column)
+                    Typography {
+                        variant = TypographyVariant.body1
+                        +"${table.details.adventureTitle ?: "Mystery adventure"} (${table.details.moduleDesignation ?: "Homebrew"})"
+                    }
+                    Typography {
+                        variant = TypographyVariant.caption
+                        +"${table.details.language.name} - Character levels ${table.details.levelRange.first} to ${table.details.levelRange.last}"
+                    }
+                }
+            }
+        }
+        TableCell {
             Seating {
                 seatedPlayers = players
             }

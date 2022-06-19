@@ -26,7 +26,7 @@ create table Events (
     guild_id UUID not null,
 
     foreign key (guild_id) references LinkedGuilds(id),
-    unique (event_date)
+    unique (guild_id, event_date)
 );
 
 create table EventRegistrations (

@@ -1,3 +1,5 @@
+package theme
+
 import kotlinx.js.jso
 import mui.material.CssBaseline
 import mui.material.PaletteMode

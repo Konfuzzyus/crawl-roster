@@ -31,6 +31,10 @@ data class PlaySession(val table: Table, val players: List<Player>) {
         return table.dungeonMaster == player
     }
 
+    fun occupancyPercentage() : Int {
+        return players.size * 100 / table.details.playerRange.last
+    }
+
 }
 
 @Serializable
@@ -63,8 +67,16 @@ data class Event(
         return sessions.sumOf { it.table.details.playerRange.last }
     }
 
+    fun capacity(): Int {
+        return tableSpace() - playerCount()
+    }
+
     fun openSeatCount(): Int {
-        return maxOf(0, tableSpace() - seatedPlayerCount())
+        return maxOf(0, capacity())
+    }
+
+    fun waitingListLength(): Int {
+        return minOf(0, capacity())
     }
 
     fun getHostedTable(p: Player): Table? {

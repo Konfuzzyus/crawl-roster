@@ -2,7 +2,7 @@ package components
 
 import com.benasher44.uuid.Uuid
 import components.events.EventActions
-import components.events.PlaySessionOccupancyIndicator
+import components.events.PlayTableIndicator
 import csstype.px
 import mui.icons.material.KeyboardArrowDown
 import mui.icons.material.KeyboardArrowUp
@@ -31,7 +31,7 @@ val EventCalendarHeaderRow = FC<Props> {
             +"Date"
         }
         TableCell {
-            +"Players"
+            +"Event Capacity"
         }
         TableCell {
             +"Tables"
@@ -78,15 +78,20 @@ val EventCalendarBodyRow = FC<EventCalendarRowProps> { props ->
                 }
             }
             TableCell {
-                +"${event.playerCount()} of ${event.tableSpace()}"
+                if (event.capacity() >= 0) {
+                    +"${event.openSeatCount()} open seats"
+                } else {
+                    +"${event.waitingListLength()} on waiting list"
+                }
+
             }
             TableCell {
                 Stack {
                     direction = responsive(StackDirection.row)
                     spacing = responsive(2)
                     event.sessions.forEach {
-                        PlaySessionOccupancyIndicator {
-                            occupancy = it
+                        PlayTableIndicator {
+                            session = it
                         }
                     }
                 }
