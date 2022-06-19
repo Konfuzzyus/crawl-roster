@@ -20,11 +20,11 @@ external interface EventCalendarProps : Props {
 
 val EventCalendar = FC<EventCalendarProps> { props ->
     val store = useContext(StoreContext)
-    val (events, setEvents) = useState(store.state.calendar.events)
+    var events by useState(store.state.calendar.events)
     val account = store.state.identity.discord
 
     useEffectOnce {
-        val unsubscribe = store.subscribe { setEvents(store.state.calendar.events) }
+        val unsubscribe = store.subscribe { events = store.state.calendar.events }
         cleanup(unsubscribe)
     }
 
@@ -39,9 +39,9 @@ val EventCalendar = FC<EventCalendarProps> { props ->
                         EventCalendarHeaderRow {}
                     }
                     TableBody {
-                        events.forEach {
+                        events!!.forEach {
                             EventCalendarBodyRow {
-                                eventId = it.id
+                                event = it
                             }
                         }
                     }

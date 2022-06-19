@@ -76,7 +76,7 @@ data class Event(
     }
 
     fun waitingListLength(): Int {
-        return minOf(0, capacity())
+        return 0 - minOf(0, capacity())
     }
 
     fun getHostedTable(p: Player): Table? {

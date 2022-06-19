@@ -13,8 +13,6 @@ import react.FC
 import react.Props
 import react.ReactNode
 import react.create
-import react.useContext
-import reducers.StoreContext
 
 external interface UnseatedRowProps : Props {
     var event: Event
@@ -22,12 +20,7 @@ external interface UnseatedRowProps : Props {
 }
 
 val UnseatedRow = FC<UnseatedRowProps> { props ->
-    val store = useContext(StoreContext)
-
     val players = props.event.unseated
-
-    val isRegistered = props.event.isRegistered(props.me)
-    val isPlayer = players.map(Player::id).contains(props.me.id)
 
     TableRow {
         TableCell {

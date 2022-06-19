@@ -28,11 +28,11 @@ import reducers.UserLoggedOut
 
 val Identity = FC<Props> {
     val store = useContext(StoreContext)
-    val (profile, setProfile) = useState(store.state.identity.data)
+    val (profile, setProfile) = useState(store.state.identity.player)
     var anchor by useState<Element>()
 
     useEffect {
-        val unsubscribe = store.subscribe { setProfile(store.state.identity.data) }
+        val unsubscribe = store.subscribe { setProfile(store.state.identity.player) }
         cleanup(unsubscribe)
     }
 
@@ -50,10 +50,10 @@ val Identity = FC<Props> {
         Chip {
             id = "identity-chip"
             avatar = Avatar.create {
-                alt = profile.name
-                src = profile.profile?.avatarUrl
+                alt = profile.details.name
+                src = profile.avatarUrl
             }
-            label = ReactNode(profile.name)
+            label = ReactNode(profile.details.name)
             variant = ChipVariant.outlined
             onClick = { anchor = it.currentTarget }
         }
@@ -66,7 +66,7 @@ val Identity = FC<Props> {
 
             MenuItem {
                 onClick = {
-                    store.dispatch(PlayerEditorOpened(profile.profile!!))
+                    store.dispatch(PlayerEditorOpened(profile))
                     handleClose(it)
                 }
                 ListItemIcon { ManageAccounts {} }

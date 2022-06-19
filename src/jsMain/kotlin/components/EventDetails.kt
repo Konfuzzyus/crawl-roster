@@ -20,7 +20,7 @@ external interface EventDetailsProps : Props {
 
 val EventDetails = FC<EventDetailsProps> { props ->
     val store = useContext(StoreContext)
-    val profile = store.state.identity.data?.profile
+    val profile = store.state.identity.player
 
     Box {
         sx {

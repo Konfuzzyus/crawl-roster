@@ -19,7 +19,7 @@ external interface EventActionsProps : Props {
 val EventActions = FC<EventActionsProps> { props ->
     val store = useContext(StoreContext)
 
-    val me = store.state.identity.data?.profile
+    val me = store.state.identity.player
     val isRegistered = me?.let { props.targetEvent.isRegistered(it) } == true
     val isHosting = me?.let { props.targetEvent.isHosting(it) } == true
 

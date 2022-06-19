@@ -112,6 +112,7 @@ class AuthenticationSettings(
                     cookie.path = "/"
                     cookie.maxAgeInSeconds = sessionExiprationTime.inWholeSeconds
                     cookie.extensions["SameSite"] = "lax"
+                    cookie.secure = !Configuration.devMode
                     serializer = JsonSessionSerializer()
                     transform(Configuration.sessionTransformer)
                 }
