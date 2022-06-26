@@ -20,7 +20,7 @@ class TableApi(private val repository: Repository) {
             patch("/api/v1/tables/{id}") {
                 val userSession = call.sessions.get<UserSession>()
                 if (userSession == null) {
-                    call.respond(HttpStatusCode.Unauthorized)
+                    call.respond(HttpStatusCode.Unauthorized, "Not logged in")
                 } else {
                     val id = Uuid.fromString(call.parameters["id"])
                     val details = call.receive<TableDetails>()
@@ -29,7 +29,7 @@ class TableApi(private val repository: Repository) {
                         repository.updateHostedTable(id, details)
                         call.respond(HttpStatusCode.OK)
                     } else {
-                        call.respond(HttpStatusCode.Forbidden)
+                        call.respond(HttpStatusCode.Forbidden, "Only the DM can update table details")
                     }
                 }
             }

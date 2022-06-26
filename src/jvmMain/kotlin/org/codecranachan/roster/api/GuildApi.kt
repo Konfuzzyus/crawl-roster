@@ -37,16 +37,16 @@ class GuildApi(private val repository: Repository) {
             post("/api/v1/guilds") {
                 val userSession = call.sessions.get<UserSession>()
                 if (userSession == null) {
-                    call.respond(HttpStatusCode.Unauthorized)
+                    call.respond(HttpStatusCode.Unauthorized, "Not logged in")
                 } else {
                     val guild: Guild = call.receive()
                     if (repository.fetchLinkedGuilds().size >= Configuration.guildLimit) {
-                        call.respond(HttpStatusCode.Conflict)
+                        call.respond(HttpStatusCode.Conflict, "May not attune any more guilds to this server")
                     } else if (userSession.getDiscordUserInfo().hasAdminRightsFor(guild)) {
                         repository.addLinkedGuild(guild)
                         call.respond(HttpStatusCode.OK)
                     } else {
-                        call.respond(HttpStatusCode.Forbidden)
+                        call.respond(HttpStatusCode.Forbidden, "Must be a guild admin to attune a guild")
                     }
                 }
             }

@@ -4,7 +4,7 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.plus
-import kotlinx.datetime.todayAt
+import kotlinx.datetime.todayIn
 import org.codecranachan.roster.DiscordUser
 import org.codecranachan.roster.Event
 import org.codecranachan.roster.EventRegistration
@@ -58,7 +58,7 @@ class FakeRepoData(val repo: Repository) {
     }
 
     private fun makeEvent(i: Int, g: Guild): Event {
-        return Event(guildId = g.id, date = Clock.System.todayAt(TimeZone.UTC).plus(i, DateTimeUnit.DAY))
+        return Event(guildId = g.id, date = Clock.System.todayIn(TimeZone.UTC).plus(i, DateTimeUnit.DAY))
     }
 
     private fun makeTableHosting(i: Int, e: Event, dm: Player): TableHosting {

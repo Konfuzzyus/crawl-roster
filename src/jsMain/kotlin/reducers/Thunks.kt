@@ -65,11 +65,11 @@ fun createEvent(e: Event): Thunk<ApplicationState> = { dispatch, getState, _ ->
     }
 }
 
-fun registerPlayer(e: Event): Thunk<ApplicationState> = { dispatch, getState, _ ->
+fun registerPlayer(e: Event, t: Table? = null): Thunk<ApplicationState> = { dispatch, getState, _ ->
     scope.launch {
         val player = getState().identity.player
         if (player != null) {
-            addEventRegistration(e, player)
+            addEventRegistration(e, player, t)
             dispatch(updateEvents(getState().calendar.selectedGuild))
         }
     }

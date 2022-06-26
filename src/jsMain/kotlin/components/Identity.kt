@@ -50,8 +50,8 @@ val Identity = FC<Props> {
         Chip {
             id = "identity-chip"
             avatar = Avatar.create {
-                alt = profile.details.name
                 src = profile.avatarUrl
+                +profile.details.name
             }
             label = ReactNode(profile.discordHandle)
             variant = ChipVariant.outlined

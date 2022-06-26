@@ -37,7 +37,7 @@ class AccountApi(private val repository: Repository) {
                 val details = call.receive<PlayerDetails>()
                 if (userSession == null) {
                     // not logged in
-                    call.respond(HttpStatusCode.Unauthorized)
+                    call.respond(HttpStatusCode.Unauthorized, "Not logged in")
                 } else {
                     repository.updatePlayer(userSession.playerId, details)
                     call.respond(HttpStatusCode.OK)
@@ -47,7 +47,7 @@ class AccountApi(private val repository: Repository) {
             get("/api/v1/me/discord") {
                 val userSession = call.sessions.get<UserSession>()
                 if (userSession == null || userSession.providerName != discordOidProviderName) {
-                    call.respond(HttpStatusCode.Unauthorized)
+                    call.respond(HttpStatusCode.Unauthorized, "Not logged in")
                 } else {
                     call.respond(DiscordUserInfo(userSession.authInfo.user, userSession.discordGuilds))
                 }

@@ -40,7 +40,7 @@ class EventApi(private val repository: Repository) {
             post("/api/v1/events") {
                 val userSession = call.sessions.get<UserSession>()
                 if (userSession == null) {
-                    call.respond(HttpStatusCode.Unauthorized)
+                    call.respond(HttpStatusCode.Unauthorized, "Not logged in")
                 } else {
                     val event = call.receive<Event>()
                     val guild = repository.fetchGuild(event.guildId)
@@ -48,7 +48,7 @@ class EventApi(private val repository: Repository) {
                         repository.addEvent(event)
                         call.respond(HttpStatusCode.Created)
                     } else {
-                        call.respond(HttpStatusCode.Forbidden)
+                        call.respond(HttpStatusCode.Forbidden, "Only guild admins can create events")
                     }
                 }
             }
@@ -56,19 +56,19 @@ class EventApi(private val repository: Repository) {
             post("/api/v1/events/{evtId}/registrations") {
                 val userSession = call.sessions.get<UserSession>()
                 if (userSession == null) {
-                    call.respond(HttpStatusCode.Unauthorized)
+                    call.respond(HttpStatusCode.Unauthorized, "Not logged in")
                 } else {
                     val evtId = Uuid.fromString(call.parameters["evtId"])
                     val reg = call.receive<EventRegistration>()
                     if (reg.playerId == userSession.playerId) {
                         if (repository.isHostingForEvent(reg.playerId, evtId)) {
-                            call.respond(HttpStatusCode.Conflict)
+                            call.respond(HttpStatusCode.Conflict, "Player is already hosting a table")
                         } else {
-                            repository.addEventRegistration(EventRegistration(reg.id, evtId, reg.playerId))
+                            repository.addEventRegistration(EventRegistration(reg.id, evtId, reg.playerId, reg.tableId))
                             call.respond(HttpStatusCode.Created)
                         }
                     } else {
-                        call.respond(HttpStatusCode.Forbidden)
+                        call.respond(HttpStatusCode.Forbidden, "You can sign up yourself")
                     }
                 }
             }
@@ -76,7 +76,7 @@ class EventApi(private val repository: Repository) {
             patch("/api/v1/events/{evtId}/registrations/{plrId}") {
                 val userSession = call.sessions.get<UserSession>()
                 if (userSession == null) {
-                    call.respond(HttpStatusCode.Unauthorized)
+                    call.respond(HttpStatusCode.Unauthorized, "Not logged in")
                 } else {
                     val evtId = Uuid.fromString(call.parameters["evtId"])
                     val plrId = Uuid.fromString(call.parameters["plrId"])
@@ -85,7 +85,7 @@ class EventApi(private val repository: Repository) {
                         repository.updateEventRegistration(evtId, plrId, reg.tableId)
                         call.respond(HttpStatusCode.OK)
                     } else {
-                        call.respond(HttpStatusCode.Forbidden)
+                        call.respond(HttpStatusCode.Forbidden, "You can only edit your own registrations")
                     }
                 }
             }
@@ -93,7 +93,7 @@ class EventApi(private val repository: Repository) {
             delete("/api/v1/events/{evtId}/registrations/{plrId}") {
                 val userSession = call.sessions.get<UserSession>()
                 if (userSession == null) {
-                    call.respond(HttpStatusCode.Unauthorized)
+                    call.respond(HttpStatusCode.Unauthorized, "Not logged in")
                 } else {
                     val evtId = Uuid.fromString(call.parameters["evtId"])
                     val plrId = Uuid.fromString(call.parameters["plrId"])
@@ -101,7 +101,7 @@ class EventApi(private val repository: Repository) {
                         repository.removeEventRegistration(evtId, plrId)
                         call.respond(HttpStatusCode.OK)
                     } else {
-                        call.respond(HttpStatusCode.Forbidden)
+                        call.respond(HttpStatusCode.Forbidden, "You can only remove yourself from an event")
                     }
                 }
             }
@@ -110,19 +110,19 @@ class EventApi(private val repository: Repository) {
             post("/api/v1/events/{evtId}/tables") {
                 val userSession = call.sessions.get<UserSession>()
                 if (userSession == null) {
-                    call.respond(HttpStatusCode.Unauthorized)
+                    call.respond(HttpStatusCode.Unauthorized, "Not logged in")
                 } else {
                     val evtId = Uuid.fromString(call.parameters["evtId"])
                     val tbl = call.receive<TableHosting>()
                     if (tbl.dungeonMasterId == userSession.playerId) {
                         if (repository.isRegisteredForEvent(tbl.dungeonMasterId, evtId)) {
-                            call.respond(HttpStatusCode.Conflict)
+                            call.respond(HttpStatusCode.Conflict, "Player is already playing a character")
                         } else {
                             repository.addHostedTable(TableHosting(tbl.id, evtId, tbl.dungeonMasterId))
                             call.respond(HttpStatusCode.Created)
                         }
                     } else {
-                        call.respond(HttpStatusCode.Forbidden)
+                        call.respond(HttpStatusCode.Forbidden, "You can only sign yourself up to DM")
                     }
                 }
             }
@@ -138,7 +138,7 @@ class EventApi(private val repository: Repository) {
                         repository.removeHostedTable(evtId, dmId)
                         call.respond(HttpStatusCode.OK)
                     } else {
-                        call.respond(HttpStatusCode.Forbidden)
+                        call.respond(HttpStatusCode.Forbidden, "Only the DM can cancel a table")
                     }
                 }
             }

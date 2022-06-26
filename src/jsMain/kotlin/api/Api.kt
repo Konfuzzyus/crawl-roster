@@ -75,10 +75,10 @@ suspend fun addEvent(e: Event) {
     }
 }
 
-suspend fun addEventRegistration(e: Event, p: Player) {
+suspend fun addEventRegistration(e: Event, p: Player, t: Table? = null) {
     client.post("/api/v1/events/${e.id}/registrations") {
         contentType(ContentType.Application.Json)
-        setBody(EventRegistration(uuid4(), e.id, p.id))
+        setBody(EventRegistration(uuid4(), e.id, p.id, t?.id))
     }
 }
 

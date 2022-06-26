@@ -2,10 +2,18 @@ package components.events
 
 import mui.material.Button
 import mui.material.ButtonGroup
+import mui.material.ListItemText
+import mui.material.Menu
+import mui.material.MenuItem
 import org.codecranachan.roster.Event
+import org.codecranachan.roster.TableState
+import org.w3c.dom.Element
 import react.FC
 import react.Props
+import react.dom.events.MouseEventHandler
 import react.useContext
+import react.useEffectOnce
+import react.useState
 import reducers.StoreContext
 import reducers.registerPlayer
 import reducers.registerTable
@@ -17,36 +25,77 @@ external interface EventActionsProps : Props {
 }
 
 val EventActions = FC<EventActionsProps> { props ->
-    val store = useContext(StoreContext)
+    val myStore = useContext(StoreContext)
+    var anchor by useState<Element>()
 
-    val me = store.state.identity.player
-    val isRegistered = me?.let { props.targetEvent.isRegistered(it) } == true
-    val isHosting = me?.let { props.targetEvent.isHosting(it) } == true
+    var userIdentity by useState(myStore.state.identity)
+    var currentGuild by useState(myStore.state.calendar.selectedGuild)
+
+    useEffectOnce {
+        val unsubscribe = myStore.subscribe {
+            userIdentity = myStore.state.identity
+            currentGuild = myStore.state.calendar.selectedGuild
+        }
+        cleanup(unsubscribe)
+    }
+
+    val isRegistered = userIdentity.player?.let { props.targetEvent.isRegistered(it) } == true
+    val isHosting = userIdentity.player?.let { props.targetEvent.isHosting(it) } == true
 
     ButtonGroup {
         when {
             isRegistered -> {
                 Button {
-                    onClick = { store.dispatch(unregisterPlayer(props.targetEvent)) }
+                    onClick = { myStore.dispatch(unregisterPlayer(props.targetEvent)) }
                     +"Cancel Registration"
                 }
             }
             isHosting -> {
                 Button {
-                    onClick = { store.dispatch(unregisterTable(props.targetEvent)) }
+                    onClick = { myStore.dispatch(unregisterTable(props.targetEvent)) }
                     +"Cancel Table"
                 }
             }
             else -> {
                 Button {
-                    onClick = { store.dispatch(registerPlayer(props.targetEvent)) }
-                    +"Join Waiting List"
+                    onClick = { anchor = it.currentTarget }
+                    +"Sign Up"
                 }
                 Button {
-                    onClick = { store.dispatch(registerTable(props.targetEvent)) }
+                    onClick = { myStore.dispatch(registerTable(props.targetEvent)) }
                     +"Host Table"
                 }
             }
+        }
+    }
+
+    val handleClose: MouseEventHandler<*> = { anchor = null }
+    Menu {
+        open = anchor != null
+        if (anchor != null) {
+            anchorEl = { anchor as Element }
+        }
+        onClose = handleClose
+
+        props.targetEvent.sessions.forEach {
+            MenuItem {
+                if (it.getState() == TableState.Full) {
+                    disabled = true
+                }
+                onClick = { e ->
+                    myStore.dispatch(registerPlayer(props.targetEvent, it.table))
+                    handleClose(e)
+                }
+                ListItemText { +"Join ${it.table.getName()}" }
+            }
+        }
+
+        MenuItem {
+            onClick = { e ->
+                myStore.dispatch(registerPlayer(props.targetEvent))
+                handleClose(e)
+            }
+            ListItemText { +"Join Waiting List" }
         }
     }
 }

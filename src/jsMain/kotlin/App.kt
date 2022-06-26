@@ -38,7 +38,7 @@ val App = FC<Props> {
                 xs = 8
 
                 Typography {
-                    variant = TypographyVariant.h4
+                    variant = TypographyVariant.h5
                     +"Crawl-Roster"
                 }
             }
