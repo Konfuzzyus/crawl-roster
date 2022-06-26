@@ -11,6 +11,7 @@ import io.ktor.server.engine.*
 import io.ktor.server.html.*
 import io.ktor.server.http.content.*
 import io.ktor.server.netty.*
+import io.ktor.server.plugins.forwardedheaders.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.sessions.*
@@ -117,6 +118,8 @@ class RosterServer {
             install(io.ktor.server.plugins.contentnegotiation.ContentNegotiation) {
                 json()
             }
+            install(ForwardedHeaders)
+            install(XForwardedHeaders)
             auth.install(this)
             routing {
                 auth.install(this)

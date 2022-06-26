@@ -4,7 +4,7 @@ import com.benasher44.uuid.uuid4
 import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
-import kotlinx.datetime.todayAt
+import kotlinx.datetime.todayIn
 import mui.icons.material.AddCircle
 import mui.material.Button
 import mui.material.Dialog
@@ -32,7 +32,7 @@ external interface SubmitEventProps : Props {
 val SubmitEvent = FC<SubmitEventProps> { props ->
     val store = useContext(StoreContext)
     val (isOpen, setIsOpen) = useState(false)
-    val (selectedDate, setSelectedDate) = useState(Clock.System.todayAt(TimeZone.currentSystemDefault()))
+    val (selectedDate, setSelectedDate) = useState(Clock.System.todayIn(TimeZone.currentSystemDefault()))
 
     Button {
         startIcon = AddCircle.create()

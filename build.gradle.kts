@@ -25,7 +25,7 @@ plugins {
 }
 
 group = "org.codecranachan"
-version = "2022.7"
+version = "2022.7.1"
 
 object Versions {
     const val kotlinReact = "18.2.0-pre.347"
@@ -91,6 +91,7 @@ kotlin {
                 implementation("io.ktor:ktor-server-html-builder:${Versions.ktor}")
                 implementation("io.ktor:ktor-server-sessions:${Versions.ktor}")
                 implementation("io.ktor:ktor-server-auth:${Versions.ktor}")
+                implementation("io.ktor:ktor-server-forwarded-header:${Versions.ktor}")
                 implementation("org.bitbucket.b_c:jose4j:${Versions.jose4j}")
                 implementation("io.ktor:ktor-client-core:${Versions.ktor}")
                 implementation("io.ktor:ktor-client-cio:${Versions.ktor}")
