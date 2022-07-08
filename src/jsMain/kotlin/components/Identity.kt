@@ -1,6 +1,7 @@
 package components
 
 import kotlinx.browser.window
+import mui.icons.material.BugReport
 import mui.icons.material.Login
 import mui.icons.material.Logout
 import mui.icons.material.ManageAccounts
@@ -79,6 +80,13 @@ val Identity = FC<Props> {
                 }
                 ListItemIcon { Settings {} }
                 ListItemText { +"Guild Settings" }
+            }
+            MenuItem {
+                onClick = {
+                    window.open("https://github.com/CodeCranachan/crawl-roster/issues", "_blank")
+                }
+                ListItemIcon { BugReport {} }
+                ListItemText { +"Report a Bug" }
             }
             MenuItem {
                 onClick = {
