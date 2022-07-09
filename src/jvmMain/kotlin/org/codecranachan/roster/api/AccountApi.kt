@@ -1,11 +1,15 @@
 package org.codecranachan.roster.api
 
+import RosterServer
+import io.ktor.client.call.*
+import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.sessions.*
+import org.codecranachan.roster.DiscordGuild
 import org.codecranachan.roster.DiscordUserInfo
 import org.codecranachan.roster.PlayerDetails
 import org.codecranachan.roster.UserSession
@@ -49,7 +53,11 @@ class AccountApi(private val repository: Repository) {
                 if (userSession == null || userSession.providerName != discordOidProviderName) {
                     call.respond(HttpStatusCode.Unauthorized, "Not logged in")
                 } else {
-                    call.respond(DiscordUserInfo(userSession.authInfo.user, userSession.discordGuilds))
+                    val guilds: List<DiscordGuild> =
+                        RosterServer.httpClient.get("https://discord.com/api/users/@me/guilds") {
+                            bearerAuth(userSession.accessToken)
+                        }.body()
+                    call.respond(DiscordUserInfo(userSession.authInfo.user, guilds))
                 }
             }
         }

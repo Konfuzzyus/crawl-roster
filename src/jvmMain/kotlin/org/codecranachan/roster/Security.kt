@@ -3,8 +3,6 @@ package org.codecranachan.roster
 import Configuration
 import RosterServer
 import com.benasher44.uuid.Uuid
-import io.ktor.client.call.*
-import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
@@ -23,6 +21,7 @@ import org.codecranachan.roster.auth.DiscordAuthorizationInfo
 import org.codecranachan.roster.repo.Repository
 import org.codecranachan.roster.repo.addPlayer
 import org.codecranachan.roster.repo.fetchPlayerByDiscordId
+import kotlin.collections.set
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
@@ -33,11 +32,8 @@ data class UserSession(
     val expiresIn: Long,
     @Serializable(with = UuidSerializer::class)
     val playerId: Uuid,
-    val authInfo: DiscordAuthorizationInfo,
-    val discordGuilds: List<DiscordGuild>
-) : Principal {
-    fun getDiscordUserInfo() = DiscordUserInfo(authInfo.user, discordGuilds)
-}
+    val authInfo: DiscordAuthorizationInfo
+) : Principal
 
 @Serializable
 data class OpenIdConfiguration(
@@ -89,6 +85,7 @@ data class OpenIdProvider(
 }
 
 class JsonSessionSerializer : SessionSerializer<UserSession> {
+
     override fun deserialize(text: String): UserSession {
         return Json.decodeFromString(UserSession.serializer(), text)
     }
@@ -155,21 +152,16 @@ class AuthenticationSettings(
                             player = repository.addPlayer(authInfo.user)
                         }
 
-                        val guilds: List<DiscordGuild> =
-                            RosterServer.httpClient.get("https://discord.com/api/users/@me/guilds") {
-                                bearerAuth(principal.accessToken)
-                            }.body()
-
                         call.sessions.set(
                             UserSession(
                                 oidProvider.name,
                                 principal.accessToken,
                                 principal.expiresIn,
                                 player.id,
-                                authInfo,
-                                guilds
+                                authInfo
                             )
                         )
+
                         call.respondRedirect("/")
                     }
                 }

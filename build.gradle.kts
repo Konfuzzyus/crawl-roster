@@ -86,6 +86,7 @@ kotlin {
             dependsOn(flyway)
             dependencies {
                 implementation("io.ktor:ktor-serialization-kotlinx-json:${Versions.ktor}")
+                implementation("io.ktor:ktor-serialization-kotlinx-cbor:${Versions.ktor}")
                 implementation("io.ktor:ktor-server-netty:${Versions.ktor}")
                 implementation("io.ktor:ktor-server-content-negotiation:${Versions.ktor}")
                 implementation("io.ktor:ktor-server-html-builder:${Versions.ktor}")
