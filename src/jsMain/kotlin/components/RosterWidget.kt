@@ -33,7 +33,7 @@ val RosterWidget = FC<Props> {
                     guild = currentGuild
                 }
             }
-            ServerEditor { }
+            if (userIdentity.isServerAdmin) ServerEditor { }
             TableEditor { }
             PlayerEditor { }
         }

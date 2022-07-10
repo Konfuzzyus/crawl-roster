@@ -1,6 +1,9 @@
 package components.editors
 
+import api.fetchDiscordAccountInfo
 import com.benasher44.uuid.uuid4
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.launch
 import mui.icons.material.AddLink
 import mui.icons.material.Close
 import mui.icons.material.Link
@@ -16,6 +19,7 @@ import mui.material.ListItemButton
 import mui.material.ListItemIcon
 import mui.material.ListItemText
 import org.codecranachan.roster.DiscordGuild
+import org.codecranachan.roster.DiscordUserInfo
 import org.codecranachan.roster.Guild
 import org.codecranachan.roster.Server
 import react.FC
@@ -83,13 +87,15 @@ val ServerEditor = FC<Props> {
     var isOpen by useState(false)
 
     var settings by useState(Server())
-    var accountInfo by useState(store.state.identity.discord)
+    var accountInfo by useState<DiscordUserInfo?>(null)
 
     useEffectOnce {
         val unsubscribe = store.subscribe {
-            accountInfo = store.state.identity.discord
             val s = store.state.ui.editorTarget
             if (s is Server) {
+                MainScope().launch {
+                    accountInfo = fetchDiscordAccountInfo()
+                }
                 isOpen = true
                 settings = s
             } else {

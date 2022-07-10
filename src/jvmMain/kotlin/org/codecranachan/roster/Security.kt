@@ -18,9 +18,12 @@ import kotlinx.html.p
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import org.codecranachan.roster.auth.DiscordAuthorizationInfo
+import org.codecranachan.roster.discord.fetchUserGuildInformation
 import org.codecranachan.roster.repo.Repository
 import org.codecranachan.roster.repo.addPlayer
+import org.codecranachan.roster.repo.fetchLinkedGuilds
 import org.codecranachan.roster.repo.fetchPlayerByDiscordId
+import org.codecranachan.roster.repo.setGuildMembership
 import kotlin.collections.set
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
@@ -85,7 +88,6 @@ data class OpenIdProvider(
 }
 
 class JsonSessionSerializer : SessionSerializer<UserSession> {
-
     override fun deserialize(text: String): UserSession {
         return Json.decodeFromString(UserSession.serializer(), text)
     }
@@ -95,19 +97,30 @@ class JsonSessionSerializer : SessionSerializer<UserSession> {
     }
 }
 
+suspend fun refreshGuildRoles(player: Player, repository: Repository, accessToken: String) {
+    val userGuilds = fetchUserGuildInformation(accessToken).associateBy { it.id }
+    repository.fetchLinkedGuilds().forEach {
+        val match = userGuilds[it.discordId]
+        if (match != null) {
+            // TODO: Figure out a way to determine who is a DM and who is not
+            repository.setGuildMembership(player.id, it, match.isAdmin(), true)
+        }
+    }
+}
+
 class AuthenticationSettings(
     private val rootUrl: String,
     private val providers: List<OpenIdProvider>,
     private val repository: Repository
 ) {
-    private val sessionExiprationTime = 7.toDuration(DurationUnit.DAYS)
+    private val sessionExpirationTime = 7.toDuration(DurationUnit.DAYS)
 
     fun install(app: Application) {
         with(app) {
             install(Sessions) {
                 cookie<UserSession>("user_session") {
                     cookie.path = "/"
-                    cookie.maxAgeInSeconds = sessionExiprationTime.inWholeSeconds
+                    cookie.maxAgeInSeconds = sessionExpirationTime.inWholeSeconds
                     cookie.extensions["SameSite"] = "lax"
                     cookie.secure = !Configuration.devMode
                     serializer = JsonSessionSerializer()
@@ -147,10 +160,9 @@ class AuthenticationSettings(
                         val principal: OAuthAccessTokenResponse.OAuth2? = call.principal()
                         val authInfo = oidProvider.identitySupplier(principal!!, oidProvider)
 
-                        var player = repository.fetchPlayerByDiscordId(authInfo.user.id)
-                        if (player == null) {
-                            player = repository.addPlayer(authInfo.user)
-                        }
+                        val player = repository.fetchPlayerByDiscordId(authInfo.user.id)
+                            ?: repository.addPlayer(authInfo.user)
+                        refreshGuildRoles(player, repository, principal.accessToken)
 
                         call.sessions.set(
                             UserSession(

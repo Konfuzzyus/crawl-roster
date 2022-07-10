@@ -64,32 +64,32 @@ fun Repository.fetchEventsWhere(condition: Condition): List<Event> {
 
         regSelect.union(tblSelect).orderBy(EVENTS.EVENT_DATE.asc(), EVENTREGISTRATIONS.REGISTRATION_TIME.asc())
             .fetchGroups(EVENTS.ID).map { (id, results) ->
-            val byTables = results.groupBy {
-                if (it[HOSTEDTABLES.ID] == null) {
-                    null
-                } else {
-                    Table(
-                        it[HOSTEDTABLES.ID],
-                        playerFromRecord(it, dms),
-                        tableDetailsFromRecord(it, HOSTEDTABLES)
-                    )
+                val byTables = results.groupBy {
+                    if (it[HOSTEDTABLES.ID] == null) {
+                        null
+                    } else {
+                        Table(
+                            it[HOSTEDTABLES.ID],
+                            playerFromRecord(it, dms),
+                            tableDetailsFromRecord(it, HOSTEDTABLES)
+                        )
+                    }
                 }
-            }
-            Event(id,
-                results.first()[EVENTS.GUILD_ID],
-                results.first()[EVENTS.EVENT_DATE].toKotlinLocalDate(),
-                byTables.filterKeys { it != null }.map { e ->
-                    val rows = e.value
-                    PlaySession(
-                        e.key!!,
+                Event(id,
+                    results.first()[EVENTS.GUILD_ID],
+                    results.first()[EVENTS.EVENT_DATE].toKotlinLocalDate(),
+                    byTables.filterKeys { it != null }.map { e ->
+                        val rows = e.value
+                        PlaySession(
+                            e.key!!,
+                            rows.filter { it[pcs.ID] != null }.map { playerFromRecord(it, pcs) }.distinct()
+                        )
+                    },
+                    byTables[null]?.let { rows ->
                         rows.filter { it[pcs.ID] != null }.map { playerFromRecord(it, pcs) }.distinct()
-                    )
-                },
-                byTables[null]?.let { rows ->
-                    rows.filter { it[pcs.ID] != null }.map { playerFromRecord(it, pcs) }.distinct()
-                } ?: listOf()
-            )
-        }
+                    } ?: listOf()
+                )
+            }
     }
 }
 
@@ -222,7 +222,7 @@ private fun EventsRecord.asModel(): Event {
 }
 
 private fun Event.asRecord(): EventsRecord {
-    return EventsRecord(id, date.toJavaLocalDate(), guildId)
+    return EventsRecord(id, date.toJavaLocalDate(), null, guildId, null, null, null)
 }
 
 private fun TableHosting.asRecord(): HostedtablesRecord {

@@ -17,6 +17,7 @@ import org.codecranachan.roster.repo.addEventRegistration
 import org.codecranachan.roster.repo.addHostedTable
 import org.codecranachan.roster.repo.fetchEvent
 import org.codecranachan.roster.repo.fetchGuild
+import org.codecranachan.roster.repo.isGuildAdmin
 import org.codecranachan.roster.repo.isHostingForEvent
 import org.codecranachan.roster.repo.isRegisteredForEvent
 import org.codecranachan.roster.repo.removeEventRegistration
@@ -24,7 +25,6 @@ import org.codecranachan.roster.repo.removeHostedTable
 import org.codecranachan.roster.repo.updateEventRegistration
 
 class EventApi(private val repository: Repository) {
-    private val permissions = Permissions(repository)
 
     fun install(r: Route) {
         with(r) {
@@ -45,7 +45,7 @@ class EventApi(private val repository: Repository) {
                 } else {
                     val event = call.receive<Event>()
                     val guild = repository.fetchGuild(event.guildId)
-                    if (guild?.let { permissions.hasAdminRightsForGuild(userSession.playerId, it) } == true) {
+                    if (guild?.let { repository.isGuildAdmin(userSession.playerId, it) } == true) {
                         repository.addEvent(event)
                         call.respond(HttpStatusCode.Created)
                     } else {

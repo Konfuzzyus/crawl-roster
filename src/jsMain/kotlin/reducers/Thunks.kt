@@ -4,7 +4,6 @@ import api.addEvent
 import api.addEventRegistration
 import api.addLinkedGuild
 import api.addTableHosting
-import api.fetchDiscordAccountInfo
 import api.fetchEvents
 import api.fetchPlayerInfo
 import api.fetchServerSettings
@@ -28,8 +27,7 @@ private val scope = MainScope()
 fun updateUserId(): Thunk<ApplicationState> = { dispatch, _, _ ->
     scope.launch {
         val player = fetchPlayerInfo()
-        val discord = fetchDiscordAccountInfo()
-        dispatch(UserIdentified(discord, player))
+        dispatch(UserIdentified(player))
     }
 }
 
