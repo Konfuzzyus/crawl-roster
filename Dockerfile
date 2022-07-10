@@ -8,7 +8,7 @@ RUN \
 
 FROM eclipse-temurin:17-jre-alpine
 RUN mkdir /dist
-COPY --from=builder /home/gradle/project/build/distributions/crawl-roster-2022.7.2.tar /dist
+COPY --from=builder /home/gradle/project/build/distributions/crawl-roster-2022.7.3.tar /dist
 RUN tar -xf /dist/crawl-roster-2022.7.3.tar -C /
 RUN rm -rf /dist
 EXPOSE 8080
