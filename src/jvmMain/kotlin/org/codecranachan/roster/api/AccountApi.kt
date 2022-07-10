@@ -10,9 +10,11 @@ import org.codecranachan.roster.DiscordUserInfo
 import org.codecranachan.roster.PlayerDetails
 import org.codecranachan.roster.UserSession
 import org.codecranachan.roster.auth.discordOidProviderName
+import org.codecranachan.roster.discord.fetchUserGuildInformation
 import org.codecranachan.roster.repo.Repository
 import org.codecranachan.roster.repo.addPlayer
-import org.codecranachan.roster.repo.fetchPlayerByDiscordId
+import org.codecranachan.roster.repo.fetchPlayer
+import org.codecranachan.roster.repo.getGuildMemberships
 import org.codecranachan.roster.repo.updatePlayer
 
 class AccountApi(private val repository: Repository) {
@@ -25,9 +27,10 @@ class AccountApi(private val repository: Repository) {
                     // not logged in
                     call.respond(Unit)
                 } else {
-                    val player = repository.fetchPlayerByDiscordId(userSession.authInfo.user.id)
+                    val player = repository.fetchPlayer(userSession.playerId)
                         ?: repository.addPlayer(userSession.authInfo.user)
-                    call.respond(player)
+                    val memberships = repository.getGuildMemberships(userSession.playerId)
+                    call.respond(player.copy(memberships = memberships))
                 }
             }
 
@@ -49,7 +52,8 @@ class AccountApi(private val repository: Repository) {
                 if (userSession == null || userSession.providerName != discordOidProviderName) {
                     call.respond(HttpStatusCode.Unauthorized, "Not logged in")
                 } else {
-                    call.respond(DiscordUserInfo(userSession.authInfo.user, userSession.discordGuilds))
+                    val guilds = fetchUserGuildInformation(userSession.accessToken)
+                    call.respond(DiscordUserInfo(userSession.authInfo.user, guilds))
                 }
             }
         }

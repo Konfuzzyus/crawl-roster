@@ -1,5 +1,6 @@
 package components
 
+import components.editors.EventEditor
 import components.editors.PlayerEditor
 import components.editors.ServerEditor
 import components.editors.TableEditor
@@ -33,7 +34,8 @@ val RosterWidget = FC<Props> {
                     guild = currentGuild
                 }
             }
-            ServerEditor { }
+            if (userIdentity.isServerAdmin) ServerEditor { }
+            EventEditor { }
             TableEditor { }
             PlayerEditor { }
         }

@@ -21,7 +21,7 @@ external interface EventCalendarProps : Props {
 val EventCalendar = FC<EventCalendarProps> { props ->
     val store = useContext(StoreContext)
     var events by useState(store.state.calendar.events)
-    val account = store.state.identity.discord
+    val account = store.state.identity.player
 
     useEffectOnce {
         val unsubscribe = store.subscribe { events = store.state.calendar.events }
@@ -47,7 +47,7 @@ val EventCalendar = FC<EventCalendarProps> { props ->
                     }
                 }
             }
-            if (account?.hasAdminRightsFor(props.guild) == true) {
+            if (account?.isAdminOf(props.guild) == true) {
                 SubmitEvent {
                     guild = props.guild
                 }

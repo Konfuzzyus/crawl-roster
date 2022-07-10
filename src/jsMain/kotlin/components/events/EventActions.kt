@@ -14,6 +14,7 @@ import react.dom.events.MouseEventHandler
 import react.useContext
 import react.useEffectOnce
 import react.useState
+import reducers.EventEditorOpened
 import reducers.StoreContext
 import reducers.registerPlayer
 import reducers.registerTable
@@ -28,19 +29,19 @@ val EventActions = FC<EventActionsProps> { props ->
     val myStore = useContext(StoreContext)
     var anchor by useState<Element>()
 
-    var userIdentity by useState(myStore.state.identity)
+    var userIdentity by useState(myStore.state.identity.player)
     var currentGuild by useState(myStore.state.calendar.selectedGuild)
 
     useEffectOnce {
         val unsubscribe = myStore.subscribe {
-            userIdentity = myStore.state.identity
+            userIdentity = myStore.state.identity.player
             currentGuild = myStore.state.calendar.selectedGuild
         }
         cleanup(unsubscribe)
     }
 
-    val isRegistered = userIdentity.player?.let { props.targetEvent.isRegistered(it) } == true
-    val isHosting = userIdentity.player?.let { props.targetEvent.isHosting(it) } == true
+    val isRegistered = userIdentity?.let { props.targetEvent.isRegistered(it) } == true
+    val isHosting = userIdentity?.let { props.targetEvent.isHosting(it) } == true
 
     ButtonGroup {
         when {
@@ -65,6 +66,12 @@ val EventActions = FC<EventActionsProps> { props ->
                     onClick = { myStore.dispatch(registerTable(props.targetEvent)) }
                     +"Host Table"
                 }
+            }
+        }
+        if (currentGuild?.let { userIdentity?.isAdminOf(it) } == true) {
+            Button {
+                onClick = { myStore.dispatch(EventEditorOpened(props.targetEvent)) }
+                +"Edit Event"
             }
         }
     }

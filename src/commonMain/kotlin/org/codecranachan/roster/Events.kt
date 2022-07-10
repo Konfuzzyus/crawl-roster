@@ -3,6 +3,7 @@ package org.codecranachan.roster
 import com.benasher44.uuid.Uuid
 import com.benasher44.uuid.uuid4
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalTime
 import kotlinx.serialization.Serializable
 
 enum class TableState {
@@ -24,18 +25,24 @@ data class PlaySession(val table: Table, val players: List<Player>) {
     }
 
     fun isPlayer(player: Player): Boolean {
-        return players.contains(player)
+        return players.map { it.id }.contains(player.id)
     }
 
     fun isDungeonMaster(player: Player): Boolean {
-        return table.dungeonMaster == player
+        return table.dungeonMaster.id == player.id
     }
 
-    fun occupancyPercentage() : Int {
+    fun occupancyPercentage(): Int {
         return players.size * 100 / table.details.playerRange.last
     }
 
 }
+
+@Serializable
+data class EventDetails(
+    val time: LocalTime? = null,
+    val location: String? = null,
+)
 
 @Serializable
 data class Event(
@@ -45,10 +52,11 @@ data class Event(
     val guildId: Uuid,
     val date: LocalDate,
     val sessions: List<PlaySession> = listOf(),
-    val unseated: List<Player> = listOf()
+    val unseated: List<Player> = listOf(),
+    val details: EventDetails = EventDetails()
 ) {
     fun isRegistered(p: Player): Boolean {
-        return sessions.any { it.isPlayer(p) } || unseated.contains(p)
+        return sessions.any { it.isPlayer(p) } || unseated.map { it.id }.contains(p.id)
     }
 
     fun isHosting(p: Player): Boolean {
@@ -67,16 +75,20 @@ data class Event(
         return sessions.sumOf { it.table.details.playerRange.last }
     }
 
-    fun capacity(): Int {
+    fun unclaimedSeatCount(): Int {
+        return tableSpace() - seatedPlayerCount()
+    }
+
+    private fun remainingCapacity(): Int {
         return tableSpace() - playerCount()
     }
 
     fun openSeatCount(): Int {
-        return maxOf(0, capacity())
+        return maxOf(0, remainingCapacity())
     }
 
     fun waitingListLength(): Int {
-        return 0 - minOf(0, capacity())
+        return 0 - minOf(0, remainingCapacity())
     }
 
     fun getHostedTable(p: Player): Table? {

@@ -25,7 +25,7 @@ plugins {
 }
 
 group = "org.codecranachan"
-version = "2022.7.2"
+version = "2022.7.3"
 
 object Versions {
     const val kotlinReact = "18.2.0-pre.347"
@@ -86,6 +86,7 @@ kotlin {
             dependsOn(flyway)
             dependencies {
                 implementation("io.ktor:ktor-serialization-kotlinx-json:${Versions.ktor}")
+                implementation("io.ktor:ktor-serialization-kotlinx-cbor:${Versions.ktor}")
                 implementation("io.ktor:ktor-server-netty:${Versions.ktor}")
                 implementation("io.ktor:ktor-server-content-negotiation:${Versions.ktor}")
                 implementation("io.ktor:ktor-server-html-builder:${Versions.ktor}")

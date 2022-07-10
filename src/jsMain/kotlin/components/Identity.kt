@@ -73,13 +73,15 @@ val Identity = FC<Props> {
                 ListItemIcon { ManageAccounts {} }
                 ListItemText { +"Profile" }
             }
-            MenuItem {
-                onClick = {
-                    store.dispatch(ServerEditorOpened(store.state.server.settings))
-                    handleClose(it)
+            if (profile.isServerAdmin) {
+                MenuItem {
+                    onClick = {
+                        store.dispatch(ServerEditorOpened(store.state.server.settings))
+                        handleClose(it)
+                    }
+                    ListItemIcon { Settings {} }
+                    ListItemText { +"Server Settings" }
                 }
-                ListItemIcon { Settings {} }
-                ListItemText { +"Guild Settings" }
             }
             MenuItem {
                 onClick = {

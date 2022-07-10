@@ -54,6 +54,7 @@ fun HTML.index() {
 object Configuration {
     private val env = System.getenv()
 
+    private val adminAccounts = env["ROSTER_ADMIN_IDS"]?.split(",") ?: emptyList()
     val guildLimit = (env["ROSTER_GUILD_LIMIT"] ?: "3").toInt()
     val devMode = env["ROSTER_DEV_MODE"] == "true"
     val rootUrl = env["ROSTER_ROOT_URL"] ?: "http://localhost:8080"
@@ -63,6 +64,10 @@ object Configuration {
     private val sessionEncryptKey = env["ROSTER_SESSION_ENCRYPT_KEY"] ?: "79EBA26C10A7A6D8B22864DB05987369"
     private val sessionSignKey = env["ROSTER_SESSION_SIGN_KEY"] ?: "2FFBBF335042E92C09B988DF4BC040A5"
     val sessionTransformer = SessionTransportTransformerEncrypt(hex(sessionEncryptKey), hex(sessionSignKey))
+
+    fun isServerAdmin(discordId: String):Boolean {
+        return adminAccounts.isEmpty() || adminAccounts.contains(discordId)
+    }
 
     private fun getClientCreds(prefix: String): ClientCredentials? {
         val id = env["${prefix}_CLIENT_ID"]

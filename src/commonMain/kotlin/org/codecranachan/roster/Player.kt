@@ -5,12 +5,10 @@ import com.benasher44.uuid.uuid4
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class PlayerDetails (
+data class PlayerDetails(
     val name: String = "Anonymous",
     val languages: List<TableLanguage> = listOf(TableLanguage.English)
 )
-
-
 
 @Serializable
 data class Player(
@@ -18,5 +16,18 @@ data class Player(
     val id: Uuid = uuid4(),
     val discordHandle: String,
     val avatarUrl: String? = null,
-    val details: PlayerDetails = PlayerDetails()
+    val details: PlayerDetails = PlayerDetails(),
+    val memberships: List<GuildMembership> = emptyList(),
+    val isServerAdmin: Boolean = false
+) {
+    fun isAdminOf(guild: Guild): Boolean {
+        return memberships.firstOrNull { it.guild.id == guild.id }?.isAdmin ?: false
+    }
+}
+
+@Serializable
+data class GuildMembership(
+    val guild: Guild,
+    val isAdmin: Boolean,
+    val isDungeonMaster: Boolean
 )
