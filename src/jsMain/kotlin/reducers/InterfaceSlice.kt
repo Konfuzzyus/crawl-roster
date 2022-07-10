@@ -1,5 +1,6 @@
 package reducers
 
+import org.codecranachan.roster.Event
 import org.codecranachan.roster.Player
 import org.codecranachan.roster.Server
 import org.codecranachan.roster.Table
@@ -12,6 +13,7 @@ data class InterfaceState(
 data class ServerEditorOpened(val server: Server)
 data class PlayerEditorOpened(val player: Player)
 data class TableEditorOpened(val table: Table)
+data class EventEditorOpened(val event: Event)
 class EditorClosed
 
 val interfaceReducer: Reducer<ApplicationState> = { s: ApplicationState, a: Any ->
@@ -21,6 +23,7 @@ val interfaceReducer: Reducer<ApplicationState> = { s: ApplicationState, a: Any 
         is TableEditorOpened -> old.copy(editorTarget = a.table)
         is PlayerEditorOpened -> old.copy(editorTarget = a.player)
         is ServerEditorOpened -> old.copy(editorTarget = a.server)
+        is EventEditorOpened -> old.copy(editorTarget = a.event)
         else -> old
     }
     s.copy(ui = new)

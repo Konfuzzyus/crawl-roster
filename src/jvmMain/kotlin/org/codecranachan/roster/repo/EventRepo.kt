@@ -2,8 +2,11 @@ package org.codecranachan.roster.repo
 
 import com.benasher44.uuid.Uuid
 import kotlinx.datetime.toJavaLocalDate
+import kotlinx.datetime.toJavaLocalTime
 import kotlinx.datetime.toKotlinLocalDate
+import kotlinx.datetime.toKotlinLocalTime
 import org.codecranachan.roster.Event
+import org.codecranachan.roster.EventDetails
 import org.codecranachan.roster.EventRegistration
 import org.codecranachan.roster.PlaySession
 import org.codecranachan.roster.Player
@@ -87,7 +90,11 @@ fun Repository.fetchEventsWhere(condition: Condition): List<Event> {
                     },
                     byTables[null]?.let { rows ->
                         rows.filter { it[pcs.ID] != null }.map { playerFromRecord(it, pcs) }.distinct()
-                    } ?: listOf()
+                    } ?: listOf(),
+                    EventDetails(
+                        results.first()[EVENTS.EVENT_TIME]?.toKotlinLocalTime(),
+                        results.first()[EVENTS.LOCATION]
+                    )
                 )
             }
     }
@@ -104,6 +111,16 @@ fun Repository.fetchEvent(id: Uuid): Event? {
 fun Repository.addEvent(event: Event) {
     return withJooq {
         insertInto(EVENTS).set(event.asRecord()).execute()
+    }
+}
+
+fun Repository.updateEventDetails(eventId: Uuid, details: EventDetails) {
+    return withJooq {
+        update(EVENTS)
+            .set(EVENTS.LOCATION, details.location)
+            .set(EVENTS.EVENT_TIME, details.time?.toJavaLocalTime())
+            .where(EVENTS.ID.eq(eventId))
+            .execute()
     }
 }
 

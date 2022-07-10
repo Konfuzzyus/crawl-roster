@@ -11,14 +11,18 @@ import mui.material.Dialog
 import mui.material.DialogActions
 import mui.material.DialogContent
 import mui.material.DialogTitle
-import mui.material.Input
-import mui.material.InputLabel
+import mui.material.FormControlMargin
+import mui.material.TextField
 import org.codecranachan.roster.Event
 import org.codecranachan.roster.Guild
 import org.w3c.dom.HTMLInputElement
 import react.FC
 import react.Props
+import react.ReactNode
 import react.create
+import react.dom.events.ChangeEvent
+import react.dom.html.InputType
+import react.dom.onChange
 import react.useContext
 import react.useState
 import reducers.StoreContext
@@ -46,17 +50,15 @@ val SubmitEvent = FC<SubmitEventProps> { props ->
             +"Create new event"
         }
         DialogContent {
-            InputLabel {
-                +"Event Date"
-            }
-            Input {
-                autoFocus = true
-                type = "date"
+            TextField {
+                margin = FormControlMargin.dense
+                fullWidth = true
+                label = ReactNode("Event Date")
                 value = selectedDate.toString()
-                required = true
+                type = InputType.date
                 onChange = {
-                    val t = it.target as HTMLInputElement
-                    setSelectedDate(LocalDate.parse(t.value))
+                    val e = it.unsafeCast<ChangeEvent<HTMLInputElement>>()
+                    setSelectedDate(LocalDate.parse(e.target.value))
                 }
             }
         }

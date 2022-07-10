@@ -11,6 +11,7 @@ import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import org.codecranachan.roster.DiscordUserInfo
 import org.codecranachan.roster.Event
+import org.codecranachan.roster.EventDetails
 import org.codecranachan.roster.EventRegistration
 import org.codecranachan.roster.Guild
 import org.codecranachan.roster.Player
@@ -72,6 +73,13 @@ suspend fun addEvent(e: Event) {
     client.post("/api/v1/events") {
         contentType(ContentType.Application.Json)
         setBody(e)
+    }
+}
+
+suspend fun updateEvent(eventId: Uuid, details: EventDetails) {
+    client.patch("/api/v1/events/${eventId}") {
+        contentType(ContentType.Application.Json)
+        setBody(details)
     }
 }
 

@@ -19,7 +19,7 @@ val Seating = FC<SeatingProps> { props ->
             props.seatedPlayers.forEach {
                 Avatar {
                     src = it.avatarUrl
-                    +it.details.name
+                    +it.details.name.substring(0, 1)
                 }
             }
         } else {
@@ -27,7 +27,7 @@ val Seating = FC<SeatingProps> { props ->
                 Avatar {
                     if (idx < props.seatedPlayers.size) {
                         src = props.seatedPlayers[idx].avatarUrl
-                        +props.seatedPlayers[idx].details.name
+                        +props.seatedPlayers[idx].details.name.substring(0, 1)
                     } else {
                         if (idx < seatRange.first) {
                             mui.icons.material.PriorityHigh {}

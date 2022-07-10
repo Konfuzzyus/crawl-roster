@@ -43,8 +43,7 @@ external interface GuildListEntryProps : Props {
 val GuildListEntry = FC<GuildListEntryProps> { props ->
     val store = useContext(StoreContext)
     val isLinked = props.attunedGuilds.any { props.guild.id == it.discordId }
-    val isLinkable = props.attunedGuilds.size < props.guildLimit &&
-            (props.guild.isAdmin() || props.guild.owner) && !isLinked
+    val isLinkable = props.attunedGuilds.size < props.guildLimit && !isLinked
 
     ListItem {
         ListItemButton {

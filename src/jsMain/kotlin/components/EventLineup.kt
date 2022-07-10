@@ -46,7 +46,7 @@ val EventLineup = FC<EventLineupProps> { props ->
                 PlayerRow {
                     me = props.me
                     players = props.event.unseated
-                    capacity = props.event.openSeatCount()
+                    capacity = props.event.unclaimedSeatCount()
                 }
             }
         }

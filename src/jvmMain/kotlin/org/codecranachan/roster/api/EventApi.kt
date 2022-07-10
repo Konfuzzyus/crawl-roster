@@ -8,6 +8,7 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.sessions.*
 import org.codecranachan.roster.Event
+import org.codecranachan.roster.EventDetails
 import org.codecranachan.roster.EventRegistration
 import org.codecranachan.roster.TableHosting
 import org.codecranachan.roster.UserSession
@@ -22,6 +23,7 @@ import org.codecranachan.roster.repo.isHostingForEvent
 import org.codecranachan.roster.repo.isRegisteredForEvent
 import org.codecranachan.roster.repo.removeEventRegistration
 import org.codecranachan.roster.repo.removeHostedTable
+import org.codecranachan.roster.repo.updateEventDetails
 import org.codecranachan.roster.repo.updateEventRegistration
 
 class EventApi(private val repository: Repository) {
@@ -45,11 +47,32 @@ class EventApi(private val repository: Repository) {
                 } else {
                     val event = call.receive<Event>()
                     val guild = repository.fetchGuild(event.guildId)
-                    if (guild?.let { repository.isGuildAdmin(userSession.playerId, it) } == true) {
+                    if (guild?.let { repository.isGuildAdmin(userSession.playerId, it.id) } == true) {
                         repository.addEvent(event)
                         call.respond(HttpStatusCode.Created)
                     } else {
                         call.respond(HttpStatusCode.Forbidden, "Only guild admins can create events")
+                    }
+                }
+            }
+
+            patch("/api/v1/events/{evtId}") {
+                val userSession = call.sessions.get<UserSession>()
+                if (userSession == null) {
+                    call.respond(HttpStatusCode.Unauthorized, "Not logged in")
+                } else {
+                    val evtId = Uuid.fromString(call.parameters["evtId"])
+                    val event = repository.fetchEvent(evtId)
+                    if (event == null) {
+                        call.respond(HttpStatusCode.NotFound)
+                    } else {
+                        if (repository.isGuildAdmin(userSession.playerId, event.guildId)) {
+                            val details = call.receive<EventDetails>()
+                            repository.updateEventDetails(evtId, details)
+                            call.respond(HttpStatusCode.Created)
+                        } else {
+                            call.respond(HttpStatusCode.Forbidden, "Only guild admins can create events")
+                        }
                     }
                 }
             }

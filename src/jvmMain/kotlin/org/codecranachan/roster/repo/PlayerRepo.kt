@@ -81,13 +81,13 @@ fun Repository.getGuildMemberships(playerId: Uuid): List<GuildMembership> {
     }
 }
 
-fun Repository.isGuildAdmin(playerId: Uuid, guild: Guild): Boolean {
+fun Repository.isGuildAdmin(playerId: Uuid, guildId: Uuid): Boolean {
     return withJooq {
         select(GUILDROLES.IS_ADMIN)
             .from(GUILDROLES)
             .where(
                 GUILDROLES.PLAYER_ID.eq(playerId),
-                GUILDROLES.GUILD_ID.eq(guild.id)
+                GUILDROLES.GUILD_ID.eq(guildId)
             )
             .fetchOne()?.value1() ?: false
     }

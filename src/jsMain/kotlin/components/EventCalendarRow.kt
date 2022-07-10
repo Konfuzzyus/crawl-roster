@@ -54,13 +54,22 @@ val EventCalendarBodyRow = FC<EventCalendarRowProps> { props ->
             }
         }
         TableCell {
-            Typography {
-                variant = TypographyVariant.h6
-                +event.getFormattedDate()
+            Stack {
+                direction = responsive(StackDirection.column)
+                Typography {
+                    variant = TypographyVariant.h6
+                    +event.getFormattedDate()
+                }
+                Typography {
+                    variant = TypographyVariant.caption
+                    val locationStr = event.details.location ?: ""
+                    val timeStr = event.details.time?.let { "at $it" } ?: ""
+                    +"$locationStr $timeStr"
+                }
             }
         }
         TableCell {
-            if (event.capacity() >= 0) {
+            if (event.openSeatCount() >= 0) {
                 +"${event.openSeatCount()} open seats"
             } else {
                 +"${event.waitingListLength()} on waiting list"

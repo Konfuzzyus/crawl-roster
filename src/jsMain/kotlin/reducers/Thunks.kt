@@ -9,6 +9,7 @@ import api.fetchPlayerInfo
 import api.fetchServerSettings
 import api.removeEventRegistration
 import api.removeTableHosting
+import api.updateEvent
 import api.updateEventRegistration
 import api.updatePlayer
 import api.updateTableHosting
@@ -16,6 +17,7 @@ import com.benasher44.uuid.Uuid
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
 import org.codecranachan.roster.Event
+import org.codecranachan.roster.EventDetails
 import org.codecranachan.roster.Guild
 import org.codecranachan.roster.PlayerDetails
 import org.codecranachan.roster.Table
@@ -135,6 +137,13 @@ fun updatePlayerDetails(details: PlayerDetails): Thunk<ApplicationState> = { dis
     scope.launch {
         updatePlayer(details)
         dispatch(updateUserId())
+        dispatch(updateEvents(getState().calendar.selectedGuild))
+    }
+}
+
+fun updateEventDetails(eventId: Uuid, details: EventDetails): Thunk<ApplicationState> = { dispatch, getState, _ ->
+    scope.launch {
+        updateEvent(eventId, details)
         dispatch(updateEvents(getState().calendar.selectedGuild))
     }
 }

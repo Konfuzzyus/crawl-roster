@@ -40,7 +40,7 @@ create table PlayerCharacters (
 create table Events (
     id UUID not null primary key,
     event_date DATE not null,
-    event_time TIME WITH TIME ZONE null,
+    event_time TIME null,
     guild_id UUID not null,
     name varchar(100) null,
     description varchar(3000) null,
