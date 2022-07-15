@@ -5,13 +5,13 @@ import com.benasher44.uuid.uuid4
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class Server(
+data class GuildRoster(
     val guildLimit : Int = 0,
-    val guilds: List<Guild> = emptyList()
+    val linkedGuilds: List<LinkedGuild> = emptyList()
 )
 
 @Serializable
-data class Guild(
+data class LinkedGuild(
     @Serializable(with = UuidSerializer::class)
     val id: Uuid = uuid4(),
     val name: String,

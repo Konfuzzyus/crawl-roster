@@ -30,7 +30,7 @@ data class DiscordUserInfo(
     val user: DiscordUser,
     val guilds: List<DiscordGuild>
 ) {
-    fun hasAdminRightsFor(guild: Guild): Boolean {
-        return guilds.filter { it.id == guild.discordId }.any { it.isAdmin() || it.owner }
+    fun hasAdminRightsFor(linkedGuild: LinkedGuild): Boolean {
+        return guilds.filter { it.id == linkedGuild.discordId }.any { it.isAdmin() || it.owner }
     }
 }

@@ -30,12 +30,12 @@ val EventActions = FC<EventActionsProps> { props ->
     var anchor by useState<Element>()
 
     var userIdentity by useState(myStore.state.identity.player)
-    var currentGuild by useState(myStore.state.calendar.selectedGuild)
+    var currentGuild by useState(myStore.state.calendar.selectedLinkedGuild)
 
     useEffectOnce {
         val unsubscribe = myStore.subscribe {
             userIdentity = myStore.state.identity.player
-            currentGuild = myStore.state.calendar.selectedGuild
+            currentGuild = myStore.state.calendar.selectedLinkedGuild
         }
         cleanup(unsubscribe)
     }
@@ -68,7 +68,7 @@ val EventActions = FC<EventActionsProps> { props ->
                 }
             }
         }
-        if (currentGuild?.let { userIdentity?.isAdminOf(it) } == true) {
+        if (currentGuild?.let { userIdentity?.isAdminOf(it.id) } == true) {
             Button {
                 onClick = { myStore.dispatch(EventEditorOpened(props.targetEvent)) }
                 +"Edit Event"

@@ -42,6 +42,7 @@ object Versions {
     const val logback = "1.2.11"
     const val uuid = "0.4.0"
     const val jose4j = "0.7.12"
+    const val discord4j = "3.2.2"
 }
 
 repositories {
@@ -85,6 +86,7 @@ kotlin {
         val jvmMain by getting {
             dependsOn(flyway)
             dependencies {
+                implementation("com.discord4j:discord4j-core:${Versions.discord4j}")
                 implementation("io.ktor:ktor-serialization-kotlinx-json:${Versions.ktor}")
                 implementation("io.ktor:ktor-serialization-kotlinx-cbor:${Versions.ktor}")
                 implementation("io.ktor:ktor-server-netty:${Versions.ktor}")

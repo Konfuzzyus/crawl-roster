@@ -124,3 +124,10 @@ data class TableHosting(
     @Serializable(with = UuidSerializer::class)
     val dungeonMasterId: Uuid
 )
+
+@Serializable
+data class EventCalendar(
+    @Serializable(with = UuidSerializer::class)
+    val linkedGuildId: Uuid,
+    val events: List<Event>
+)

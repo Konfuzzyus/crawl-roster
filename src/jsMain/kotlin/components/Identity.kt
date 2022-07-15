@@ -6,6 +6,7 @@ import mui.icons.material.Login
 import mui.icons.material.Logout
 import mui.icons.material.ManageAccounts
 import mui.icons.material.Settings
+import mui.icons.material.SmartToy
 import mui.material.Avatar
 import mui.material.Chip
 import mui.material.ChipVariant
@@ -84,15 +85,12 @@ val Identity = FC<Props> {
                 ListItemIcon { ManageAccounts {} }
                 ListItemText { +"Profile" }
             }
-            if (profile.isServerAdmin) {
-                MenuItem {
-                    onClick = {
-                        store.dispatch(ServerEditorOpened(store.state.server.settings))
-                        handleClose()
-                    }
-                    ListItemIcon { Settings {} }
-                    ListItemText { +"Server Settings" }
+            MenuItem {
+                onClick = {
+                    window.open("https://discord.com/api/oauth2/authorize?client_id=976931433903960074&scope=bot&permissions=326417522768", "_blank")
                 }
+                ListItemIcon { SmartToy {} }
+                ListItemText { +"Invite Crawl Butler" }
             }
             MenuItem {
                 onClick = {

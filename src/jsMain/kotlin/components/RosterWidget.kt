@@ -2,7 +2,6 @@ package components
 
 import components.editors.EventEditor
 import components.editors.PlayerEditor
-import components.editors.ServerEditor
 import components.editors.TableEditor
 import mui.material.Paper
 import react.FC
@@ -15,12 +14,12 @@ import reducers.StoreContext
 val RosterWidget = FC<Props> {
     val myStore = useContext(StoreContext)
     val (userIdentity, setUserIdentity) = useState(myStore.state.identity.player)
-    val (currentGuild, setCurrentGuild) = useState(myStore.state.calendar.selectedGuild)
+    val (currentGuild, setCurrentGuild) = useState(myStore.state.calendar.selectedLinkedGuild)
 
     useEffectOnce {
         val unsubscribe = myStore.subscribe {
             setUserIdentity(myStore.state.identity.player)
-            setCurrentGuild(myStore.state.calendar.selectedGuild)
+            setCurrentGuild(myStore.state.calendar.selectedLinkedGuild)
         }
         cleanup(unsubscribe)
     }
@@ -31,10 +30,9 @@ val RosterWidget = FC<Props> {
             GuildSelector { }
             if (currentGuild != null) {
                 EventCalendar {
-                    guild = currentGuild
+                    linkedGuild = currentGuild
                 }
             }
-            if (userIdentity.isServerAdmin) ServerEditor { }
             EventEditor { }
             TableEditor { }
             PlayerEditor { }

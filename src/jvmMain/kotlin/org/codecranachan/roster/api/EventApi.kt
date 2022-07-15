@@ -10,29 +10,17 @@ import io.ktor.server.sessions.*
 import org.codecranachan.roster.Event
 import org.codecranachan.roster.EventDetails
 import org.codecranachan.roster.EventRegistration
+import org.codecranachan.roster.RosterCore
 import org.codecranachan.roster.TableHosting
 import org.codecranachan.roster.UserSession
-import org.codecranachan.roster.repo.Repository
-import org.codecranachan.roster.repo.addEvent
-import org.codecranachan.roster.repo.addEventRegistration
-import org.codecranachan.roster.repo.addHostedTable
-import org.codecranachan.roster.repo.fetchEvent
-import org.codecranachan.roster.repo.fetchGuild
-import org.codecranachan.roster.repo.isGuildAdmin
-import org.codecranachan.roster.repo.isHostingForEvent
-import org.codecranachan.roster.repo.isRegisteredForEvent
-import org.codecranachan.roster.repo.removeEventRegistration
-import org.codecranachan.roster.repo.removeHostedTable
-import org.codecranachan.roster.repo.updateEventDetails
-import org.codecranachan.roster.repo.updateEventRegistration
 
-class EventApi(private val repository: Repository) {
+class EventApi(private val core: RosterCore) {
 
     fun install(r: Route) {
         with(r) {
             get("/api/v1/events/{id}") {
                 val id = Uuid.fromString(call.parameters["id"])
-                val event = repository.fetchEvent(id)
+                val event = core.eventCalendar.getEvent(id)
                 if (event == null) {
                     call.respond(HttpStatusCode.NotFound)
                 } else {
@@ -46,9 +34,8 @@ class EventApi(private val repository: Repository) {
                     call.respond(HttpStatusCode.Unauthorized, "Not logged in")
                 } else {
                     val event = call.receive<Event>()
-                    val guild = repository.fetchGuild(event.guildId)
-                    if (guild?.let { repository.isGuildAdmin(userSession.playerId, it.id) } == true) {
-                        repository.addEvent(event)
+                    if (core.playerRoster.isGuildAdmin(userSession.playerId, event.guildId)) {
+                        core.eventCalendar.addEvent(event.guildId, event)
                         call.respond(HttpStatusCode.Created)
                     } else {
                         call.respond(HttpStatusCode.Forbidden, "Only guild admins can create events")
@@ -62,16 +49,16 @@ class EventApi(private val repository: Repository) {
                     call.respond(HttpStatusCode.Unauthorized, "Not logged in")
                 } else {
                     val evtId = Uuid.fromString(call.parameters["evtId"])
-                    val event = repository.fetchEvent(evtId)
+                    val event = core.eventCalendar.getEvent(evtId)
                     if (event == null) {
                         call.respond(HttpStatusCode.NotFound)
                     } else {
-                        if (repository.isGuildAdmin(userSession.playerId, event.guildId)) {
+                        if (core.playerRoster.isGuildAdmin(userSession.playerId, event.guildId)) {
                             val details = call.receive<EventDetails>()
-                            repository.updateEventDetails(evtId, details)
+                            core.eventCalendar.updateEvent(evtId, details)
                             call.respond(HttpStatusCode.Created)
                         } else {
-                            call.respond(HttpStatusCode.Forbidden, "Only guild admins can create events")
+                            call.respond(HttpStatusCode.Forbidden, "Only guild admins can update events")
                         }
                     }
                 }
@@ -84,16 +71,8 @@ class EventApi(private val repository: Repository) {
                 } else {
                     val evtId = Uuid.fromString(call.parameters["evtId"])
                     val reg = call.receive<EventRegistration>()
-                    if (reg.playerId == userSession.playerId) {
-                        if (repository.isHostingForEvent(reg.playerId, evtId)) {
-                            call.respond(HttpStatusCode.Conflict, "Player is already hosting a table")
-                        } else {
-                            repository.addEventRegistration(EventRegistration(reg.id, evtId, reg.playerId, reg.tableId))
-                            call.respond(HttpStatusCode.Created)
-                        }
-                    } else {
-                        call.respond(HttpStatusCode.Forbidden, "You can sign up yourself")
-                    }
+                    core.eventCalendar.registerPlayer(evtId, userSession.playerId, reg.tableId)
+                    call.respond(HttpStatusCode.OK)
                 }
             }
 
@@ -106,7 +85,7 @@ class EventApi(private val repository: Repository) {
                     val plrId = Uuid.fromString(call.parameters["plrId"])
                     val reg = call.receive<EventRegistration>()
                     if (plrId == userSession.playerId) {
-                        repository.updateEventRegistration(evtId, plrId, reg.tableId)
+                        core.eventCalendar.updatePlayerRegistration(evtId, userSession.playerId, reg.tableId)
                         call.respond(HttpStatusCode.OK)
                     } else {
                         call.respond(HttpStatusCode.Forbidden, "You can only edit your own registrations")
@@ -122,7 +101,7 @@ class EventApi(private val repository: Repository) {
                     val evtId = Uuid.fromString(call.parameters["evtId"])
                     val plrId = Uuid.fromString(call.parameters["plrId"])
                     if (plrId == userSession.playerId) {
-                        repository.removeEventRegistration(evtId, plrId)
+                        core.eventCalendar.unregisterPlayer(evtId, plrId)
                         call.respond(HttpStatusCode.OK)
                     } else {
                         call.respond(HttpStatusCode.Forbidden, "You can only remove yourself from an event")
@@ -139,15 +118,12 @@ class EventApi(private val repository: Repository) {
                     val evtId = Uuid.fromString(call.parameters["evtId"])
                     val tbl = call.receive<TableHosting>()
                     if (tbl.dungeonMasterId == userSession.playerId) {
-                        if (repository.isRegisteredForEvent(tbl.dungeonMasterId, evtId)) {
-                            call.respond(HttpStatusCode.Conflict, "Player is already playing a character")
-                        } else {
-                            repository.addHostedTable(TableHosting(tbl.id, evtId, tbl.dungeonMasterId))
-                            call.respond(HttpStatusCode.Created)
-                        }
+                        core.eventCalendar.hostTable(TableHosting(tbl.id, evtId, tbl.dungeonMasterId))
+                        call.respond(HttpStatusCode.OK)
                     } else {
                         call.respond(HttpStatusCode.Forbidden, "You can only sign yourself up to DM")
                     }
+
                 }
             }
 
@@ -159,7 +135,7 @@ class EventApi(private val repository: Repository) {
                     val evtId = Uuid.fromString(call.parameters["evtId"])
                     val dmId = Uuid.fromString(call.parameters["dmId"])
                     if (dmId == userSession.playerId) {
-                        repository.removeHostedTable(evtId, dmId)
+                        core.eventCalendar.cancelTable(evtId, dmId)
                         call.respond(HttpStatusCode.OK)
                     } else {
                         call.respond(HttpStatusCode.Forbidden, "Only the DM can cancel a table")
