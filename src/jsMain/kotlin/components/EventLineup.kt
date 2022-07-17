@@ -84,10 +84,14 @@ val PlayerRow = FC<PlayerRowProps> { props ->
                 else -> {}
             }
             TableCell {
-                val p = if (props.me == player) "★" else ""
+                val p = if (props.me.id == player.id) "★" else ""
                 +"$p ${player.details.name} (${player.discordHandle})"
             }
-            TableCell { }
+            TableCell {
+                val langs = player.details.languages.joinToString(" ") { it.flag }
+                val tier = player.details.playTier.let { if (it == 0) "Beginner" else "Tier $it" }
+                +"$langs $tier"
+            }
             TableCell { }
         }
     }

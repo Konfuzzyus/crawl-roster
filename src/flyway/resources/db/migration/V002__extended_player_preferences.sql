@@ -1,0 +1,1 @@
+alter table Players add tier_preference integer not null default 0;

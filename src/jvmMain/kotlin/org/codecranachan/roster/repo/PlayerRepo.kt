@@ -34,7 +34,8 @@ fun Repository.addPlayer(discordIdentity: DiscordUser): Player {
             Repository.encodeLanguages(listOf(TableLanguage.English)),
             discordIdentity.id,
             discordIdentity.username,
-            discordIdentity.getAvatarUrl()
+            discordIdentity.getAvatarUrl(),
+            0
         )
         insertInto(PLAYERS).set(record).execute()
         record.asModel()
@@ -46,6 +47,7 @@ fun Repository.updatePlayer(id: Uuid, playerDetails: PlayerDetails) {
         selectFrom(PLAYERS).where(PLAYERS.ID.eq(id)).fetchSingle().apply {
             playerName = playerDetails.name
             languages = Repository.encodeLanguages(playerDetails.languages)
+            tierPreference = playerDetails.playTier
         }.store()
     }
 }
@@ -112,7 +114,8 @@ fun PlayersRecord.asModel(): Player {
         discordAvatar,
         PlayerDetails(
             playerName,
-            Repository.decodeLanguages(languages)
+            Repository.decodeLanguages(languages),
+            tierPreference
         ),
         isServerAdmin = Configuration.isServerAdmin(discordId)
     )

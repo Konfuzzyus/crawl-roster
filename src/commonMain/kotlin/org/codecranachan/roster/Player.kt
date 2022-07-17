@@ -7,7 +7,8 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class PlayerDetails(
     val name: String = "Anonymous",
-    val languages: List<TableLanguage> = listOf(TableLanguage.English)
+    val languages: List<TableLanguage> = listOf(TableLanguage.English),
+    val playTier: Int = 0
 )
 
 @Serializable

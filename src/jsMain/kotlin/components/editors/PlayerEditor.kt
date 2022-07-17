@@ -41,10 +41,12 @@ val PlayerEditor = FC<Props> {
 
     var name by useState("Anonymous")
     var languages by useState(arrayOf(TableLanguage.English))
+    var playTier by useState(0)
 
     fun setPlayer(player: Player) {
         name = player.details.name
         languages = player.details.languages.toTypedArray()
+        playTier = player.details.playTier
     }
 
     useEffectOnce {
@@ -84,7 +86,29 @@ val PlayerEditor = FC<Props> {
                         name = e.target.value
                     }
                 }
-
+                TextField {
+                    margin = FormControlMargin.dense
+                    fullWidth = true
+                    label = ReactNode("Play Tier")
+                    select = true
+                    value = playTier.toString()
+                    onChange = {
+                        val e = it.unsafeCast<ChangeEvent<HTMLInputElement>>()
+                        playTier = e.target.value.toInt()
+                    }
+                    MenuItem {
+                        key = "0"
+                        value = "0"
+                        +"Beginner"
+                    }
+                    (1..4).forEach {
+                        MenuItem {
+                            key = "$it"
+                            value = "$it"
+                            +"Tier $it"
+                        }
+                    }
+                }
                 FormControl {
                     margin = FormControlMargin.dense
                     fullWidth = true
@@ -137,7 +161,8 @@ val PlayerEditor = FC<Props> {
                         updatePlayerDetails(
                             PlayerDetails(
                                 name,
-                                languages.asList()
+                                languages.asList(),
+                                playTier
                             )
                         )
                     )

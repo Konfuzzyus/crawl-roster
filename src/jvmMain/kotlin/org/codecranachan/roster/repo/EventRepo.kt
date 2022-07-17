@@ -214,7 +214,8 @@ private fun playerFromRecord(r: Record, t: Players): Player {
         r[t.DISCORD_AVATAR],
         PlayerDetails(
             r[t.PLAYER_NAME],
-            Repository.decodeLanguages(r[t.LANGUAGES])
+            Repository.decodeLanguages(r[t.LANGUAGES]),
+            r[t.TIER_PREFERENCE]
         )
     )
 }
