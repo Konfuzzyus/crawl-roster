@@ -3,6 +3,8 @@ package org.codecranachan.roster.repo
 import Configuration
 import com.benasher44.uuid.Uuid
 import com.benasher44.uuid.uuid4
+import org.codecranachan.roster.Character
+import org.codecranachan.roster.CharacterClass
 import org.codecranachan.roster.DiscordUser
 import org.codecranachan.roster.Guild
 import org.codecranachan.roster.GuildMembership
@@ -11,7 +13,11 @@ import org.codecranachan.roster.PlayerDetails
 import org.codecranachan.roster.TableLanguage
 import org.codecranachan.roster.jooq.Tables.GUILDROLES
 import org.codecranachan.roster.jooq.Tables.GUILDS
+import org.codecranachan.roster.jooq.Tables.PLAYERCHARACTERCLASSES
+import org.codecranachan.roster.jooq.Tables.PLAYERCHARACTERS
 import org.codecranachan.roster.jooq.Tables.PLAYERS
+import org.codecranachan.roster.jooq.tables.records.PlayercharacterclassesRecord
+import org.codecranachan.roster.jooq.tables.records.PlayercharactersRecord
 import org.codecranachan.roster.jooq.tables.records.PlayersRecord
 
 fun Repository.fetchPlayer(playerId: Uuid): Player? {
@@ -35,7 +41,8 @@ fun Repository.addPlayer(discordIdentity: DiscordUser): Player {
             discordIdentity.id,
             discordIdentity.username,
             discordIdentity.getAvatarUrl(),
-            0
+            0,
+            null
         )
         insertInto(PLAYERS).set(record).execute()
         record.asModel()
@@ -48,6 +55,7 @@ fun Repository.updatePlayer(id: Uuid, playerDetails: PlayerDetails) {
             playerName = playerDetails.name
             languages = Repository.encodeLanguages(playerDetails.languages)
             tierPreference = playerDetails.playTier
+            characterPreference = playerDetails.preferredCharacter
         }.store()
     }
 }
@@ -107,6 +115,56 @@ fun Repository.isGuildDm(playerId: Uuid, guild: Guild): Boolean {
     }
 }
 
+fun Repository.addCharacter(playerId: Uuid, character: Character) {
+    val characterRecord = PlayercharactersRecord(
+        character.id,
+        playerId,
+        character.dndBeyondId,
+        character.name
+    )
+    val classRecords = character.classes.map {
+        PlayercharacterclassesRecord(
+            character.id,
+            it.level,
+            it.name
+        )
+    }
+
+    withJooq {
+        transaction { transactionConfig ->
+            characterRecord.attach(transactionConfig)
+            characterRecord.store()
+
+            val t = transactionConfig.dsl()
+            classRecords.forEach {
+                t.insertInto(PLAYERCHARACTERCLASSES).set(it).execute()
+            }
+        }
+    }
+}
+
+fun Repository.getPlayerCharacters(playerId: Uuid): List<Character> {
+    return withJooq {
+        select().from(PLAYERCHARACTERS).join(PLAYERCHARACTERCLASSES).onKey()
+            .where(PLAYERCHARACTERS.PLAYER_ID.eq(playerId))
+            .orderBy(PLAYERCHARACTERCLASSES.LEVEL.desc())
+            .fetchGroups(PLAYERCHARACTERS.ID)
+            .map { (id, records) ->
+                Character(
+                    id = id,
+                    dndBeyondId = records.first()[PLAYERCHARACTERS.DND_BEYOND_ID],
+                    name = records.first()[PLAYERCHARACTERS.CHARACTER_NAME],
+                    classes = records.map { record ->
+                        CharacterClass(
+                            record[PLAYERCHARACTERCLASSES.NAME],
+                            record[PLAYERCHARACTERCLASSES.LEVEL]
+                        )
+                    }
+                )
+            }
+    }
+}
+
 fun PlayersRecord.asModel(): Player {
     return Player(
         id,
@@ -115,7 +173,8 @@ fun PlayersRecord.asModel(): Player {
         PlayerDetails(
             playerName,
             Repository.decodeLanguages(languages),
-            tierPreference
+            tierPreference,
+            characterPreference
         ),
         isServerAdmin = Configuration.isServerAdmin(discordId)
     )

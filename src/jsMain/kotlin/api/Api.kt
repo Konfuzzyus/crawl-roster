@@ -9,6 +9,7 @@ import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
+import org.codecranachan.roster.Character
 import org.codecranachan.roster.DiscordUserInfo
 import org.codecranachan.roster.Event
 import org.codecranachan.roster.EventDetails
@@ -117,5 +118,12 @@ suspend fun updateTableHosting(id: Uuid, details: TableDetails) {
     client.patch("/api/v1/tables/${id}") {
         contentType(ContentType.Application.Json)
         setBody(details)
+    }
+}
+
+suspend fun addPlayerCharacter(character: Character) {
+    client.post("/api/v1/me/characters") {
+        contentType(ContentType.Application.Json)
+        setBody(character)
     }
 }

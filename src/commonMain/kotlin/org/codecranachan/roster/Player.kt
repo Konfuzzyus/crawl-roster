@@ -8,7 +8,9 @@ import kotlinx.serialization.Serializable
 data class PlayerDetails(
     val name: String = "Anonymous",
     val languages: List<TableLanguage> = listOf(TableLanguage.English),
-    val playTier: Int = 0
+    val playTier: Int = 0,
+    @Serializable(with = UuidSerializer::class)
+    val preferredCharacter: Uuid? = null
 )
 
 @Serializable
@@ -19,6 +21,7 @@ data class Player(
     val avatarUrl: String? = null,
     val details: PlayerDetails = PlayerDetails(),
     val memberships: List<GuildMembership> = emptyList(),
+    val characters: List<Character> = emptyList(),
     val isServerAdmin: Boolean = false
 ) {
     fun isAdminOf(guild: Guild): Boolean {

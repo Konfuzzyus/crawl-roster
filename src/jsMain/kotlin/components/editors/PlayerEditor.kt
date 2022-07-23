@@ -1,5 +1,8 @@
 package components.editors
 
+import com.benasher44.uuid.Uuid
+import com.benasher44.uuid.uuid4
+import com.benasher44.uuid.uuidFrom
 import mui.icons.material.Cancel
 import mui.icons.material.Save
 import mui.material.Button
@@ -17,6 +20,7 @@ import mui.material.Stack
 import mui.material.StackDirection
 import mui.material.TextField
 import mui.system.responsive
+import org.codecranachan.roster.Character
 import org.codecranachan.roster.Player
 import org.codecranachan.roster.PlayerDetails
 import org.codecranachan.roster.TableLanguage
@@ -38,15 +42,22 @@ import reducers.updatePlayerDetails
 val PlayerEditor = FC<Props> {
     val store = useContext(StoreContext)
     var isOpen by useState(false)
+    var importerIsOpen by useState(false)
 
+    var playerId by useState(uuid4())
     var name by useState("Anonymous")
     var languages by useState(arrayOf(TableLanguage.English))
     var playTier by useState(0)
+    var preferredCharacter by useState<Uuid?>(null)
+    var characters by useState(emptyList<Character>())
 
     fun setPlayer(player: Player) {
+        playerId = player.id
         name = player.details.name
         languages = player.details.languages.toTypedArray()
         playTier = player.details.playTier
+        preferredCharacter = player.details.preferredCharacter
+        characters = player.characters
     }
 
     useEffectOnce {
@@ -55,6 +66,7 @@ val PlayerEditor = FC<Props> {
             if (p is Player) {
                 isOpen = true
                 setPlayer(p)
+                characters = store.state.identity.player?.characters ?: emptyList()
             } else {
                 isOpen = false
             }
@@ -89,7 +101,7 @@ val PlayerEditor = FC<Props> {
                 TextField {
                     margin = FormControlMargin.dense
                     fullWidth = true
-                    label = ReactNode("Play Tier")
+                    label = ReactNode("Play Tier Preference")
                     select = true
                     value = playTier.toString()
                     onChange = {
@@ -97,13 +109,13 @@ val PlayerEditor = FC<Props> {
                         playTier = e.target.value.toInt()
                     }
                     MenuItem {
-                        key = "0"
+                        key = "Tier_0"
                         value = "0"
                         +"Beginner"
                     }
                     (1..4).forEach {
                         MenuItem {
-                            key = "$it"
+                            key = "Tier_$it"
                             value = "$it"
                             +"Tier $it"
                         }
@@ -137,12 +149,37 @@ val PlayerEditor = FC<Props> {
                         }
                         TableLanguage.values().forEach {
                             MenuItem {
-                                key = it.name
+                                key = it.short
                                 value = it.unsafeCast<Nothing?>()
                                 +"${it.flag} ${it.name}"
                             }
                         }
                     }
+                }
+                if (characters.isNotEmpty()) {
+                    TextField {
+                        margin = FormControlMargin.dense
+                        required = false
+                        fullWidth = true
+                        label = ReactNode("Preferred Character")
+                        select = true
+                        value = preferredCharacter?.toString() ?: ""
+                        onChange = {
+                            val e = it.unsafeCast<ChangeEvent<HTMLInputElement>>()
+                            preferredCharacter = uuidFrom(e.target.value)
+                        }
+                        characters.forEach {
+                            MenuItem {
+                                key = it.id.toString()
+                                value = it.id.toString()
+                                +"${it.name} - ${it.getClassDescription()}"
+                            }
+                        }
+                    }
+                }
+                Button {
+                    onClick = { importerIsOpen = true }
+                    +"Add Character"
                 }
             }
         }
@@ -162,7 +199,8 @@ val PlayerEditor = FC<Props> {
                             PlayerDetails(
                                 name,
                                 languages.asList(),
-                                playTier
+                                playTier,
+                                preferredCharacter
                             )
                         )
                     )
@@ -172,4 +210,11 @@ val PlayerEditor = FC<Props> {
             }
         }
     }
+
+    CharacterImporter {
+        open = importerIsOpen
+        onClose = { importerIsOpen = false }
+        id = playerId
+    }
+
 }
