@@ -155,7 +155,7 @@ val TableEditor = FC<Props> {
                         type = InputType.number
                         onChange = {
                             val e = it.unsafeCast<ChangeEvent<HTMLInputElement>>()
-                            val v = minOf(maxOf(e.target.value.toInt(), Boundaries.MIN_PLAYERS), maxPlayers)
+                            val v = toIntInRange(e.target.value, Boundaries.MIN_PLAYERS..maxPlayers)
                             setMinPlayers(v)
                         }
                     }
@@ -166,7 +166,7 @@ val TableEditor = FC<Props> {
                         type = InputType.number
                         onChange = {
                             val e = it.unsafeCast<ChangeEvent<HTMLInputElement>>()
-                            val v = minOf(maxOf(e.target.value.toInt(), minPlayers), Boundaries.MAX_PLAYERS)
+                            val v = toIntInRange(e.target.value, minPlayers..Boundaries.MAX_PLAYERS)
                             setMaxPlayers(v)
                         }
                     }
@@ -180,7 +180,7 @@ val TableEditor = FC<Props> {
                         type = InputType.number
                         onChange = {
                             val e = it.unsafeCast<ChangeEvent<HTMLInputElement>>()
-                            val v = minOf(maxOf(e.target.value.toInt(), Boundaries.MIN_LEVEL), maxLevel)
+                            val v = toIntInRange(e.target.value, Boundaries.MIN_LEVEL..maxLevel)
                             setMinLevel(v)
                         }
                     }
@@ -191,7 +191,7 @@ val TableEditor = FC<Props> {
                         type = InputType.number
                         onChange = {
                             val e = it.unsafeCast<ChangeEvent<HTMLInputElement>>()
-                            val v = minOf(maxOf(e.target.value.toInt(), minLevel), Boundaries.MAX_LEVEL)
+                            val v = toIntInRange(e.target.value, minLevel..Boundaries.MAX_LEVEL)
                             setMaxLevel(v)
                         }
                     }
@@ -229,3 +229,8 @@ val TableEditor = FC<Props> {
         }
     }
 }
+
+private fun toIntInRange(
+    value: String,
+    range: IntRange
+) = minOf(maxOf(value.toIntOrNull() ?: 1, range.first), range.last)
