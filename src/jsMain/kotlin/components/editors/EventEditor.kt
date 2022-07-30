@@ -95,7 +95,7 @@ val EventEditor = FC<Props> {
                     type = InputType.time
                     onChange = {
                         val e = it.unsafeCast<ChangeEvent<HTMLInputElement>>()
-                        if (e.target.value.isNullOrBlank()) {
+                        if (e.target.value.isBlank()) {
                             setEventTime(null)
                         } else {
                             setEventTime(LocalTime.parse(e.target.value))
