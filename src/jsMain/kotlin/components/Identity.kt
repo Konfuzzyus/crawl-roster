@@ -14,10 +14,12 @@ import mui.material.ListItemText
 import mui.material.Menu
 import mui.material.MenuItem
 import org.w3c.dom.Element
+import org.w3c.dom.HTMLDivElement
 import react.FC
 import react.Props
 import react.ReactNode
 import react.create
+import react.dom.events.MouseEvent
 import react.dom.events.MouseEventHandler
 import react.useContext
 import react.useEffect
@@ -37,7 +39,11 @@ val Identity = FC<Props> {
         cleanup(unsubscribe)
     }
 
-    val handleClose: MouseEventHandler<*> = { anchor = null }
+    val handleClose = { anchor = null }
+    val handleLogout: MouseEventHandler<*> = {
+        store.dispatch(UserLoggedOut())
+        handleClose()
+    }
 
     if (profile == null) {
         Chip {
@@ -57,6 +63,11 @@ val Identity = FC<Props> {
             label = ReactNode(profile.discordHandle)
             variant = ChipVariant.outlined
             onClick = { anchor = it.currentTarget }
+            onDelete = {
+                val a = it.unsafeCast<MouseEvent<HTMLDivElement, *>>()
+                anchor = a.currentTarget
+            }
+            deleteIcon = mui.icons.material.Menu.create()
         }
         Menu {
             open = anchor != null
@@ -68,7 +79,7 @@ val Identity = FC<Props> {
             MenuItem {
                 onClick = {
                     store.dispatch(PlayerEditorOpened(profile))
-                    handleClose(it)
+                    handleClose()
                 }
                 ListItemIcon { ManageAccounts {} }
                 ListItemText { +"Profile" }
@@ -77,7 +88,7 @@ val Identity = FC<Props> {
                 MenuItem {
                     onClick = {
                         store.dispatch(ServerEditorOpened(store.state.server.settings))
-                        handleClose(it)
+                        handleClose()
                     }
                     ListItemIcon { Settings {} }
                     ListItemText { +"Server Settings" }
@@ -91,10 +102,7 @@ val Identity = FC<Props> {
                 ListItemText { +"Report a Bug" }
             }
             MenuItem {
-                onClick = {
-                    store.dispatch(UserLoggedOut())
-                    handleClose(it)
-                }
+                onClick = handleLogout
                 ListItemIcon { Logout {} }
                 ListItemText { +"Logout" }
             }
