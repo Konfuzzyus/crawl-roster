@@ -69,7 +69,7 @@ val EventCalendarBodyRow = FC<EventCalendarRowProps> { props ->
             }
         }
         TableCell {
-            if (event.openSeatCount() >= 0) {
+            if (event.waitingListLength() <= 0) {
                 +"${event.openSeatCount()} open seats"
             } else {
                 +"${event.waitingListLength()} on waiting list"
