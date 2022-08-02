@@ -2,39 +2,48 @@ package org.codecranachan.roster.logic
 
 import com.benasher44.uuid.uuid4
 import discord4j.core.`object`.entity.Guild
+import org.codecranachan.roster.BotCoordinates
 import org.codecranachan.roster.GuildRoster
 import org.codecranachan.roster.LinkedGuild
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-class GuildRosterLogic(private val guildRepository: GuildRepository, private val linkedGuildLimit: Int) {
+class GuildRosterLogic(
+    private val guildRepository: GuildRepository,
+    private val linkedGuildLimit: Int,
+    private val botCoordinates: BotCoordinates?
+) {
     private val logger: Logger = LoggerFactory.getLogger(javaClass)
 
     fun get(): GuildRoster {
         return GuildRoster(
             linkedGuildLimit,
-            guildRepository.getLinkedGuilds()
+            guildRepository.getLinkedGuilds(),
+            botCoordinates
         )
     }
 
     /**
      * Links a discord guild with this server.
      */
-    fun link(discordGuild: Guild) {
+    fun link(discordGuild: Guild): LinkedGuild? {
         val guilds = guildRepository.getLinkedGuilds()
-        if (guilds.any { it.discordId == discordGuild.id.asString() }) {
+        val link = guilds.find { it.discordId == discordGuild.id.asString() }
+        return if (link != null) {
             logger.debug("Did not link guild ${discordGuild.name} to the server - already linked")
+            link
         } else if (guilds.size >= linkedGuildLimit) {
             logger.info("Did not link guild ${discordGuild.name} to the server - guild limit reached")
+            null
         } else {
-            guildRepository.addLinkedGuild(
-                LinkedGuild(
-                    uuid4(),
-                    discordGuild.name,
-                    discordGuild.id.asString()
-                )
+            val newLink = LinkedGuild(
+                uuid4(),
+                discordGuild.name,
+                discordGuild.id.asString()
             )
+            guildRepository.addLinkedGuild(newLink)
             logger.info("Guild ${discordGuild.name} has been linked to the server")
+            newLink
         }
     }
 }

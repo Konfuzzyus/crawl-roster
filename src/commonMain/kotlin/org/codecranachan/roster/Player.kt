@@ -28,6 +28,10 @@ data class Player(
     fun isDungeonMasterOf(guildId: Uuid): Boolean {
         return memberships.firstOrNull { it.linkedGuild.id == guildId }?.isDungeonMaster ?: false
     }
+
+    fun asDiscordMention(): String {
+        return "<@${discordId}> ${details.name}"
+    }
 }
 
 @Serializable

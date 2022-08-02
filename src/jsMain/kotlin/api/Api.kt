@@ -9,7 +9,6 @@ import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
-import org.codecranachan.roster.DiscordUserInfo
 import org.codecranachan.roster.Event
 import org.codecranachan.roster.EventDetails
 import org.codecranachan.roster.EventRegistration
@@ -37,14 +36,6 @@ suspend fun updatePlayer(details: PlayerDetails) {
 suspend fun fetchPlayerInfo(): Player? {
     return try {
         client.get("/api/v1/me").body()
-    } catch (e: Exception) {
-        null
-    }
-}
-
-suspend fun fetchDiscordAccountInfo(): DiscordUserInfo? {
-    return try {
-        client.get("/api/v1/me/discord").body()
     } catch (e: Exception) {
         null
     }

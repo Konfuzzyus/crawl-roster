@@ -5,7 +5,6 @@ import mui.icons.material.BugReport
 import mui.icons.material.Login
 import mui.icons.material.Logout
 import mui.icons.material.ManageAccounts
-import mui.icons.material.Settings
 import mui.icons.material.SmartToy
 import mui.material.Avatar
 import mui.material.Chip
@@ -26,17 +25,20 @@ import react.useContext
 import react.useEffect
 import react.useState
 import reducers.PlayerEditorOpened
-import reducers.ServerEditorOpened
 import reducers.StoreContext
 import reducers.UserLoggedOut
 
 val Identity = FC<Props> {
     val store = useContext(StoreContext)
     val (profile, setProfile) = useState(store.state.identity.player)
+    val (botCoordinates, setBotCoordinates) = useState(store.state.server.settings.botCoordinates)
     var anchor by useState<Element>()
 
     useEffect {
-        val unsubscribe = store.subscribe { setProfile(store.state.identity.player) }
+        val unsubscribe = store.subscribe {
+            setProfile(store.state.identity.player)
+            setBotCoordinates(store.state.server.settings.botCoordinates)
+        }
         cleanup(unsubscribe)
     }
 
@@ -85,12 +87,14 @@ val Identity = FC<Props> {
                 ListItemIcon { ManageAccounts {} }
                 ListItemText { +"Profile" }
             }
-            MenuItem {
-                onClick = {
-                    window.open("https://discord.com/api/oauth2/authorize?client_id=976931433903960074&scope=bot&permissions=326417522768", "_blank")
+            if (botCoordinates != null) {
+                MenuItem {
+                    onClick = {
+                        window.open(botCoordinates.getInviteLink(), "_blank")
+                    }
+                    ListItemIcon { SmartToy {} }
+                    ListItemText { +"Invite Crawl Butler" }
                 }
-                ListItemIcon { SmartToy {} }
-                ListItemText { +"Invite Crawl Butler" }
             }
             MenuItem {
                 onClick = {

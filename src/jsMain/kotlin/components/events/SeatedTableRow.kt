@@ -17,8 +17,8 @@ import mui.material.Typography
 import mui.material.styles.TypographyVariant
 import mui.system.responsive
 import org.codecranachan.roster.Event
-import org.codecranachan.roster.PlaySession
 import org.codecranachan.roster.Player
+import org.codecranachan.roster.Table
 import org.codecranachan.roster.TableState
 import react.FC
 import react.Props
@@ -32,17 +32,16 @@ import reducers.joinTable
 external interface SeatedTableRowProps : Props {
     var event: Event
     var me: Player
-    var occupancy: PlaySession
+    var occupancy: Table
 }
 
 val SeatedTableRow = FC<SeatedTableRowProps> { props ->
     val store = useContext(StoreContext)
-    val players = props.occupancy.players
-    val table = props.occupancy.table
+    val table = props.occupancy
 
     val isRegistered = props.event.isRegistered(props.me)
-    val isHost = props.me.id == table.dungeonMaster.id
-    val isPlayer = players.map(Player::id).contains(props.me.id)
+    val isHost = table.isDungeonMaster(props.me)
+    val isPlayer = table.isPlayer(props.me)
 
     TableRow {
         TableCell {
@@ -101,7 +100,7 @@ val SeatedTableRow = FC<SeatedTableRowProps> { props ->
         }
         TableCell {
             Seating {
-                seatedPlayers = players
+                seatedPlayers = table.players
             }
         }
     }

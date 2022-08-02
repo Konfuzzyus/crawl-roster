@@ -42,12 +42,14 @@ object Versions {
     const val logback = "1.2.11"
     const val uuid = "0.4.0"
     const val jose4j = "0.7.12"
-    const val discord4j = "3.2.2"
+    const val discord4j = "3.3.0-SNAPSHOT"
+    const val reactor = "3.4.12"
 }
 
 repositories {
     mavenCentral()
     maven("https://maven.pkg.jetbrains.space/public/p/kotlinx-html/maven")
+    maven("https://oss.sonatype.org/content/repositories/snapshots")
 }
 
 kotlin {
@@ -86,6 +88,7 @@ kotlin {
         val jvmMain by getting {
             dependsOn(flyway)
             dependencies {
+                implementation("io.projectreactor:reactor-core:${Versions.reactor}")
                 implementation("com.discord4j:discord4j-core:${Versions.discord4j}")
                 implementation("io.ktor:ktor-serialization-kotlinx-json:${Versions.ktor}")
                 implementation("io.ktor:ktor-serialization-kotlinx-cbor:${Versions.ktor}")

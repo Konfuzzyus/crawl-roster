@@ -7,7 +7,7 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.sessions.*
 import org.codecranachan.roster.PlayerDetails
-import org.codecranachan.roster.RosterCore
+import org.codecranachan.roster.logic.RosterCore
 import org.codecranachan.roster.UserSession
 
 class PlayerApi(private val core: RosterCore) {

@@ -8,7 +8,6 @@ import kotlinx.datetime.toKotlinLocalTime
 import org.codecranachan.roster.Event
 import org.codecranachan.roster.EventDetails
 import org.codecranachan.roster.EventRegistration
-import org.codecranachan.roster.PlaySession
 import org.codecranachan.roster.Player
 import org.codecranachan.roster.PlayerDetails
 import org.codecranachan.roster.Table
@@ -56,6 +55,15 @@ class EventRepositoryImpl(private val base: Repository) : EventRepository {
         }
     }
 
+    override fun getRegistration(eventId: Uuid, playerId: Uuid): EventRegistration? {
+        return base.withJooq {
+            selectFrom(EVENTREGISTRATIONS).where(
+                EVENTREGISTRATIONS.EVENT_ID.eq(eventId),
+                EVENTREGISTRATIONS.PLAYER_ID.eq(playerId)
+            ).fetchOne()?.let { it.asModel() }
+        }
+    }
+
     override fun addRegistration(registration: EventRegistration) {
         base.withJooq {
             insertInto(EVENTREGISTRATIONS).set(registration.asRecord()).execute()
@@ -93,6 +101,22 @@ class EventRepositoryImpl(private val base: Repository) : EventRepository {
         }
     }
 
+    override fun getHosting(eventId: Uuid, dmId: Uuid): Table? {
+        return base.withJooq {
+            select().from(HOSTEDTABLES).join(PLAYERS).on(HOSTEDTABLES.DUNGEON_MASTER_ID.eq(PLAYERS.ID))
+                .where(
+                    HOSTEDTABLES.EVENT_ID.eq(eventId),
+                    HOSTEDTABLES.DUNGEON_MASTER_ID.eq(dmId)
+                ).fetchOne()?.map {
+                    Table(
+                        it[HOSTEDTABLES.ID],
+                        playerFromRecord(it, PLAYERS),
+                        tableDetailsFromRecord(it, HOSTEDTABLES)
+                    )
+                }
+        }
+    }
+
     override fun addHosting(hosting: TableHosting) {
         return base.withJooq {
             insertInto(HOSTEDTABLES).set(hosting.asRecord()).execute()
@@ -114,11 +138,14 @@ class EventRepositoryImpl(private val base: Repository) : EventRepository {
         }
     }
 
-    override fun deleteHosting(eventId: Uuid, dmId: Uuid) {
+    override fun deleteHosting(tableId: Uuid) {
         return base.withJooq {
+            update(EVENTREGISTRATIONS)
+                .setNull(EVENTREGISTRATIONS.TABLE_ID)
+                .where(EVENTREGISTRATIONS.TABLE_ID.eq(tableId))
+                .execute()
             deleteFrom(HOSTEDTABLES).where(
-                HOSTEDTABLES.EVENT_ID.eq(eventId),
-                HOSTEDTABLES.DUNGEON_MASTER_ID.eq(dmId),
+                HOSTEDTABLES.ID.eq(tableId)
             ).execute()
         }
     }
@@ -170,9 +197,8 @@ class EventRepositoryImpl(private val base: Repository) : EventRepository {
                         results.first()[EVENTS.EVENT_DATE].toKotlinLocalDate(),
                         byTables.filterKeys { it != null }.map { e ->
                             val rows = e.value
-                            PlaySession(
-                                e.key!!,
-                                rows.filter { it[pcs.ID] != null }.map { playerFromRecord(it, pcs) }.distinct()
+                            e.key!!.copy(players =
+                            rows.filter { it[pcs.ID] != null }.map { playerFromRecord(it, pcs) }.distinct()
                             )
                         },
                         byTables[null]?.let { rows ->
@@ -226,6 +252,10 @@ class EventRepositoryImpl(private val base: Repository) : EventRepository {
             r[t.MIN_PLAYERS]..r[t.MAX_PLAYERS],
             r[t.MIN_CHARACTER_LEVEL]..r[t.MAX_CHARACTER_LEVEL]
         )
+    }
+
+    private fun EventregistrationsRecord.asModel(): EventRegistration {
+        return EventRegistration(id, eventId, playerId, tableId)
     }
 
     private fun EventRegistration.asRecord(): EventregistrationsRecord {

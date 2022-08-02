@@ -18,14 +18,16 @@ interface EventRepository {
     fun isDungeonMasterForEvent(playerId: Uuid, eventId: Uuid): Boolean
 
     // todo: clean up interface signature mess
+    fun getRegistration(eventId: Uuid, playerId: Uuid): EventRegistration?
     fun addRegistration(registration: EventRegistration)
     fun updateRegistration(eventId: Uuid, playerId: Uuid, tableId: Uuid?)
     fun deleteRegistration(eventId: Uuid, playerId: Uuid)
 
     // todo: clean up interface signature mess
     fun getHosting(tableId: Uuid): Table?
+    fun getHosting(eventId: Uuid, dmId: Uuid): Table?
     fun addHosting(hosting: TableHosting)
     fun updateHosting(tableId: Uuid, details: TableDetails)
-    fun deleteHosting(eventId: Uuid, dmId: Uuid)
+    fun deleteHosting(tableId: Uuid)
 
 }

@@ -80,7 +80,7 @@ val EventCalendarBodyRow = FC<EventCalendarRowProps> { props ->
             Stack {
                 direction = responsive(StackDirection.row)
                 spacing = responsive(2)
-                event.sessions.forEach {
+                event.tables.forEach {
                     PlayTableIndicator {
                         session = it
                     }

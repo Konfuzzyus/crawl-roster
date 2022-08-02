@@ -10,7 +10,7 @@ import io.ktor.server.sessions.*
 import org.codecranachan.roster.Event
 import org.codecranachan.roster.EventDetails
 import org.codecranachan.roster.EventRegistration
-import org.codecranachan.roster.RosterCore
+import org.codecranachan.roster.logic.RosterCore
 import org.codecranachan.roster.TableHosting
 import org.codecranachan.roster.UserSession
 

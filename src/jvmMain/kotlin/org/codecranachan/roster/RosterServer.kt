@@ -26,7 +26,7 @@ import kotlinx.html.title
 import kotlinx.serialization.json.Json
 import org.codecranachan.roster.AuthenticationSettings
 import org.codecranachan.roster.Configuration
-import org.codecranachan.roster.RosterCore
+import org.codecranachan.roster.logic.RosterCore
 import org.codecranachan.roster.api.EventApi
 import org.codecranachan.roster.api.GuildApi
 import org.codecranachan.roster.api.PlayerApi

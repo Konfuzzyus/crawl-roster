@@ -84,16 +84,16 @@ val EventActions = FC<EventActionsProps> { props ->
         }
         onClose = handleClose
 
-        props.targetEvent.sessions.forEach {
+        props.targetEvent.tables.forEach {
             MenuItem {
                 if (it.getState() == TableState.Full) {
                     disabled = true
                 }
                 onClick = { e ->
-                    myStore.dispatch(registerPlayer(props.targetEvent, it.table))
+                    myStore.dispatch(registerPlayer(props.targetEvent, it))
                     handleClose(e)
                 }
-                ListItemText { +"Join ${it.table.getName()}" }
+                ListItemText { +"Join ${it.getName()}" }
             }
         }
 

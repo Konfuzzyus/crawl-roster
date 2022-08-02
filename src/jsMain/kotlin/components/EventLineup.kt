@@ -26,7 +26,7 @@ val EventLineup = FC<EventLineupProps> { props ->
         Table {
             size = Size.small
             TableBody {
-                props.event.sessions.forEach { session ->
+                props.event.tables.forEach { session ->
                     SeatedTableRow {
                         event = props.event
                         me = props.me
@@ -35,7 +35,7 @@ val EventLineup = FC<EventLineupProps> { props ->
                     PlayerRow {
                         me = props.me
                         players = session.players
-                        capacity = session.table.details.playerRange.last
+                        capacity = session.details.playerRange.last
                     }
                 }
 
