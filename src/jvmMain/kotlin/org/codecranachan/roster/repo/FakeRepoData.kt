@@ -34,7 +34,7 @@ class FakeRepoData(val repo: Repository) {
         // Make some tables
         val tables = (0..3).map {
             try {
-                val h = makeTableHosting(it, events[it % events.size], players[it % players.size])
+                val h = makeTableHosting(it, events[it % (events.size-1)], players[it % players.size])
                 repo.addHostedTable(h)
                 h
             } catch (e: Exception) {
