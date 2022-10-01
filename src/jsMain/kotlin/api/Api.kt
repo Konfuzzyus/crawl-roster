@@ -9,14 +9,13 @@ import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
-import org.codecranachan.roster.DiscordUserInfo
 import org.codecranachan.roster.Event
 import org.codecranachan.roster.EventDetails
 import org.codecranachan.roster.EventRegistration
-import org.codecranachan.roster.Guild
+import org.codecranachan.roster.GuildRoster
+import org.codecranachan.roster.LinkedGuild
 import org.codecranachan.roster.Player
 import org.codecranachan.roster.PlayerDetails
-import org.codecranachan.roster.Server
 import org.codecranachan.roster.Table
 import org.codecranachan.roster.TableDetails
 import org.codecranachan.roster.TableHosting
@@ -42,31 +41,16 @@ suspend fun fetchPlayerInfo(): Player? {
     }
 }
 
-suspend fun fetchDiscordAccountInfo(): DiscordUserInfo? {
-    return try {
-        client.get("/api/v1/me/discord").body()
-    } catch (e: Exception) {
-        null
-    }
-}
-
-suspend fun fetchServerSettings(): Server {
+suspend fun fetchServerSettings(): GuildRoster {
     return try {
         client.get("/api/v1/guilds").body()
     } catch (e: Exception) {
-        Server(0, emptyList())
+        GuildRoster(0, emptyList())
     }
 }
 
-suspend fun addLinkedGuild(guild: Guild) {
-    client.post("/api/v1/guilds") {
-        contentType(ContentType.Application.Json)
-        setBody(guild)
-    }
-}
-
-suspend fun fetchEvents(guild: Guild): List<Event> {
-    return client.get("/api/v1/guilds/${guild.id}/events").body()
+suspend fun fetchEvents(linkedGuild: LinkedGuild): List<Event> {
+    return client.get("/api/v1/guilds/${linkedGuild.id}/events").body()
 }
 
 suspend fun addEvent(e: Event) {

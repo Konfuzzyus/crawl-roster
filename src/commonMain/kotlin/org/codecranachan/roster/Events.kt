@@ -6,38 +6,6 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
 import kotlinx.serialization.Serializable
 
-enum class TableState {
-    Full,
-    Ready,
-    Understrength,
-    Empty
-}
-
-@Serializable
-data class PlaySession(val table: Table, val players: List<Player>) {
-    fun getState(): TableState {
-        return when {
-            players.isEmpty() -> TableState.Empty
-            players.size >= table.details.playerRange.last -> TableState.Full
-            players.size <= table.details.playerRange.first -> TableState.Understrength
-            else -> TableState.Ready
-        }
-    }
-
-    fun isPlayer(player: Player): Boolean {
-        return players.map { it.id }.contains(player.id)
-    }
-
-    fun isDungeonMaster(player: Player): Boolean {
-        return table.dungeonMaster.id == player.id
-    }
-
-    fun occupancyPercentage(): Int {
-        return players.size * 100 / table.details.playerRange.last
-    }
-
-}
-
 @Serializable
 data class EventDetails(
     val time: LocalTime? = null,
@@ -51,20 +19,20 @@ data class Event(
     @Serializable(with = UuidSerializer::class)
     val guildId: Uuid,
     val date: LocalDate,
-    val sessions: List<PlaySession> = listOf(),
+    val tables: List<Table> = listOf(),
     val unseated: List<Player> = listOf(),
     val details: EventDetails = EventDetails()
 ) {
     fun isRegistered(p: Player): Boolean {
-        return sessions.any { it.isPlayer(p) } || unseated.map { it.id }.contains(p.id)
+        return tables.any { it.isPlayer(p) } || unseated.map { it.id }.contains(p.id)
     }
 
     fun isHosting(p: Player): Boolean {
-        return sessions.any { it.isDungeonMaster(p) }
+        return tables.any { it.isDungeonMaster(p) }
     }
 
     fun seatedPlayerCount(): Int {
-        return sessions.sumOf { it.players.size }
+        return tables.sumOf { it.players.size }
     }
 
     fun playerCount(): Int {
@@ -72,7 +40,7 @@ data class Event(
     }
 
     fun tableSpace(): Int {
-        return sessions.sumOf { it.table.details.playerRange.last }
+        return tables.sumOf { it.details.playerRange.last }
     }
 
     fun unclaimedSeatCount(): Int {
@@ -92,13 +60,25 @@ data class Event(
     }
 
     fun getHostedTable(p: Player): Table? {
-        return sessions.map { it.table }.find { it.dungeonMaster.id == p.id }
+        return getHostedTable(p.id)
+    }
+
+    fun getHostedTable(dmId: Uuid): Table? {
+        return tables.find { it.dungeonMaster.id == dmId }
     }
 
     fun getFormattedDate(): String {
         return "${date.dayOfWeek.name.substring(0..2)} - ${date.dayOfMonth}. ${
             date.month.name.lowercase().replaceFirstChar { it.titlecase() }
         }, ${date.year}"
+    }
+
+    fun getEligibleForSeat(): List<Player> {
+        return unseated.take(openSeatCount())
+    }
+
+    fun getWaitingList(): List<Player> {
+        return unseated.takeLast(waitingListLength())
     }
 
 }
@@ -123,4 +103,11 @@ data class TableHosting(
     val eventId: Uuid,
     @Serializable(with = UuidSerializer::class)
     val dungeonMasterId: Uuid
+)
+
+@Serializable
+data class EventCalendar(
+    @Serializable(with = UuidSerializer::class)
+    val linkedGuildId: Uuid,
+    val events: List<Event>
 )

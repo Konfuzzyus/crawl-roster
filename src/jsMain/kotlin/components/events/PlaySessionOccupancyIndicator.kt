@@ -23,7 +23,7 @@ import mui.material.Tooltip
 import mui.material.Typography
 import mui.material.styles.TypographyVariant
 import mui.system.sx
-import org.codecranachan.roster.PlaySession
+import org.codecranachan.roster.Table
 import react.FC
 import react.Props
 import react.ReactNode
@@ -31,12 +31,12 @@ import react.useContext
 import theme.ThemeContext
 
 external interface PlaySessionOccupancyIndicatorProps : Props {
-    var session: PlaySession
+    var session: Table
 }
 
 val PlayTableIndicator = FC<PlaySessionOccupancyIndicatorProps> { props ->
     val theme by useContext(ThemeContext)
-    val table = props.session.table
+    val table = props.session
     Badge {
         anchorOrigin = object : BadgeOrigin {
             override var horizontal = BadgeOriginHorizontal.left
@@ -44,7 +44,7 @@ val PlayTableIndicator = FC<PlaySessionOccupancyIndicatorProps> { props ->
         }
         variant = BadgeVariant.standard
         color = BadgeColor.default
-        badgeContent = react.ReactNode(table.details.language.flag)
+        badgeContent = ReactNode(table.details.language.flag)
         overlap = BadgeOverlap.circular
 
         Tooltip {
@@ -96,7 +96,7 @@ val PlayTableIndicator = FC<PlaySessionOccupancyIndicatorProps> { props ->
                         justifyContent = JustifyContent.center
                     }
                     variant = TypographyVariant.caption
-                    +"${props.session.players.size}/${props.session.table.details.playerRange.last}"
+                    +"${props.session.players.size}/${props.session.details.playerRange.last}"
                 }
             }
         }

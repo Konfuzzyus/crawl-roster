@@ -7,13 +7,11 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.sessions.*
+import org.codecranachan.roster.logic.RosterCore
 import org.codecranachan.roster.TableDetails
 import org.codecranachan.roster.UserSession
-import org.codecranachan.roster.repo.Repository
-import org.codecranachan.roster.repo.fetchTable
-import org.codecranachan.roster.repo.updateHostedTable
 
-class TableApi(private val repository: Repository) {
+class TableApi(private val core: RosterCore) {
 
     fun install(r: Route) {
         with(r) {
@@ -24,9 +22,9 @@ class TableApi(private val repository: Repository) {
                 } else {
                     val id = Uuid.fromString(call.parameters["id"])
                     val details = call.receive<TableDetails>()
-                    val table = repository.fetchTable(id)
+                    val table = core.eventCalendar.getTable(id)
                     if (table?.let { it.dungeonMaster.id } == userSession.playerId) {
-                        repository.updateHostedTable(id, details)
+                        core.eventCalendar.updateTable(id, details)
                         call.respond(HttpStatusCode.OK)
                     } else {
                         call.respond(HttpStatusCode.Forbidden, "Only the DM can update table details")

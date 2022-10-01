@@ -15,20 +15,28 @@ data class PlayerDetails(
 data class Player(
     @Serializable(with = UuidSerializer::class)
     val id: Uuid = uuid4(),
+    val discordId: String,
     val discordHandle: String,
     val avatarUrl: String? = null,
     val details: PlayerDetails = PlayerDetails(),
-    val memberships: List<GuildMembership> = emptyList(),
-    val isServerAdmin: Boolean = false
+    val memberships: List<GuildMembership> = emptyList()
 ) {
-    fun isAdminOf(guild: Guild): Boolean {
-        return memberships.firstOrNull { it.guild.id == guild.id }?.isAdmin ?: false
+    fun isAdminOf(guildId: Uuid): Boolean {
+        return memberships.firstOrNull { it.linkedGuild.id == guildId }?.isAdmin ?: false
+    }
+
+    fun isDungeonMasterOf(guildId: Uuid): Boolean {
+        return memberships.firstOrNull { it.linkedGuild.id == guildId }?.isDungeonMaster ?: false
+    }
+
+    fun asDiscordMention(): String {
+        return "<@${discordId}> ${details.name}"
     }
 }
 
 @Serializable
 data class GuildMembership(
-    val guild: Guild,
+    val linkedGuild: LinkedGuild,
     val isAdmin: Boolean,
     val isDungeonMaster: Boolean
 )

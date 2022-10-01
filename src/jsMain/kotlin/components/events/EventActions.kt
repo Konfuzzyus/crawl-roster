@@ -30,12 +30,12 @@ val EventActions = FC<EventActionsProps> { props ->
     var anchor by useState<Element>()
 
     var userIdentity by useState(myStore.state.identity.player)
-    var currentGuild by useState(myStore.state.calendar.selectedGuild)
+    var currentGuild by useState(myStore.state.calendar.selectedLinkedGuild)
 
     useEffectOnce {
         val unsubscribe = myStore.subscribe {
             userIdentity = myStore.state.identity.player
-            currentGuild = myStore.state.calendar.selectedGuild
+            currentGuild = myStore.state.calendar.selectedLinkedGuild
         }
         cleanup(unsubscribe)
     }
@@ -68,7 +68,7 @@ val EventActions = FC<EventActionsProps> { props ->
                 }
             }
         }
-        if (currentGuild?.let { userIdentity?.isAdminOf(it) } == true) {
+        if (currentGuild?.let { userIdentity?.isAdminOf(it.id) } == true) {
             Button {
                 onClick = { myStore.dispatch(EventEditorOpened(props.targetEvent)) }
                 +"Edit Event"
@@ -84,16 +84,16 @@ val EventActions = FC<EventActionsProps> { props ->
         }
         onClose = handleClose
 
-        props.targetEvent.sessions.forEach {
+        props.targetEvent.tables.forEach {
             MenuItem {
                 if (it.getState() == TableState.Full) {
                     disabled = true
                 }
                 onClick = { e ->
-                    myStore.dispatch(registerPlayer(props.targetEvent, it.table))
+                    myStore.dispatch(registerPlayer(props.targetEvent, it))
                     handleClose(e)
                 }
-                ListItemText { +"Join ${it.table.getName()}" }
+                ListItemText { +"Join ${it.getName()}" }
             }
         }
 

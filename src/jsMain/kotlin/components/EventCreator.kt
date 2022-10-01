@@ -14,7 +14,7 @@ import mui.material.DialogTitle
 import mui.material.FormControlMargin
 import mui.material.TextField
 import org.codecranachan.roster.Event
-import org.codecranachan.roster.Guild
+import org.codecranachan.roster.LinkedGuild
 import org.w3c.dom.HTMLInputElement
 import react.FC
 import react.Props
@@ -30,7 +30,7 @@ import reducers.createEvent
 
 
 external interface SubmitEventProps : Props {
-    var guild: Guild
+    var linkedGuild: LinkedGuild
 }
 
 val SubmitEvent = FC<SubmitEventProps> { props ->
@@ -69,7 +69,7 @@ val SubmitEvent = FC<SubmitEventProps> { props ->
                         createEvent(
                             Event(
                                 uuid4(),
-                                props.guild.id,
+                                props.linkedGuild.id,
                                 selectedDate
                             )
                         )

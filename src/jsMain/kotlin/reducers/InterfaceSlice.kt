@@ -2,7 +2,7 @@ package reducers
 
 import org.codecranachan.roster.Event
 import org.codecranachan.roster.Player
-import org.codecranachan.roster.Server
+import org.codecranachan.roster.GuildRoster
 import org.codecranachan.roster.Table
 import org.reduxkotlin.Reducer
 
@@ -10,7 +10,7 @@ data class InterfaceState(
     val editorTarget: Any? = null
 )
 
-data class ServerEditorOpened(val server: Server)
+data class ServerEditorOpened(val guildRoster: GuildRoster)
 data class PlayerEditorOpened(val player: Player)
 data class TableEditorOpened(val table: Table)
 data class EventEditorOpened(val event: Event)
@@ -22,7 +22,7 @@ val interfaceReducer: Reducer<ApplicationState> = { s: ApplicationState, a: Any 
         is EditorClosed -> old.copy(editorTarget = null)
         is TableEditorOpened -> old.copy(editorTarget = a.table)
         is PlayerEditorOpened -> old.copy(editorTarget = a.player)
-        is ServerEditorOpened -> old.copy(editorTarget = a.server)
+        is ServerEditorOpened -> old.copy(editorTarget = a.guildRoster)
         is EventEditorOpened -> old.copy(editorTarget = a.event)
         else -> old
     }

@@ -19,13 +19,13 @@ import reducers.updateServerSettings
 
 val GuildSelector = FC<Props> {
     val store = useContext(StoreContext)
-    val (selectedGuild, setSelectedGuild) = useState(store.state.calendar.selectedGuild)
-    val (linkedGuilds, setLinkedGuilds) = useState(store.state.server.settings.guilds)
+    val (selectedGuild, setSelectedGuild) = useState(store.state.calendar.selectedLinkedGuild)
+    val (linkedGuilds, setLinkedGuilds) = useState(store.state.server.settings.linkedGuilds)
 
     useEffectOnce {
         val unsubscribe = store.subscribe {
-            setSelectedGuild(store.state.calendar.selectedGuild)
-            setLinkedGuilds(store.state.server.settings.guilds)
+            setSelectedGuild(store.state.calendar.selectedLinkedGuild)
+            setLinkedGuilds(store.state.server.settings.linkedGuilds)
         }
         store.dispatch(updateServerSettings())
         cleanup(unsubscribe)
@@ -34,7 +34,7 @@ val GuildSelector = FC<Props> {
     Box {
         sx { minWidth = 120.px }
         if (linkedGuilds.isEmpty()) {
-            +"There are no guilds attuned to this server"
+            +"There are no guilds linked to this server"
         } else {
             FormControl {
                 fullWidth = true

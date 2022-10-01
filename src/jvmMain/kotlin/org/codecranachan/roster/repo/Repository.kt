@@ -1,6 +1,6 @@
 package org.codecranachan.roster.repo
 
-import Configuration
+import org.codecranachan.roster.Configuration
 import org.codecranachan.roster.TableLanguage
 import org.flywaydb.core.Flyway
 import org.jooq.DSLContext
@@ -10,6 +10,10 @@ import java.sql.Connection
 import java.sql.DriverManager
 
 class Repository {
+    val guildRepository = GuildRepositoryImpl(this)
+    val eventRepository = EventRepositoryImpl(this)
+    val playerRepository = PlayerRepositoryImpl(this)
+
     companion object {
         init {
             // Deactivate jooq spam
@@ -32,10 +36,6 @@ class Repository {
         }
     }
 
-    private fun getConnection(): Connection {
-        return DriverManager.getConnection(Configuration.jdbcUri)
-    }
-
     fun migrate() {
         val flyway = baseFlyway().load()
         flyway.migrate()
@@ -47,6 +47,10 @@ class Repository {
             .cleanOnValidationError(true)
             .load()
         flyway.migrate()
+    }
+
+    private fun getConnection(): Connection {
+        return DriverManager.getConnection(Configuration.jdbcUri)
     }
 
     private fun baseFlyway() = Flyway.configure()

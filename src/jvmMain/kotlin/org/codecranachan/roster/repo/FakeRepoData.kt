@@ -5,11 +5,11 @@ import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.plus
 import kotlinx.datetime.todayIn
-import org.codecranachan.roster.DiscordUser
 import org.codecranachan.roster.Event
 import org.codecranachan.roster.EventRegistration
-import org.codecranachan.roster.Guild
+import org.codecranachan.roster.LinkedGuild
 import org.codecranachan.roster.Player
+import org.codecranachan.roster.PlayerDetails
 import org.codecranachan.roster.TableHosting
 
 class FakeRepoData(val repo: Repository) {
@@ -18,24 +18,26 @@ class FakeRepoData(val repo: Repository) {
         // Make a guild
         val guilds = (0..0).map {
             val g = makeGuild(it)
-            repo.addLinkedGuild(g)
+            repo.guildRepository.addLinkedGuild(g)
             g
         }
         // Make some events
         val events = (0..2).map {
             val e = makeEvent(it, guilds[0])
-            repo.addEvent(e)
+            repo.eventRepository.addEvent(e)
             e
         }
         // Make some players
         val players = (0..8).map {
-            repo.addPlayer(DiscordUser("DiscordId$it", "DiscordHandle$it"))
+            val p = makePlayer(it)
+            repo.playerRepository.addPlayer(p)
+            p
         }
         // Make some tables
         val tables = (0..3).map {
             try {
-                val h = makeTableHosting(it, events[it % (events.size-1)], players[it % players.size])
-                repo.addHostedTable(h)
+                val h = makeTableHosting(it, events[it % events.size - 1], players[it % players.size])
+                repo.eventRepository.addHosting(h)
                 h
             } catch (e: Exception) {
                 null
@@ -45,7 +47,7 @@ class FakeRepoData(val repo: Repository) {
         val registrations = (0..7).map {
             try {
                 val r = makeEventRegistration(it, events[(it + 1) % events.size], players[it % players.size])
-                repo.addEventRegistration(r)
+                repo.eventRepository.addRegistration(r)
                 r
             } catch (e: Exception) {
                 null
@@ -53,11 +55,21 @@ class FakeRepoData(val repo: Repository) {
         }
     }
 
-    private fun makeGuild(i: Int): Guild {
-        return Guild(name = "GuildName$i", discordId = "DiscordId$i")
+    private fun makePlayer(i: Int): Player {
+        return Player(
+            discordId = "PlayerDiscordId$i",
+            discordHandle = "DiscordHandle$i",
+            details = PlayerDetails(
+                name = "PlayerName$i"
+            )
+        )
     }
 
-    private fun makeEvent(i: Int, g: Guild): Event {
+    private fun makeGuild(i: Int): LinkedGuild {
+        return LinkedGuild(name = "GuildName$i", discordId = "GuildDiscordId$i")
+    }
+
+    private fun makeEvent(i: Int, g: LinkedGuild): Event {
         return Event(guildId = g.id, date = Clock.System.todayIn(TimeZone.UTC).plus(i, DateTimeUnit.DAY))
     }
 

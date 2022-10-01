@@ -1,3 +1,4 @@
+
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
 import io.ktor.client.plugins.contentnegotiation.*
@@ -14,8 +15,6 @@ import io.ktor.server.netty.*
 import io.ktor.server.plugins.forwardedheaders.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import io.ktor.server.sessions.*
-import io.ktor.util.*
 import kotlinx.html.HTML
 import kotlinx.html.body
 import kotlinx.html.div
@@ -26,14 +25,13 @@ import kotlinx.html.script
 import kotlinx.html.title
 import kotlinx.serialization.json.Json
 import org.codecranachan.roster.AuthenticationSettings
-import org.codecranachan.roster.ClientCredentials
-import org.codecranachan.roster.api.AccountApi
+import org.codecranachan.roster.Configuration
+import org.codecranachan.roster.logic.RosterCore
 import org.codecranachan.roster.api.EventApi
 import org.codecranachan.roster.api.GuildApi
+import org.codecranachan.roster.api.PlayerApi
 import org.codecranachan.roster.api.TableApi
 import org.codecranachan.roster.auth.createDiscordOidProvider
-import org.codecranachan.roster.repo.FakeRepoData
-import org.codecranachan.roster.repo.Repository
 
 fun HTML.index() {
     head {
@@ -51,36 +49,8 @@ fun HTML.index() {
     }
 }
 
-object Configuration {
-    private val env = System.getenv()
+class RosterServer(private val core: RosterCore) {
 
-    private val adminAccounts = env["ROSTER_ADMIN_IDS"]?.split(",") ?: emptyList()
-    val guildLimit = (env["ROSTER_GUILD_LIMIT"] ?: "3").toInt()
-    val devMode = env["ROSTER_DEV_MODE"] == "true"
-    val rootUrl = env["ROSTER_ROOT_URL"] ?: "http://localhost:8080"
-    val jdbcUri = env["ROSTER_JDBC_URI"] ?: "jdbc:h2:mem:test;DB_CLOSE_DELAY=-1"
-    val discordCredentials = getClientCreds("DISCORD")
-
-    private val sessionEncryptKey = env["ROSTER_SESSION_ENCRYPT_KEY"] ?: "79EBA26C10A7A6D8B22864DB05987369"
-    private val sessionSignKey = env["ROSTER_SESSION_SIGN_KEY"] ?: "2FFBBF335042E92C09B988DF4BC040A5"
-    val sessionTransformer = SessionTransportTransformerEncrypt(hex(sessionEncryptKey), hex(sessionSignKey))
-
-    fun isServerAdmin(discordId: String):Boolean {
-        return adminAccounts.isEmpty() || adminAccounts.contains(discordId)
-    }
-
-    private fun getClientCreds(prefix: String): ClientCredentials? {
-        val id = env["${prefix}_CLIENT_ID"]
-        val secret = env["${prefix}_CLIENT_SECRET"]
-        return if (id != null && secret != null) {
-            ClientCredentials(id, secret)
-        } else {
-            null
-        }
-    }
-}
-
-class RosterServer {
     companion object {
         val httpClient = HttpClient(CIO) {
             install(ContentNegotiation) {
@@ -97,18 +67,15 @@ class RosterServer {
         }
     }
 
-    suspend fun start() {
-        val repo = Repository()
+    fun start() {
 
         val watchPaths = if (Configuration.devMode) {
             println("--- EDNA MODE ---")
-            repo.reset()
-            FakeRepoData(repo).insert()
+            core.initForDevelopment()
 
             listOf("classes", "resources")
         } else {
-            repo.migrate()
-
+            core.initForProduction()
             listOf()
         }
 
@@ -116,7 +83,7 @@ class RosterServer {
             Configuration.rootUrl, listOf(
                 createDiscordOidProvider(Configuration.discordCredentials!!)
             ),
-            repo
+            core
         )
 
         embeddedServer(Netty, port = 8080, watchPaths = watchPaths) {
@@ -129,12 +96,12 @@ class RosterServer {
             routing {
                 auth.install(this)
                 authenticate("auth-session", optional = false) {
-                    GuildApi(repo).install(this)
-                    EventApi(repo).install(this)
-                    TableApi(repo).install(this)
+                    GuildApi(core).install(this)
+                    EventApi(core).install(this)
+                    TableApi(core).install(this)
                 }
                 authenticate("auth-session", optional = true) {
-                    AccountApi(repo).install(this)
+                    PlayerApi(core).install(this)
                     get("/") {
                         call.respondHtml(HttpStatusCode.OK, HTML::index)
                     }

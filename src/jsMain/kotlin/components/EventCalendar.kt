@@ -6,7 +6,7 @@ import mui.material.Table
 import mui.material.TableBody
 import mui.material.TableContainer
 import mui.material.TableHead
-import org.codecranachan.roster.Guild
+import org.codecranachan.roster.LinkedGuild
 import react.FC
 import react.Props
 import react.useContext
@@ -15,7 +15,7 @@ import react.useState
 import reducers.StoreContext
 
 external interface EventCalendarProps : Props {
-    var guild: Guild
+    var linkedGuild: LinkedGuild
 }
 
 val EventCalendar = FC<EventCalendarProps> { props ->
@@ -47,9 +47,9 @@ val EventCalendar = FC<EventCalendarProps> { props ->
                     }
                 }
             }
-            if (account?.isAdminOf(props.guild) == true) {
+            if (account?.isAdminOf(props.linkedGuild.id) == true) {
                 SubmitEvent {
-                    guild = props.guild
+                    linkedGuild = props.linkedGuild
                 }
             }
         }
