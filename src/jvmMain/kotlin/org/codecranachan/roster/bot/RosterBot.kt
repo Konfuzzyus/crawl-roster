@@ -26,6 +26,9 @@ import org.codecranachan.roster.util.orNull
 import org.slf4j.LoggerFactory
 import reactor.core.Disposable
 import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeFormatterBuilder
+import java.time.format.SignStyle
+import java.time.temporal.ChronoField
 
 fun User.asDiscordUser(): DiscordUser =
     DiscordUser(
@@ -170,7 +173,7 @@ class RosterBot(val core: RosterCore, botToken: String, val rootUrl: String) {
                     val unseatedList = if (event.getEligibleForSeat().isEmpty()) "" else
                         "\n**Eligible for a table seat**\n${
                             event.getEligibleForSeat().map { "- ${it.asDiscordMention()}" }.joinToString("\n")
-                        }}"
+                        }"
 
                     val waitingList = if (event.getWaitingList().isEmpty()) "" else
                         "\n**Waiting List**\n${
@@ -238,7 +241,7 @@ class RosterBot(val core: RosterCore, botToken: String, val rootUrl: String) {
                             .subscribe()
                     }
                 }
-                canceledTables.forEach {tbl ->
+                canceledTables.forEach { tbl ->
                     withPinnedTableMessage(channel, tbl) { msg ->
                         val content = listOfNotNull(
                             "${tbl.dungeonMaster.asDiscordMention()} has canceled this table.",
@@ -251,6 +254,7 @@ class RosterBot(val core: RosterCore, botToken: String, val rootUrl: String) {
                         )
                         msg.edit()
                             .withContentOrNull(botMessage.asContent())
+                            .withComponents()
                             .subscribe()
                     }
                 }
@@ -259,8 +263,16 @@ class RosterBot(val core: RosterCore, botToken: String, val rootUrl: String) {
     }
 }
 
+private val EVENT_DATE_FORMATTER: DateTimeFormatter = DateTimeFormatterBuilder()
+    .appendValue(ChronoField.DAY_OF_MONTH, 2)
+    .appendLiteral('-')
+    .appendValue(ChronoField.MONTH_OF_YEAR, 2)
+    .appendLiteral('-')
+    .appendValue(ChronoField.YEAR, 4, 10, SignStyle.EXCEEDS_PAD)
+    .toFormatter()
+
 fun Event.getChannelName(): String {
-    return DateTimeFormatter.ISO_DATE.format(date.toJavaLocalDate())
+    return EVENT_DATE_FORMATTER.format(date.toJavaLocalDate())
 }
 
 fun Event.getChannelTopic(): String {

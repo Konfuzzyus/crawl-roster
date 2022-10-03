@@ -94,6 +94,10 @@ class EventCalendarLogic(
 
     fun updateTable(tableId: Uuid, details: TableDetails) {
         eventRepository.updateHosting(tableId, details)
+        val table = eventRepository.getHosting(tableId)
+        if (table != null) {
+            publishEventChange(table.eventId)
+        }
     }
 
     fun cancelTable(eventId: Uuid, dmId: Uuid) {

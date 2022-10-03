@@ -12,6 +12,4 @@ interface GuildRepository {
 
     @kotlin.jvm.Throws(GuildAlreadyLinkedException::class)
     fun addLinkedGuild(linkedGuild: LinkedGuild)
-
-
 }

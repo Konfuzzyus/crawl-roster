@@ -2,7 +2,6 @@ package org.codecranachan.roster.logic
 
 import org.codecranachan.roster.Configuration
 import org.codecranachan.roster.logic.events.EventBus
-import org.codecranachan.roster.repo.FakeRepoData
 import org.codecranachan.roster.repo.Repository
 
 class RosterCore {
@@ -15,7 +14,7 @@ class RosterCore {
 
     fun initForDevelopment() {
         repo.reset()
-        FakeRepoData(repo).insert()
+        //FakeRepoData(repo).insert()
     }
 
     fun initForProduction() {
