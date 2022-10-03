@@ -60,7 +60,7 @@ class EventRepositoryImpl(private val base: Repository) : EventRepository {
             selectFrom(EVENTREGISTRATIONS).where(
                 EVENTREGISTRATIONS.EVENT_ID.eq(eventId),
                 EVENTREGISTRATIONS.PLAYER_ID.eq(playerId)
-            ).fetchOne()?.let { it.asModel() }
+            ).fetchOne()?.asModel()
         }
     }
 
@@ -94,6 +94,7 @@ class EventRepositoryImpl(private val base: Repository) : EventRepository {
                 .where(HOSTEDTABLES.ID.eq(tableId)).fetchOne()?.map {
                     Table(
                         it[HOSTEDTABLES.ID],
+                        it[HOSTEDTABLES.EVENT_ID],
                         playerFromRecord(it, PLAYERS),
                         tableDetailsFromRecord(it, HOSTEDTABLES)
                     )
@@ -110,6 +111,7 @@ class EventRepositoryImpl(private val base: Repository) : EventRepository {
                 ).fetchOne()?.map {
                     Table(
                         it[HOSTEDTABLES.ID],
+                        it[HOSTEDTABLES.EVENT_ID],
                         playerFromRecord(it, PLAYERS),
                         tableDetailsFromRecord(it, HOSTEDTABLES)
                     )
@@ -187,6 +189,7 @@ class EventRepositoryImpl(private val base: Repository) : EventRepository {
                         } else {
                             Table(
                                 it[HOSTEDTABLES.ID],
+                                id,
                                 playerFromRecord(it, dms),
                                 tableDetailsFromRecord(it, HOSTEDTABLES)
                             )

@@ -27,6 +27,8 @@ data class TableDetails(
 data class Table(
     @Serializable(with = UuidSerializer::class)
     val id: Uuid = uuid4(),
+    @Serializable(with = UuidSerializer::class)
+    val eventId: Uuid,
     val dungeonMaster: Player,
     val details: TableDetails = TableDetails(),
     val players: List<Player> = listOf()

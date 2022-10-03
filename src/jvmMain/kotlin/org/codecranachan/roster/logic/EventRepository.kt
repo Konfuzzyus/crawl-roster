@@ -29,5 +29,4 @@ interface EventRepository {
     fun addHosting(hosting: TableHosting)
     fun updateHosting(tableId: Uuid, details: TableDetails)
     fun deleteHosting(tableId: Uuid)
-
 }
