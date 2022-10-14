@@ -74,7 +74,7 @@ data class Event(
     }
 
     fun getEligibleForSeat(): List<Player> {
-        return unseated.take(openSeatCount())
+        return unseated.take(tableSpace())
     }
 
     fun getWaitingList(): List<Player> {
