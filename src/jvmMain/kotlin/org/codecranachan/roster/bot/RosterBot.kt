@@ -206,8 +206,7 @@ class RosterBot(val core: RosterCore, botToken: String, val rootUrl: String) {
                 }
                 event.tables.forEach { tbl ->
                     withPinnedTableMessage(channel, tbl) { msg ->
-                        val playerList =
-                            tbl.players.map { "**Players**\n- ${it.asDiscordMention()}" }.joinToString("\n")
+                        val playerList = tbl.players.map { "- ${it.asDiscordMention()}" }.ifEmpty { listOf("none") }
 
                         val content = listOfNotNull(
                             "Dungeon Master: ${tbl.dungeonMaster.asDiscordMention()}",
@@ -218,6 +217,8 @@ class RosterBot(val core: RosterCore, botToken: String, val rootUrl: String) {
                             tbl.details.adventureDescription,
                             "",
                             "Join this table using the button below. If you already joined another table you will automatically be removed from the other table.",
+                            "",
+                            "**Players**",
                             playerList
                         )
 
