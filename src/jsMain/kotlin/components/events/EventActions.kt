@@ -5,8 +5,7 @@ import mui.material.ButtonGroup
 import mui.material.ListItemText
 import mui.material.Menu
 import mui.material.MenuItem
-import org.codecranachan.roster.Event
-import org.codecranachan.roster.TableState
+import org.codecranachan.roster.query.EventQueryResult
 import org.w3c.dom.Element
 import react.FC
 import react.Props
@@ -22,7 +21,7 @@ import reducers.unregisterPlayer
 import reducers.unregisterTable
 
 external interface EventActionsProps : Props {
-    var targetEvent: Event
+    var targetEvent: EventQueryResult
 }
 
 val EventActions = FC<EventActionsProps> { props ->
@@ -40,20 +39,20 @@ val EventActions = FC<EventActionsProps> { props ->
         cleanup(unsubscribe)
     }
 
-    val isRegistered = userIdentity?.let { props.targetEvent.isRegistered(it) } == true
-    val isHosting = userIdentity?.let { props.targetEvent.isHosting(it) } == true
+    val isRegistered = userIdentity?.let { props.targetEvent.isRegistered(it.player.id) } == true
+    val isHosting = userIdentity?.let { props.targetEvent.isHosting(it.player.id) } == true
 
     ButtonGroup {
         when {
             isRegistered -> {
                 Button {
-                    onClick = { myStore.dispatch(unregisterPlayer(props.targetEvent)) }
+                    onClick = { myStore.dispatch(unregisterPlayer(props.targetEvent.event)) }
                     +"Cancel Registration"
                 }
             }
             isHosting -> {
                 Button {
-                    onClick = { myStore.dispatch(unregisterTable(props.targetEvent)) }
+                    onClick = { myStore.dispatch(unregisterTable(props.targetEvent.event)) }
                     +"Cancel Table"
                 }
             }
@@ -63,14 +62,14 @@ val EventActions = FC<EventActionsProps> { props ->
                     +"Sign Up"
                 }
                 Button {
-                    onClick = { myStore.dispatch(registerTable(props.targetEvent)) }
+                    onClick = { myStore.dispatch(registerTable(props.targetEvent.event)) }
                     +"Host Table"
                 }
             }
         }
         if (currentGuild?.let { userIdentity?.isAdminOf(it.id) } == true) {
             Button {
-                onClick = { myStore.dispatch(EventEditorOpened(props.targetEvent)) }
+                onClick = { myStore.dispatch(EventEditorOpened(props.targetEvent.event)) }
                 +"Edit Event"
             }
         }
@@ -84,22 +83,22 @@ val EventActions = FC<EventActionsProps> { props ->
         }
         onClose = handleClose
 
-        props.targetEvent.tables.forEach {
+        props.targetEvent.tables.values.forEach {
             MenuItem {
-                if (it.getState() == TableState.Full) {
+                if (it.isFull) {
                     disabled = true
                 }
                 onClick = { e ->
-                    myStore.dispatch(registerPlayer(props.targetEvent, it))
+                    myStore.dispatch(registerPlayer(props.targetEvent.event, it.table))
                     handleClose(e)
                 }
-                ListItemText { +"Join ${it.getName()}" }
+                ListItemText { +"Join ${it.name}" }
             }
         }
 
         MenuItem {
             onClick = { e ->
-                myStore.dispatch(registerPlayer(props.targetEvent))
+                myStore.dispatch(registerPlayer(props.targetEvent.event))
                 handleClose(e)
             }
             ListItemText { +"Join Waiting List" }

@@ -1,0 +1,14 @@
+{#open}
+The event on {$event.formatted_date} is now accepting registrations.
+
+Tables will be set at {$event.details.location:the usual place} and doors will open at {$event.details.time:the usual time}
+To register you can use the buttons on this message or head over to $rootUrl.
+
+--- {$player_count} have registered with table space for {$table_space} ---
+
+**Eligible for a table seat**
+- ${it.asDiscordMention()}
+
+**Waiting List**
+- ${it.asDiscordMention()}
+{#}

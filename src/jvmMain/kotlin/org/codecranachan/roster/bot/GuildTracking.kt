@@ -20,12 +20,11 @@ import discord4j.core.`object`.entity.Role
 import discord4j.core.`object`.entity.channel.Category
 import discord4j.core.`object`.entity.channel.GuildMessageChannel
 import discord4j.core.`object`.entity.channel.TextChannel
-import discord4j.core.`object`.entity.channel.ThreadChannel
 import discord4j.rest.util.Permission
 import discord4j.rest.util.PermissionSet
-import org.codecranachan.roster.Event
 import org.codecranachan.roster.LinkedGuild
-import org.codecranachan.roster.Table
+import org.codecranachan.roster.query.EventQueryResult
+import org.codecranachan.roster.query.ResolvedTable
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import reactor.core.Disposable
@@ -147,7 +146,6 @@ class GuildTracker(
     private val roles = HashMap<Snowflake, Role>()
     private val categories = HashMap<Snowflake, Category>()
     private val textChannels = HashMap<Snowflake, TextChannel>()
-    private val threadChannels = HashMap<Snowflake, ThreadChannel>()
 
     fun initialize() {
         discordGuild.channels.subscribe { c -> putEntity(c) }
@@ -158,7 +156,6 @@ class GuildTracker(
         when (e) {
             is TextChannel -> textChannels[e.id] = e
             is Category -> categories[e.id] = e
-            is ThreadChannel -> threadChannels[e.id] = e
             is Role -> roles[e.id] = e
         }
     }
@@ -181,7 +178,7 @@ class GuildTracker(
         return categories.values.find { c -> c.name.equals(eventCalendarCategoryName, ignoreCase = true) }
     }
 
-    fun getEventChannel(event: Event, categoryChannel: Category? = getEventCalendarCategory()): TextChannel? {
+    fun getEventChannel(event: EventQueryResult, categoryChannel: Category? = getEventCalendarCategory()): TextChannel? {
         return categoryChannel?.let { category ->
             textChannels.values
                 .filter { c -> category.id.equals(c.categoryId.orElse(null)) }
@@ -210,13 +207,13 @@ class GuildTracker(
             .subscribe(block)
     }
 
-    fun withEventChannel(event: Event, block: (TextChannel) -> Unit) {
+    fun withEventChannel(query: EventQueryResult, block: (TextChannel) -> Unit) {
         withEventCalendarCategory { category ->
-            Mono.justOrEmpty<TextChannel>(getEventChannel(event, category))
+            Mono.justOrEmpty<TextChannel>(getEventChannel(query, category))
                 .switchIfEmpty(
-                    discordGuild.createTextChannel(event.getChannelName())
-                        .withTopic(event.getChannelTopic())
-                        .withPosition(event.date.toEpochDays())
+                    discordGuild.createTextChannel(query.getChannelName())
+                        .withTopic(query.getChannelTopic())
+                        .withPosition(query.event.date.toEpochDays())
                         .withParentId(category.id)
                         .withPermissionOverwrites(membersOnly(Permission.VIEW_CHANNEL, Permission.SEND_MESSAGES))
                         .withReason("New event posted by Crawl Roster")
@@ -225,12 +222,12 @@ class GuildTracker(
         }
     }
 
-    fun withPinnedEventMessage(eventChannel: TextChannel, event: Event, block: (Message) -> Unit) {
+    fun withPinnedEventMessage(eventChannel: TextChannel, event: EventQueryResult, block: (Message) -> Unit) {
         withPinnedBotMessage(eventChannel, event.getChannelName(), block)
     }
 
-    fun withPinnedTableMessage(eventChannel: TextChannel, table: Table, block: (Message) -> Unit) {
-        withPinnedBotMessage(eventChannel, table.getName(), block)
+    fun withPinnedTableMessage(eventChannel: TextChannel, table: ResolvedTable, block: (Message) -> Unit) {
+        withPinnedBotMessage(eventChannel, table.name, block)
     }
 
     private fun withPinnedBotMessage(

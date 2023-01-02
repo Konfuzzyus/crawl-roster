@@ -1,4 +1,4 @@
-package org.codecranachan.roster
+package org.codecranachan.roster.core
 
 enum class TableLanguage(val short: String, val flag: String) {
     SwissGerman("gsw", "\uD83C\uDDE8\uD83C\uDDED"),

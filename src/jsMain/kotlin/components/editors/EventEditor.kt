@@ -15,8 +15,7 @@ import mui.material.Stack
 import mui.material.StackDirection
 import mui.material.TextField
 import mui.system.responsive
-import org.codecranachan.roster.Event
-import org.codecranachan.roster.EventDetails
+import org.codecranachan.roster.core.Event
 import org.w3c.dom.HTMLInputElement
 import react.FC
 import react.Props
@@ -115,7 +114,7 @@ val EventEditor = FC<Props> {
             Button {
                 startIcon = Save.create()
                 onClick = { _ ->
-                    store.dispatch(updateEventDetails(eventId!!, EventDetails(eventTime, eventLocation)))
+                    store.dispatch(updateEventDetails(eventId!!, Event.Details(eventTime, eventLocation)))
                     store.dispatch(EditorClosed())
                 }
                 +"Save Changes"

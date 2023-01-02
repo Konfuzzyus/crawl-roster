@@ -16,7 +16,7 @@ import mui.material.Typography
 import mui.material.styles.TypographyVariant
 import mui.system.responsive
 import mui.system.sx
-import org.codecranachan.roster.Event
+import org.codecranachan.roster.query.EventQueryResult
 import react.FC
 import react.Props
 import react.useState
@@ -38,11 +38,11 @@ val EventCalendarHeaderRow = FC<Props> {
 }
 
 external interface EventCalendarRowProps : Props {
-    var event: Event
+    var result: EventQueryResult
 }
 
 val EventCalendarBodyRow = FC<EventCalendarRowProps> { props ->
-    val event = props.event
+    val result = props.result
     val (isOpen, setIsOpen) = useState(false)
 
     TableRow {
@@ -58,38 +58,33 @@ val EventCalendarBodyRow = FC<EventCalendarRowProps> { props ->
                 direction = responsive(StackDirection.column)
                 Typography {
                     variant = TypographyVariant.h6
-                    +event.getFormattedDate()
+                    +result.event.formattedDate
                 }
                 Typography {
                     variant = TypographyVariant.caption
-                    val locationStr = event.details.location ?: ""
-                    val timeStr = event.details.time?.let { "at $it" } ?: ""
+                    val locationStr = result.event.details.location ?: ""
+                    val timeStr = result.event.details.time?.let { "at $it" } ?: ""
                     +"$locationStr $timeStr"
                 }
             }
         }
         TableCell {
-            if (event.waitingListLength() <= 0) {
-                +"${event.openSeatCount()} open seats"
-            } else {
-                +"${event.waitingListLength()} on waiting list"
-            }
-
+            +"${result.tableSpace} with ${result.playerCount} registered"
         }
         TableCell {
             Stack {
                 direction = responsive(StackDirection.row)
                 spacing = responsive(2)
-                event.tables.forEach {
+                result.tables.forEach {
                     PlayTableIndicator {
-                        session = it
+                        data = it.value
                     }
                 }
             }
         }
         TableCell {
             EventActions {
-                targetEvent = event
+                targetEvent = result
             }
         }
     }
@@ -105,7 +100,7 @@ val EventCalendarBodyRow = FC<EventCalendarRowProps> { props ->
                 `in` = isOpen
                 timeout = "auto"
                 EventDetails {
-                    this.event = event
+                    this.result = result
                 }
             }
         }

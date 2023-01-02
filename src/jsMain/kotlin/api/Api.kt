@@ -1,7 +1,6 @@
 package api
 
 import com.benasher44.uuid.Uuid
-import com.benasher44.uuid.uuid4
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.engine.js.*
@@ -9,16 +8,14 @@ import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
-import org.codecranachan.roster.Event
-import org.codecranachan.roster.EventDetails
-import org.codecranachan.roster.EventRegistration
 import org.codecranachan.roster.GuildRoster
 import org.codecranachan.roster.LinkedGuild
-import org.codecranachan.roster.Player
-import org.codecranachan.roster.PlayerDetails
-import org.codecranachan.roster.Table
-import org.codecranachan.roster.TableDetails
-import org.codecranachan.roster.TableHosting
+import org.codecranachan.roster.core.Event
+import org.codecranachan.roster.core.Player
+import org.codecranachan.roster.core.Registration
+import org.codecranachan.roster.core.Table
+import org.codecranachan.roster.query.EventQueryResult
+import org.codecranachan.roster.query.PlayerQueryResult
 
 val client = HttpClient(Js) {
     install(ContentNegotiation) {
@@ -26,14 +23,14 @@ val client = HttpClient(Js) {
     }
 }
 
-suspend fun updatePlayer(details: PlayerDetails) {
+suspend fun updatePlayer(details: Player.Details) {
     client.patch("/api/v1/me") {
         contentType(ContentType.Application.Json)
         setBody(details)
     }
 }
 
-suspend fun fetchPlayerInfo(): Player? {
+suspend fun fetchPlayerInfo(): PlayerQueryResult? {
     return try {
         client.get("/api/v1/me").body()
     } catch (e: Exception) {
@@ -49,7 +46,7 @@ suspend fun fetchServerSettings(): GuildRoster {
     }
 }
 
-suspend fun fetchEvents(linkedGuild: LinkedGuild): List<Event> {
+suspend fun fetchEvents(linkedGuild: LinkedGuild): List<EventQueryResult> {
     return client.get("/api/v1/guilds/${linkedGuild.id}/events").body()
 }
 
@@ -60,45 +57,45 @@ suspend fun addEvent(e: Event) {
     }
 }
 
-suspend fun updateEvent(eventId: Uuid, details: EventDetails) {
+suspend fun updateEvent(eventId: Uuid, details: Event.Details) {
     client.patch("/api/v1/events/${eventId}") {
         contentType(ContentType.Application.Json)
         setBody(details)
     }
 }
 
-suspend fun addEventRegistration(e: Event, p: Player, t: Table? = null) {
-    client.post("/api/v1/events/${e.id}/registrations") {
+suspend fun addEventRegistration(eventId: Uuid, playerId: Uuid, dungeonMasterId: Uuid? = null) {
+    client.put("/api/v1/events/$eventId/registrations/$playerId") {
         contentType(ContentType.Application.Json)
-        setBody(EventRegistration(uuid4(), e.id, p.id, t?.id))
+        setBody(Registration.Details(dungeonMasterId))
     }
 }
 
-suspend fun updateEventRegistration(e: Event, p: Player, t: Table?) {
-    client.patch("/api/v1/events/${e.id}/registrations/${p.id}") {
+suspend fun updateEventRegistration(eventId: Uuid, playerId: Uuid, dungeonMasterId: Uuid?) {
+    client.patch("/api/v1/events/$eventId/registrations/$playerId") {
         contentType(ContentType.Application.Json)
-        setBody(EventRegistration(uuid4(), e.id, p.id, t?.id))
+        setBody(Registration.Details(dungeonMasterId))
     }
 }
 
-suspend fun removeEventRegistration(e: Event, p: Player) {
-    client.delete("/api/v1/events/${e.id}/registrations/${p.id}")
+suspend fun removeEventRegistration(eventId: Uuid, playerId: Uuid) {
+    client.delete("/api/v1/events/$eventId/registrations/$playerId")
 }
 
 
-suspend fun addTableHosting(e: Event, dm: Player) {
-    client.post("/api/v1/events/${e.id}/tables") {
+suspend fun addTableHosting(eventId: Uuid, dungeonMasterId: Uuid) {
+    client.post("/api/v1/events/$eventId/tables") {
         contentType(ContentType.Application.Json)
-        setBody(TableHosting(uuid4(), e.id, dm.id))
+        setBody(Table(eventId, dungeonMasterId))
     }
 }
 
-suspend fun removeTableHosting(e: Event, dm: Player) {
-    client.delete("/api/v1/events/${e.id}/tables/${dm.id}")
+suspend fun removeTableHosting(eventId: Uuid, dungeonMasterId: Uuid) {
+    client.delete("/api/v1/events/$eventId/tables/$dungeonMasterId")
 }
 
-suspend fun updateTableHosting(id: Uuid, details: TableDetails) {
-    client.patch("/api/v1/tables/${id}") {
+suspend fun updateTableHosting(eventId: Uuid, dungeonMasterId: Uuid, details: Table.Details) {
+    client.patch("/api/v1/events/$eventId/tables/$dungeonMasterId") {
         contentType(ContentType.Application.Json)
         setBody(details)
     }

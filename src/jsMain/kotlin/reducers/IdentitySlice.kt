@@ -1,14 +1,14 @@
 package reducers
 
-import org.codecranachan.roster.Player
+import org.codecranachan.roster.query.PlayerQueryResult
 import org.reduxkotlin.Reducer
 
 data class IdentityState(
-    val player: Player? = null,
+    val player: PlayerQueryResult? = null,
     val isLoaded: Boolean = false
 )
 
-data class UserIdentified(val player: Player?)
+data class UserIdentified(val player: PlayerQueryResult?)
 class UserLoggedOut
 
 val identityReducer: Reducer<ApplicationState> = { s: ApplicationState, a: Any ->

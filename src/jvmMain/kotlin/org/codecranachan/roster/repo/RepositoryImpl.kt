@@ -1,18 +1,19 @@
 package org.codecranachan.roster.repo
 
-import org.codecranachan.roster.Configuration
-import org.codecranachan.roster.TableLanguage
+import org.codecranachan.roster.core.TableLanguage
 import org.flywaydb.core.Flyway
+import org.h2.jdbcx.JdbcConnectionPool
 import org.jooq.DSLContext
 import org.jooq.SQLDialect
 import org.jooq.impl.DSL
-import java.sql.Connection
-import java.sql.DriverManager
 
-class Repository {
-    val guildRepository = GuildRepositoryImpl(this)
-    val eventRepository = EventRepositoryImpl(this)
-    val playerRepository = PlayerRepositoryImpl(this)
+class Repository(jdbcUri: String) {
+    val guildRepository = GuildRepository(this)
+    val eventRepository = EventRepository(this)
+    val playerRepository = PlayerRepository(this)
+
+    private val dataSource = JdbcConnectionPool.create(jdbcUri, null, null)
+    private val dsl = DSL.using(dataSource, SQLDialect.H2)
 
     companion object {
         init {
@@ -30,10 +31,8 @@ class Repository {
         }
     }
 
-    fun <R> withJooq(block: DSLContext.() -> R): R {
-        getConnection().use {
-            return block(DSL.using(it, SQLDialect.H2))
-        }
+    fun <R> withJooq(action: DSLContext.() -> R): R {
+        return action(dsl)
     }
 
     fun migrate() {
@@ -41,20 +40,17 @@ class Repository {
         flyway.migrate()
     }
 
-    fun reset() {
+    fun reset(hard: Boolean = false) {
         val flyway = baseFlyway()
             .cleanDisabled(false)
             .cleanOnValidationError(true)
             .load()
+        if (hard) flyway.clean()
         flyway.migrate()
     }
 
-    private fun getConnection(): Connection {
-        return DriverManager.getConnection(Configuration.jdbcUri)
-    }
-
     private fun baseFlyway() = Flyway.configure()
-        .dataSource(Configuration.jdbcUri, null, null)
+        .dataSource(dataSource)
         .schemas("ROSTER")
         .createSchemas(true)
 

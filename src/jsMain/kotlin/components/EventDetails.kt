@@ -6,7 +6,7 @@ import mui.icons.material.ErrorOutline
 import mui.material.Chip
 import mui.system.Box
 import mui.system.sx
-import org.codecranachan.roster.Event
+import org.codecranachan.roster.query.EventQueryResult
 import react.FC
 import react.Props
 import react.ReactNode
@@ -15,7 +15,7 @@ import react.useContext
 import reducers.StoreContext
 
 external interface EventDetailsProps : Props {
-    var event: Event
+    var result: EventQueryResult
 }
 
 val EventDetails = FC<EventDetailsProps> { props ->
@@ -31,15 +31,15 @@ val EventDetails = FC<EventDetailsProps> { props ->
                 icon = ErrorOutline.create()
                 label = ReactNode("Please sign up first")
             }
-        } else if (props.event.unseated.isEmpty() && props.event.tables.isEmpty()) {
+        } else if (props.result.players.isEmpty() && props.result.tables.isEmpty()) {
             Chip {
                 icon = ErrorOutline.create()
                 label = ReactNode("No one has registered for this event")
             }
         } else {
             EventLineup {
-                event = props.event
-                me = profile
+                result = props.result
+                me = profile.player
             }
         }
     }

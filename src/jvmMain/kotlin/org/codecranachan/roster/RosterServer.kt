@@ -26,12 +26,11 @@ import kotlinx.html.title
 import kotlinx.serialization.json.Json
 import org.codecranachan.roster.AuthenticationSettings
 import org.codecranachan.roster.Configuration
-import org.codecranachan.roster.logic.RosterCore
 import org.codecranachan.roster.api.EventApi
 import org.codecranachan.roster.api.GuildApi
 import org.codecranachan.roster.api.PlayerApi
-import org.codecranachan.roster.api.TableApi
 import org.codecranachan.roster.auth.createDiscordOidProvider
+import org.codecranachan.roster.core.RosterCore
 
 fun HTML.index() {
     head {
@@ -98,7 +97,6 @@ class RosterServer(private val core: RosterCore) {
                 authenticate("auth-session", optional = false) {
                     GuildApi(core).install(this)
                     EventApi(core).install(this)
-                    TableApi(core).install(this)
                 }
                 authenticate("auth-session", optional = true) {
                     PlayerApi(core).install(this)

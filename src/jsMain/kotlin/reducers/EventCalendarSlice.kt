@@ -1,21 +1,21 @@
 package reducers
 
 import com.benasher44.uuid.Uuid
-import org.codecranachan.roster.Event
 import org.codecranachan.roster.LinkedGuild
+import org.codecranachan.roster.query.EventQueryResult
 import org.reduxkotlin.Reducer
 
 data class EventCalendarState(
     val selectedLinkedGuild: LinkedGuild? = null,
-    val events: List<Event>? = null
+    val events: List<EventQueryResult>? = null
 ) {
-    fun getEvent(id: Uuid): Event? {
-        return events?.find { it.id == id }
+    fun getEvent(id: Uuid): EventQueryResult? {
+        return events?.find { it.event.id == id }
     }
 }
 
 data class GuildSelected(val linkedGuild: LinkedGuild)
-data class EventsUpdated(val events: List<Event>)
+data class EventsUpdated(val events: List<EventQueryResult>)
 
 val eventCalendarReducer: Reducer<ApplicationState> = { s: ApplicationState, a: Any ->
     val old = s.calendar

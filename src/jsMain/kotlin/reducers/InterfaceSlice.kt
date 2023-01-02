@@ -1,9 +1,9 @@
 package reducers
 
-import org.codecranachan.roster.Event
-import org.codecranachan.roster.Player
 import org.codecranachan.roster.GuildRoster
-import org.codecranachan.roster.Table
+import org.codecranachan.roster.core.Event
+import org.codecranachan.roster.core.Player
+import org.codecranachan.roster.core.Table
 import org.reduxkotlin.Reducer
 
 data class InterfaceState(

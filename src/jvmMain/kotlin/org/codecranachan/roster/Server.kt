@@ -5,7 +5,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import org.codecranachan.roster.bot.RosterBot
-import org.codecranachan.roster.logic.RosterCore
+import org.codecranachan.roster.core.RosterCore
 
 suspend fun main() {
     val core = RosterCore()

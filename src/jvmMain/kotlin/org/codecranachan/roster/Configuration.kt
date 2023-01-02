@@ -9,7 +9,7 @@ object Configuration {
     val guildLimit = (env["ROSTER_GUILD_LIMIT"] ?: "3").toInt()
     val devMode = env["ROSTER_DEV_MODE"] == "true"
     val rootUrl = env["ROSTER_ROOT_URL"] ?: "http://localhost:8080"
-    val jdbcUri = env["ROSTER_JDBC_URI"] ?: "jdbc:h2:mem:test;DB_CLOSE_DELAY=-1"
+    val jdbcUri = env["ROSTER_JDBC_URI"] ?: "jdbc:h2:mem:test"
     val botToken = env["DISCORD_BOT_TOKEN"]
     val discordCredentials = getClientCreds("DISCORD")
     val botCoordinates = discordCredentials?.let { BotCoordinates(it.id, 326417522768L) }

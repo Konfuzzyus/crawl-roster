@@ -1,10 +1,11 @@
 package org.codecranachan.roster.api
 
 import com.benasher44.uuid.Uuid
+import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import org.codecranachan.roster.logic.RosterCore
+import org.codecranachan.roster.core.RosterCore
 
 class GuildApi(private val core: RosterCore) {
 
@@ -12,7 +13,12 @@ class GuildApi(private val core: RosterCore) {
         with(r) {
             get("/api/v1/guilds/{id}/events") {
                 val id = Uuid.fromString(call.parameters["id"])
-                call.respond(core.eventCalendar.get(id).events)
+                val calendar = core.eventCalendar.queryCalendar(id)
+                if (calendar == null) {
+                    call.respond(HttpStatusCode.NotFound)
+                }else {
+                    call.respond(calendar.events)
+                }
             }
 
             get("/api/v1/guilds") {

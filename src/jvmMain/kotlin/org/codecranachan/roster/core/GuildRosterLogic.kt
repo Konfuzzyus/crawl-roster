@@ -1,10 +1,11 @@
-package org.codecranachan.roster.logic
+package org.codecranachan.roster.core
 
 import com.benasher44.uuid.uuid4
 import discord4j.core.`object`.entity.Guild
 import org.codecranachan.roster.BotCoordinates
 import org.codecranachan.roster.GuildRoster
 import org.codecranachan.roster.LinkedGuild
+import org.codecranachan.roster.repo.GuildRepository
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -12,6 +13,7 @@ class GuildRosterLogic(
     private val guildRepository: GuildRepository,
     private val linkedGuildLimit: Int,
     private val botCoordinates: BotCoordinates?
+
 ) {
     private val logger: Logger = LoggerFactory.getLogger(javaClass)
 

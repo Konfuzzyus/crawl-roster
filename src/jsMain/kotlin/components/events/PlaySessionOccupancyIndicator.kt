@@ -23,7 +23,7 @@ import mui.material.Tooltip
 import mui.material.Typography
 import mui.material.styles.TypographyVariant
 import mui.system.sx
-import org.codecranachan.roster.Table
+import org.codecranachan.roster.query.ResolvedTable
 import react.FC
 import react.Props
 import react.ReactNode
@@ -31,12 +31,11 @@ import react.useContext
 import theme.ThemeContext
 
 external interface PlaySessionOccupancyIndicatorProps : Props {
-    var session: Table
+    var data: ResolvedTable
 }
 
 val PlayTableIndicator = FC<PlaySessionOccupancyIndicatorProps> { props ->
     val theme by useContext(ThemeContext)
-    val table = props.session
     Badge {
         anchorOrigin = object : BadgeOrigin {
             override var horizontal = BadgeOriginHorizontal.left
@@ -44,11 +43,11 @@ val PlayTableIndicator = FC<PlaySessionOccupancyIndicatorProps> { props ->
         }
         variant = BadgeVariant.standard
         color = BadgeColor.default
-        badgeContent = ReactNode(table.details.language.flag)
+        badgeContent = props.data.table?.let { ReactNode(it.details.language.flag) }
         overlap = BadgeOverlap.circular
 
         Tooltip {
-            title = ReactNode(table.getName())
+            title = ReactNode(props.data.name)
             Box {
                 sx {
                     position = Position.relative
@@ -58,7 +57,7 @@ val PlayTableIndicator = FC<PlaySessionOccupancyIndicatorProps> { props ->
                     sx {
                         opacity = number(.1)
                     }
-                    src = table.dungeonMaster.avatarUrl
+                    src = props.data.dungeonMaster?.avatarUrl
                 }
                 CircularProgress {
                     sx {
@@ -77,12 +76,8 @@ val PlayTableIndicator = FC<PlaySessionOccupancyIndicatorProps> { props ->
                     }
                     thickness = 4
                     variant = CircularProgressVariant.determinate
-                    value = props.session.occupancyPercentage()
-                    color = when (props.session.getState()) {
-                        org.codecranachan.roster.TableState.Full -> CircularProgressColor.info
-                        org.codecranachan.roster.TableState.Ready -> CircularProgressColor.success
-                        else -> CircularProgressColor.warning
-                    }
+                    value = props.data.occupancyPercent
+                    color = CircularProgressColor.info
                 }
                 Typography {
                     sx {
@@ -96,7 +91,7 @@ val PlayTableIndicator = FC<PlaySessionOccupancyIndicatorProps> { props ->
                         justifyContent = JustifyContent.center
                     }
                     variant = TypographyVariant.caption
-                    +"${props.session.players.size}/${props.session.details.playerRange.last}"
+                    +props.data.occupancyFraction
                 }
             }
         }

@@ -1,4 +1,4 @@
-package org.codecranachan.roster.logic.events
+package org.codecranachan.roster.core.events
 
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -20,4 +20,16 @@ class EventBus {
     }
 
     fun getFlux(): Flux<RosterEvent> = sink.asFlux()
+
+    /**
+     * Returns the events that have been published during the exection of the given block.
+     * Intended to be used for testing purposes.
+     */
+    fun capture(action: () -> Unit): List<RosterEvent> {
+        val capturedEvents = mutableListOf<RosterEvent>()
+        val connected = getFlux().subscribe(capturedEvents::add)
+        action()
+        connected.dispose()
+        return capturedEvents
+    }
 }

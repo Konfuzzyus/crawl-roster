@@ -1,23 +1,24 @@
-package org.codecranachan.roster.logic
+package org.codecranachan.roster.core
 
 import com.benasher44.uuid.Uuid
 import com.benasher44.uuid.uuid4
 import discord4j.discordjson.json.UserGuildData
 import discord4j.rest.util.PermissionSet
 import org.codecranachan.roster.DiscordUser
-import org.codecranachan.roster.Player
-import org.codecranachan.roster.PlayerDetails
+import org.codecranachan.roster.core.events.EventBus
+import org.codecranachan.roster.core.events.PlayerCreated
 import org.codecranachan.roster.discord.DiscordApiClient
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import org.codecranachan.roster.query.PlayerQueryResult
+import org.codecranachan.roster.repo.Repository
 
 class PlayerRosterLogic(
-    private val playerRepository: PlayerRepository,
-    private val guildRepository: GuildRepository
+    repo: Repository,
+    private val events: EventBus
 ) {
-    private val logger: Logger = LoggerFactory.getLogger(javaClass)
+    private val playerRepository = repo.playerRepository
+    private val guildRepository = repo.guildRepository
 
-    fun getPlayer(playerId: Uuid): Player? {
+    fun getPlayer(playerId: Uuid): PlayerQueryResult? {
         return playerRepository.getPlayer(playerId)?.withGuildMemberships()
     }
 
@@ -25,7 +26,7 @@ class PlayerRosterLogic(
      * Registers a discord user with the server and returns the resulting Player instance.
      * If the discord user is already registered, it returns the existing Player for that user.
      */
-    fun registerDiscordPlayer(discordIdentity: DiscordUser): Player {
+    fun registerDiscordPlayer(discordIdentity: DiscordUser): PlayerQueryResult {
         val existingPlayer = playerRepository.getPlayerByDiscordId(discordIdentity.id)
         return if (existingPlayer == null) {
             val player = Player(
@@ -33,10 +34,11 @@ class PlayerRosterLogic(
                 discordIdentity.id,
                 discordIdentity.username,
                 discordIdentity.getAvatarUrl(),
-                PlayerDetails()
+                Player.Details()
             )
             playerRepository.addPlayer(player)
-            player
+            events.publish(PlayerCreated(player))
+            PlayerQueryResult(player, emptyList())
         } else {
             existingPlayer.withGuildMemberships()
         }
@@ -55,13 +57,13 @@ class PlayerRosterLogic(
         }
     }
 
-    fun updatePlayer(playerId: Uuid, details: PlayerDetails) {
+    fun updatePlayer(playerId: Uuid, details: Player.Details) {
         playerRepository.updatePlayer(playerId, details)
     }
 
     /**
      * Can be used to check whether a particular player is an admin of the requested guild. Use if you need this
-     * information and do not have a Player object handy. This is less straining on the Database than fecthing the
+     * information and do not have a Player object handy. This is less straining on the Database than fetching the
      * Player object.
      *
      * @param playerId Uuid of the player
@@ -89,8 +91,8 @@ class PlayerRosterLogic(
     /**
      * Returns a copy fo the player instance with guild membership information added.
      */
-    private fun Player.withGuildMemberships(): Player {
-        return copy(memberships = playerRepository.getGuildMemberships(id))
+    private fun Player.withGuildMemberships(): PlayerQueryResult {
+        return PlayerQueryResult(this, playerRepository.getGuildMemberships(id))
     }
 
     private fun UserGuildData.permissionSet(): PermissionSet {
