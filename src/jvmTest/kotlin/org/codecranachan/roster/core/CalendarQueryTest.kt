@@ -34,8 +34,8 @@ class CalendarQueryTest : CoreLogicTest() {
     fun `should return all registered players for all events`() {
         repository.guildRepository.addLinkedGuild(testGuild)
         val players = insertPlayers(5)
-        val events = insertEvents(testGuild.id, 2)
-        events.forEach { e -> players.forEach { p -> logic.registerPlayer(e.id, p.id) } }
+        val events = insertEvents(2)
+        events.forEach { e -> players.forEach { p -> logic.addPlayerRegistration(e.id, p.id) } }
 
         val calendar = logic.queryCalendar(testGuild.id)
         assertNotNull(calendar)
@@ -50,8 +50,8 @@ class CalendarQueryTest : CoreLogicTest() {
     fun `should return all hosted tables for all events`() {
         repository.guildRepository.addLinkedGuild(testGuild)
         val players = insertPlayers(5)
-        val events = insertEvents(testGuild.id, 2)
-        events.forEach { e -> players.forEach { p -> logic.hostTable(e.id, p.id) } }
+        val events = insertEvents(2)
+        events.forEach { e -> players.forEach { p -> logic.addDmRegistration(e.id, p.id) } }
 
         val calendar = logic.queryCalendar(testGuild.id)
         assertNotNull(calendar)

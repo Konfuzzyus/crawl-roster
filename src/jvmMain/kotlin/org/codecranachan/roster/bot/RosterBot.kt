@@ -112,7 +112,7 @@ class RosterBot(val core: RosterCore, botToken: String, val rootUrl: String) {
                 Action.RegisterPlayer -> {
                     val p = core.playerRoster.registerDiscordPlayer(event.interaction.user.asDiscordUser())
                     try {
-                        core.eventCalendar.registerPlayer(
+                        core.eventCalendar.addPlayerRegistration(
                             activeId.getParam(0)!!,
                             p.player.id,
                             Registration.Details(activeId.getParam(1)!!)
@@ -129,7 +129,7 @@ class RosterBot(val core: RosterCore, botToken: String, val rootUrl: String) {
                 Action.UnregisterPlayer -> {
                     val p = core.playerRoster.registerDiscordPlayer(event.interaction.user.asDiscordUser())
                     try {
-                        core.eventCalendar.unregisterPlayer(activeId.getParam(0)!!, p.player.id)
+                        core.eventCalendar.deletePlayerRegistration(activeId.getParam(0)!!, p.player.id)
                         event.sendEphemeralResponse("I have canceled your registration. I Hope you can make it next time.")
                     } catch (e: RosterLogicException) {
                         event.sendEphemeralResponse(

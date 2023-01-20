@@ -9,7 +9,6 @@ import org.codecranachan.roster.core.events.TableCreated
 import org.codecranachan.roster.core.events.TableUpdated
 import org.codecranachan.roster.query.CalendarQueryResult
 import org.codecranachan.roster.query.EventQueryResult
-import org.codecranachan.roster.query.TableQueryResult
 import org.codecranachan.roster.repo.Repository
 
 class UnknownGuildException(guildId: Uuid) : RosterLogicException("Guild does not exist: $guildId")
@@ -66,12 +65,11 @@ class EventCalendarLogic(
         publishEventChange(e.id)
     }
 
-
     /**
      * Registers a player for a given event.
      */
     @kotlin.jvm.Throws(RosterLogicException::class)
-    fun registerPlayer(eventId: Uuid, playerId: Uuid, details: Registration.Details = Registration.Details()) {
+    fun addPlayerRegistration(eventId: Uuid, playerId: Uuid, details: Registration.Details = Registration.Details()) {
         eventRepository.getEvent(eventId) ?: throw UnknownEventException(eventId)
         playerRepository.getPlayer(playerId) ?: throw UnknownPlayerException(playerId)
 
@@ -98,10 +96,12 @@ class EventCalendarLogic(
         if (eventRepository.isPlayerForEvent(playerId, eventId)) {
             eventRepository.updateRegistration(eventId, playerId, details.dungeonMasterId)
             publishEventChange(eventId)
+        } else {
+            throw RosterLogicException("Player is not registered")
         }
     }
 
-    fun unregisterPlayer(eventId: Uuid, playerId: Uuid) {
+    fun deletePlayerRegistration(eventId: Uuid, playerId: Uuid) {
         if (eventRepository.isPlayerForEvent(playerId, eventId)) {
             eventRepository.deleteRegistration(eventId, playerId)
             publishEventChange(eventId)
@@ -110,11 +110,7 @@ class EventCalendarLogic(
         }
     }
 
-    fun getTable(eventId: Uuid, dungeonMasterId: Uuid): TableQueryResult? {
-        return eventRepository.getTable(eventId, dungeonMasterId)
-    }
-
-    fun hostTable(eventId: Uuid, dungeonMasterId: Uuid, details: Table.Details = Table.Details()) {
+    fun addDmRegistration(eventId: Uuid, dungeonMasterId: Uuid, details: Table.Details = Table.Details()) {
         eventRepository.getEvent(eventId) ?: throw UnknownEventException(eventId)
         playerRepository.getPlayer(dungeonMasterId) ?: throw UnknownPlayerException(dungeonMasterId)
 
@@ -127,7 +123,7 @@ class EventCalendarLogic(
         }
     }
 
-    fun updateTable(eventId: Uuid, dungeonMasterId: Uuid, details: Table.Details) {
+    fun updateDmRegistration(eventId: Uuid, dungeonMasterId: Uuid, details: Table.Details) {
         eventRepository.updateHosting(eventId, dungeonMasterId, details)
         val query = eventRepository.getTable(eventId, dungeonMasterId)
         if (query != null) {
@@ -135,7 +131,7 @@ class EventCalendarLogic(
         }
     }
 
-    fun cancelTable(eventId: Uuid, dungeonMasterId: Uuid) {
+    fun cancelDmRegistration(eventId: Uuid, dungeonMasterId: Uuid) {
         eventRepository.deleteHosting(eventId, dungeonMasterId)
     }
 

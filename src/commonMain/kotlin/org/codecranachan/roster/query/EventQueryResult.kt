@@ -11,9 +11,9 @@ import org.codecranachan.roster.core.Table
 @Serializable
 data class EventQueryResult(
     val event: Event,
-     val rawRegistrations: List<Registration>,
-     val rawTables: List<Table>,
-     val rawPlayers: List<Player>
+    val rawRegistrations: List<Registration>,
+    val rawTables: List<Table>,
+    val rawPlayers: List<Player>
 ) {
     @Transient
     val players: Map<Uuid, Player> = rawPlayers.associateBy { it.id }
@@ -25,7 +25,7 @@ data class EventQueryResult(
     val registrations: List<ResolvedRegistration> = resolveRegistrations()
 
     @Transient
-    val unseated = registrations.filter { it.dm == null }.map { it.player }
+    val unseated = registrations.filter { it.dungeonMaster == null }.map { it.player }
 
     fun isRegistered(playerId: Uuid): Boolean {
         return rawRegistrations.any { it.playerId == playerId }
@@ -44,11 +44,11 @@ data class EventQueryResult(
         val tabs = rawTables.associateBy { it.dungeonMasterId }
         val dmIds = regs.keys.union(tabs.keys)
 
-        return dmIds.filterNotNull().map { dmId ->
+        return dmIds.filterNotNull().filter { players.containsKey(it) }.map { dmId ->
             ResolvedTable(
                 dmId,
                 tabs[dmId],
-                players[dmId],
+                players[dmId]!!,
                 (regs[dmId] ?: emptyList()).mapNotNull { players[it.playerId] }
             )
         }.associateBy { it.id }
@@ -59,7 +59,12 @@ data class EventQueryResult(
             .sortedByDescending { it.meta.registrationDate }
             .mapNotNull {
                 players[it.playerId]?.let { p ->
-                    ResolvedRegistration(it, p, players[it.details.dungeonMasterId], tables[it.details.dungeonMasterId]?.table)
+                    ResolvedRegistration(
+                        it,
+                        p,
+                        players[it.details.dungeonMasterId],
+                        tables[it.details.dungeonMasterId]?.table
+                    )
                 }
             }
 

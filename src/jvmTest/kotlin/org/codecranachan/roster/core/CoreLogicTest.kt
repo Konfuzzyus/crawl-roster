@@ -1,37 +1,22 @@
 package org.codecranachan.roster.core
 
-import com.benasher44.uuid.Uuid
-import kotlinx.datetime.DateTimeUnit
-import kotlinx.datetime.LocalDate
-import kotlinx.datetime.plus
 import org.codecranachan.roster.LinkedGuild
 import org.codecranachan.roster.core.events.EventBus
 import org.codecranachan.roster.repo.Repository
+import org.codecranachan.roster.testkit.EntityGenerator
 import org.junit.jupiter.api.BeforeEach
+import java.util.function.Supplier
 
 abstract class CoreLogicTest {
     protected val repository = Repository("jdbc:h2:mem:test")
     protected val eventBus = EventBus()
     protected val logic = EventCalendarLogic(repository, eventBus)
+    protected val testGen = EntityGenerator()
 
-    protected val testGuild = LinkedGuild(
-        name = "name",
-        discordId = "discordId"
-    )
-
-    protected val testPlayer = Player(
-        discordId = "discordId",
-        discordHandle = "discordHandle"
-    )
-    protected val testEvent = Event(
-        guildId = testGuild.id,
-        date = LocalDate.parse("2022-06-06")
-    )
-
-    protected val testRegistration = Registration(
-        eventId = testEvent.id,
-        playerId = testPlayer.id
-    )
+    protected val testGuild = testGen.makeGuild()
+    protected val testPlayer = testGen.makePlayer()
+    protected val testEvent = testGen.makeEvent(testGuild)
+    protected val testRegistration = Registration(eventId = testEvent.id, playerId = testPlayer.id)
 
     @BeforeEach
     fun setUp() {
@@ -39,31 +24,20 @@ abstract class CoreLogicTest {
     }
 
     protected fun setupTestEventAndPlayer() {
-        repository.guildRepository.addLinkedGuild(testGuild)
-        repository.eventRepository.addEvent(testEvent)
-        repository.playerRepository.addPlayer(testPlayer)
+        testGen.insertEntities(repository, testGuild, testPlayer, testEvent)
     }
 
+    private inline fun <reified T : Any> insert(amount: Int, supplier: Supplier<T>): Array<T> {
+        val entities = testGen.makeMany(amount, supplier::get)
+        testGen.insertEntities(repository, *entities)
+        return entities
+    }
 
     protected fun insertPlayers(amount: Int): Array<Player> {
-        val players = (1..amount).map {
-            Player(
-                discordId = "discordId#$it",
-                discordHandle = "discordHandle#$it"
-            )
-        }
-        players.forEach(repository.playerRepository::addPlayer)
-        return players.toTypedArray()
+        return insert(amount, testGen::makePlayer)
     }
 
-    protected fun insertEvents(guildId: Uuid, amount: Int): Array<Event> {
-        val events = (1..amount).map {
-            Event(
-                guildId = testGuild.id,
-                date = LocalDate(2022, 1, 1).plus(it, DateTimeUnit.DAY)
-            )
-        }
-        events.forEach(repository.eventRepository::addEvent)
-        return events.toTypedArray()
+    protected fun insertEvents(amount: Int, guild: LinkedGuild = testGuild): Array<Event> {
+        return insert(amount) { testGen.makeEvent(guild) }
     }
 }

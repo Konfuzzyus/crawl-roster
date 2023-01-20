@@ -24,7 +24,7 @@ val RegistrationRow = FC<RegistrationRowProps> { props ->
             +"$langs $tier"
         }
         TableCell {
-            props.registration.tableDescription
+            props.registration.description
         }
     }
 }

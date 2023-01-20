@@ -8,9 +8,12 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
 import org.codecranachan.roster.core.Event
 import org.codecranachan.roster.query.EventQueryResult
+import org.codecranachan.roster.testkit.EntityGenerator
 import org.junit.jupiter.api.Test
 
 class MessageTemplatesTest {
+    private val testGen = EntityGenerator()
+
     private val expectedEvent = Event(
         guildId = Uuid.randomUUID(),
         date = LocalDate.parse("2022-06-06"),
@@ -22,11 +25,17 @@ class MessageTemplatesTest {
 
     @Test
     fun renderOpenEventContent() {
+        val players = testGen.makeMany(5) { testGen.makePlayer() }
+        val dms = testGen.makeMany(3) { testGen.makePlayer() }
+        val mysteryDms = testGen.makeMany(2) { testGen.makePlayer() }
+        val tables = dms.map { dm -> testGen.makeTable(expectedEvent, dm) }
+        val registrations = (dms + mysteryDms).zip(players).map { (dm, pl) -> testGen.makeRegistration(expectedEvent, pl, dm) }
+
         val result = EventQueryResult(
             expectedEvent,
-            emptyList(),
-            emptyList(),
-            emptyList()
+            registrations,
+            tables,
+            listOf(*players, *dms, *mysteryDms)
         )
 
         val content = MessageTemplates.eventMessageContent(result)

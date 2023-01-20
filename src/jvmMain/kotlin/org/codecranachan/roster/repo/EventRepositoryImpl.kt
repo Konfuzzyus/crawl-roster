@@ -160,19 +160,21 @@ class EventRepository(private val base: Repository) {
                 .where(condition)
                 .fetch()
         }
+        val eventIds = evts.map { it[EVENTS.ID]!! }
+
         val regs = base.withJooq {
             select().from(EVENTREGISTRATIONS)
                 .join(PLAYERS).on(EVENTREGISTRATIONS.PLAYER_ID.eq(PLAYERS.ID))
-                .where(condition)
+                .where(EVENTREGISTRATIONS.EVENT_ID.`in`(eventIds))
                 .fetch()
-                .groupBy { it[EVENTS.ID] }
+                .groupBy { it[HOSTEDTABLES.EVENT_ID] }
         }
         val tbls = base.withJooq {
             select().from(HOSTEDTABLES)
                 .join(PLAYERS).on(HOSTEDTABLES.DUNGEON_MASTER_ID.eq(PLAYERS.ID))
-                .where(condition)
+                .where(HOSTEDTABLES.EVENT_ID.`in`(eventIds))
                 .fetch()
-                .groupBy { it[EVENTS.ID] }
+                .groupBy { it[HOSTEDTABLES.EVENT_ID] }
         }
         return evts.map { evt ->
             val r = regs.getOrElse(evt.id, ::emptyList)

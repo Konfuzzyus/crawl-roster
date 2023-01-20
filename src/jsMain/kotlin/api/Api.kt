@@ -64,39 +64,39 @@ suspend fun updateEvent(eventId: Uuid, details: Event.Details) {
     }
 }
 
-suspend fun addEventRegistration(eventId: Uuid, playerId: Uuid, dungeonMasterId: Uuid? = null) {
-    client.put("/api/v1/events/$eventId/registrations/$playerId") {
+suspend fun addPlayerRegistration(eventId: Uuid, playerId: Uuid, dungeonMasterId: Uuid? = null) {
+    client.put("/api/v1/events/$eventId/players/$playerId") {
         contentType(ContentType.Application.Json)
         setBody(Registration.Details(dungeonMasterId))
     }
 }
 
-suspend fun updateEventRegistration(eventId: Uuid, playerId: Uuid, dungeonMasterId: Uuid?) {
-    client.patch("/api/v1/events/$eventId/registrations/$playerId") {
+suspend fun updatePlayerRegistration(eventId: Uuid, playerId: Uuid, dungeonMasterId: Uuid?) {
+    client.patch("/api/v1/events/$eventId/players/$playerId") {
         contentType(ContentType.Application.Json)
         setBody(Registration.Details(dungeonMasterId))
     }
 }
 
-suspend fun removeEventRegistration(eventId: Uuid, playerId: Uuid) {
-    client.delete("/api/v1/events/$eventId/registrations/$playerId")
+suspend fun removePlayerRegistration(eventId: Uuid, playerId: Uuid) {
+    client.delete("/api/v1/events/$eventId/players/$playerId")
 }
 
 
-suspend fun addTableHosting(eventId: Uuid, dungeonMasterId: Uuid) {
-    client.post("/api/v1/events/$eventId/tables") {
+suspend fun addDmRegistration(eventId: Uuid, dungeonMasterId: Uuid) {
+    client.put("/api/v1/events/$eventId/dms/$dungeonMasterId") {
         contentType(ContentType.Application.Json)
-        setBody(Table(eventId, dungeonMasterId))
+        setBody(Table.Details())
     }
 }
 
-suspend fun removeTableHosting(eventId: Uuid, dungeonMasterId: Uuid) {
-    client.delete("/api/v1/events/$eventId/tables/$dungeonMasterId")
-}
-
-suspend fun updateTableHosting(eventId: Uuid, dungeonMasterId: Uuid, details: Table.Details) {
-    client.patch("/api/v1/events/$eventId/tables/$dungeonMasterId") {
+suspend fun updateDmRegistration(eventId: Uuid, dungeonMasterId: Uuid, details: Table.Details) {
+    client.patch("/api/v1/events/$eventId/dms/$dungeonMasterId") {
         contentType(ContentType.Application.Json)
         setBody(details)
     }
+}
+
+suspend fun removeDmRegistration(eventId: Uuid, dungeonMasterId: Uuid) {
+    client.delete("/api/v1/events/$eventId/dms/$dungeonMasterId")
 }

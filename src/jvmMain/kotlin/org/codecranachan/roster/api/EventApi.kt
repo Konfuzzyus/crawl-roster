@@ -63,20 +63,9 @@ class EventApi(private val core: RosterCore) {
                 }
             }
 
-            put("/api/v1/events/{evtId}/registrations/{plrId}") {
-                val userSession = call.sessions.get<UserSession>()
-                if (userSession == null) {
-                    call.respond(HttpStatusCode.Unauthorized, "Not logged in")
-                } else {
-                    val evtId = Uuid.fromString(call.parameters["evtId"])
-                    val playerId = Uuid.fromString(call.parameters["plrId"])
-                    val reg = call.receive<Registration.Details>()
-                    core.eventCalendar.registerPlayer(evtId, playerId, reg)
-                    call.respond(HttpStatusCode.OK)
-                }
-            }
+            // player registrations
 
-            patch("/api/v1/events/{evtId}/registrations/{plrId}") {
+            put("/api/v1/events/{evtId}/players/{plrId}") {
                 val userSession = call.sessions.get<UserSession>()
                 if (userSession == null) {
                     call.respond(HttpStatusCode.Unauthorized, "Not logged in")
@@ -85,15 +74,32 @@ class EventApi(private val core: RosterCore) {
                     val plrId = Uuid.fromString(call.parameters["plrId"])
                     val reg = call.receive<Registration.Details>()
                     if (plrId == userSession.playerId) {
-                        core.eventCalendar.updatePlayerRegistration(evtId, userSession.playerId, reg)
+                        core.eventCalendar.addPlayerRegistration(evtId, plrId, reg)
                         call.respond(HttpStatusCode.OK)
                     } else {
-                        call.respond(HttpStatusCode.Forbidden, "You can only edit your own registrations")
+                        call.respond(HttpStatusCode.Forbidden, "You can only create your own registration")
                     }
                 }
             }
 
-            delete("/api/v1/events/{evtId}/registrations/{plrId}") {
+            patch("/api/v1/events/{evtId}/players/{plrId}") {
+                val userSession = call.sessions.get<UserSession>()
+                if (userSession == null) {
+                    call.respond(HttpStatusCode.Unauthorized, "Not logged in")
+                } else {
+                    val evtId = Uuid.fromString(call.parameters["evtId"])
+                    val plrId = Uuid.fromString(call.parameters["plrId"])
+                    val reg = call.receive<Registration.Details>()
+                    if (plrId == userSession.playerId) {
+                        core.eventCalendar.updatePlayerRegistration(evtId, plrId, reg)
+                        call.respond(HttpStatusCode.OK)
+                    } else {
+                        call.respond(HttpStatusCode.Forbidden, "You can only edit your own registration")
+                    }
+                }
+            }
+
+            delete("/api/v1/events/{evtId}/players/{plrId}") {
                 val userSession = call.sessions.get<UserSession>()
                 if (userSession == null) {
                     call.respond(HttpStatusCode.Unauthorized, "Not logged in")
@@ -101,16 +107,17 @@ class EventApi(private val core: RosterCore) {
                     val evtId = Uuid.fromString(call.parameters["evtId"])
                     val plrId = Uuid.fromString(call.parameters["plrId"])
                     if (plrId == userSession.playerId) {
-                        core.eventCalendar.unregisterPlayer(evtId, plrId)
+                        core.eventCalendar.deletePlayerRegistration(evtId, plrId)
                         call.respond(HttpStatusCode.OK)
                     } else {
-                        call.respond(HttpStatusCode.Forbidden, "You can only remove yourself from an event")
+                        call.respond(HttpStatusCode.Forbidden, "You can only cancel your own registration")
                     }
                 }
             }
 
+            // dm registrations
 
-            put("/api/v1/events/{evtId}/tables/{dmId}") {
+            put("/api/v1/events/{evtId}/dms/{dmId}") {
                 val userSession = call.sessions.get<UserSession>()
                 if (userSession == null) {
                     call.respond(HttpStatusCode.Unauthorized, "Not logged in")
@@ -119,16 +126,33 @@ class EventApi(private val core: RosterCore) {
                     val dmId = Uuid.fromString(call.parameters["dmId"])
                     val tbl = call.receive<Table.Details>()
                     if (dmId == userSession.playerId) {
-                        core.eventCalendar.hostTable(evtId, dmId, tbl)
+                        core.eventCalendar.addDmRegistration(evtId, dmId, tbl)
                         call.respond(HttpStatusCode.OK)
                     } else {
-                        call.respond(HttpStatusCode.Forbidden, "You can only sign yourself up to DM")
+                        call.respond(HttpStatusCode.Forbidden, "You can only create your own registration")
                     }
 
                 }
             }
 
-            delete("/api/v1/events/{evtId}/tables/{dmId}") {
+            patch("/api/v1/events/{evtId}/dms/{dmId}") {
+                val userSession = call.sessions.get<UserSession>()
+                if (userSession == null) {
+                    call.respond(HttpStatusCode.Unauthorized, "Not logged in")
+                } else {
+                    val evtId = Uuid.fromString(call.parameters["evtId"])
+                    val dmId = Uuid.fromString(call.parameters["dmId"])
+                    val tbl = call.receive<Table.Details>()
+                    if (dmId == userSession.playerId) {
+                        core.eventCalendar.updateDmRegistration(evtId, dmId, tbl)
+                        call.respond(HttpStatusCode.OK)
+                    } else {
+                        call.respond(HttpStatusCode.Forbidden, "You can only edit your own registration")
+                    }
+                }
+            }
+
+            delete("/api/v1/events/{evtId}/dms/{dmId}") {
                 val userSession = call.sessions.get<UserSession>()
                 if (userSession == null) {
                     call.respond(HttpStatusCode.Unauthorized)
@@ -136,10 +160,10 @@ class EventApi(private val core: RosterCore) {
                     val evtId = Uuid.fromString(call.parameters["evtId"])
                     val dmId = Uuid.fromString(call.parameters["dmId"])
                     if (dmId == userSession.playerId) {
-                        core.eventCalendar.cancelTable(evtId, dmId)
+                        core.eventCalendar.cancelDmRegistration(evtId, dmId)
                         call.respond(HttpStatusCode.OK)
                     } else {
-                        call.respond(HttpStatusCode.Forbidden, "Only the DM can cancel a table")
+                        call.respond(HttpStatusCode.Forbidden, "You can only cancel your own registration")
                     }
                 }
             }

@@ -16,7 +16,7 @@ buildscript {
 }
 
 plugins {
-    val kotlin = "1.7.21"
+    val kotlin = "1.8.0"
     kotlin("multiplatform") version kotlin
     kotlin("plugin.serialization") version kotlin
     id("org.flywaydb.flyway") version "8.5.10"
@@ -28,7 +28,7 @@ group = "org.codecranachan"
 version = "2022.10.3"
 
 object Versions {
-    const val kotlin = "1.7.21"
+    const val kotlin = "1.8.0"
     const val kotlinReact = "18.2.0-pre.347"
     const val kotlinMui = "5.8.3-pre.345"
     const val kotlinEmotion = "11.9.3-pre.347"
@@ -36,10 +36,10 @@ object Versions {
     const val kotlinDateTime = "0.4.0"
     const val kotlinRedux = "0.5.5"
     const val kotlinxSerJson = "1.4.1"
-    const val ktor = "2.1.3"
+    const val ktor = "2.2.1"
     const val jooq = "3.17.5"
     const val h2db = "2.1.214"
-    const val flyway = "9.8.3"
+    const val flyway = "9.10.2"
     const val logback = "1.4.5"
     const val uuid = "0.6.0"
     const val jose4j = "0.7.12"
@@ -68,7 +68,8 @@ kotlin {
         binaries.executable()
         browser {
             commonWebpackConfig {
-                cssSupport.enabled = true
+                cssSupport {
+                }
             }
         }
     }
@@ -77,7 +78,7 @@ kotlin {
         }
         val commonMain by getting {
             dependencies {
-                compileOnly("org.jetbrains.kotlinx:kotlinx-serialization-json:${Versions.kotlinxSerJson}")
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:${Versions.kotlinxSerJson}")
                 implementation("org.jetbrains.kotlinx:kotlinx-datetime:${Versions.kotlinDateTime}")
                 implementation("com.benasher44:uuid:${Versions.uuid}")
             }

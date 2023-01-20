@@ -7,13 +7,13 @@ import org.codecranachan.roster.core.Table
 data class ResolvedRegistration(
     val registration: Registration,
     val player: Player,
-    val dm: Player?,
+    val dungeonMaster: Player?,
     val table: Table?
 ) {
-    val tableDescription: String? =
+    val description: String? =
         when {
-            dm == null -> ""
-            table == null -> "Waiting for ${dm.discordHandle}"
-            else -> "${table.details.adventureTitle ?: "Adventure"} by ${dm.discordHandle}"
+            dungeonMaster == null -> "Has not yet chosen a dungeon master"
+            table == null -> "Waiting for ${dungeonMaster.discordMention}"
+            else -> "Joining ${table.title} by ${dungeonMaster.discordMention}"
         }
 }

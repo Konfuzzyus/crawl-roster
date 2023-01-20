@@ -57,7 +57,7 @@ val PlayTableIndicator = FC<PlaySessionOccupancyIndicatorProps> { props ->
                     sx {
                         opacity = number(.1)
                     }
-                    src = props.data.dungeonMaster?.avatarUrl
+                    src = props.data.dungeonMaster.avatarUrl
                 }
                 CircularProgress {
                     sx {

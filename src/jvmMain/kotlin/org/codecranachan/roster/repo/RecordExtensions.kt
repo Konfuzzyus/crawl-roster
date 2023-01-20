@@ -17,6 +17,7 @@ import org.codecranachan.roster.jooq.tables.records.EventsRecord
 import org.codecranachan.roster.jooq.tables.records.HostedtablesRecord
 import org.codecranachan.roster.jooq.tables.records.PlayersRecord
 import java.time.OffsetDateTime
+import java.time.ZoneId
 
 internal fun EventregistrationsRecord.asModel(): Registration {
     return Registration(
@@ -32,7 +33,7 @@ internal fun Registration.asRecord(): EventregistrationsRecord {
         eventId,
         playerId,
         null,
-        OffsetDateTime.from(meta.registrationDate.toJavaInstant()),
+        OffsetDateTime.ofInstant(meta.registrationDate.toJavaInstant(), ZoneId.systemDefault()),
         details.dungeonMasterId
     )
 }
@@ -55,7 +56,7 @@ internal fun EventsRecord.asModel(): Event {
         guildId!!,
         eventDate!!.toKotlinLocalDate(),
         Event.Details(
-            eventTime!!.toKotlinLocalTime(),
+            eventTime?.toKotlinLocalTime(),
             location,
             null
         ),

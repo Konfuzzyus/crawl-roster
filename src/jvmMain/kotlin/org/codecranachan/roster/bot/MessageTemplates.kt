@@ -10,9 +10,12 @@ class MessageTemplates {
 
         fun eventMessageContent(result: EventQueryResult): String {
             val c = theme.makeChunk("event#open")
-            c.set("player_count", result.playerCount)
-            c.set("table_space", result.tableSpace)
             c.set("event", result.event)
+            c.set("tables", result.tables.values)
+            c.set("table_count", result.tables.size)
+            c.set("table_space", result.tableSpace)
+            c.set("registrations", result.registrations)
+            c.set("player_count", result.playerCount)
 
             return c.toString()
         }

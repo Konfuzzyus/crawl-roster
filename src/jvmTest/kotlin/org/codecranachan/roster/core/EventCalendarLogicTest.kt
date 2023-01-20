@@ -28,7 +28,7 @@ class EventCalendarLogicTest : CoreLogicTest() {
     @Test
     fun `signing up to a nonexistent event should throw an error`() {
         assertThrows<UnknownEventException> {
-            logic.registerPlayer(UUID.randomUUID(), testPlayer.id)
+            logic.addPlayerRegistration(UUID.randomUUID(), testPlayer.id)
         }
     }
 
@@ -37,7 +37,7 @@ class EventCalendarLogicTest : CoreLogicTest() {
         repository.guildRepository.addLinkedGuild(testGuild)
         repository.eventRepository.addEvent(testEvent)
         assertThrows<UnknownPlayerException> {
-            logic.registerPlayer(testEvent.id, testPlayer.id)
+            logic.addPlayerRegistration(testEvent.id, testPlayer.id)
         }
     }
 
@@ -45,7 +45,7 @@ class EventCalendarLogicTest : CoreLogicTest() {
     fun `signing up an unregistered player to an event should emit an event update`() {
         setupTestEventAndPlayer()
         val captured = eventBus.capture {
-            logic.registerPlayer(testEvent.id, testPlayer.id)
+            logic.addPlayerRegistration(testEvent.id, testPlayer.id)
         }
         assertThat(captured).contains(RegistrationCreated(Registration(testEvent.id, testPlayer.id)))
     }
@@ -55,14 +55,14 @@ class EventCalendarLogicTest : CoreLogicTest() {
         setupTestEventAndPlayer()
         repository.eventRepository.addRegistration(testRegistration)
         assertThrows<PlayerAlreadyRegistered> {
-            logic.registerPlayer(testEvent.id, testPlayer.id)
+            logic.addPlayerRegistration(testEvent.id, testPlayer.id)
         }
     }
 
     @Test
     fun `hosting a table for an unknown event should throw an error`() {
         assertThrows<UnknownEventException> {
-            logic.hostTable(testEvent.id, testPlayer.id)
+            logic.addDmRegistration(testEvent.id, testPlayer.id)
         }
     }
 
@@ -71,7 +71,7 @@ class EventCalendarLogicTest : CoreLogicTest() {
         repository.guildRepository.addLinkedGuild(testGuild)
         repository.eventRepository.addEvent(testEvent)
         assertThrows<UnknownPlayerException> {
-            logic.hostTable(testEvent.id, testPlayer.id)
+            logic.addDmRegistration(testEvent.id, testPlayer.id)
         }
     }
 
@@ -79,7 +79,7 @@ class EventCalendarLogicTest : CoreLogicTest() {
     fun `hosting a table should emit a matching event`() {
         setupTestEventAndPlayer()
         val captured = eventBus.capture {
-            logic.hostTable(testEvent.id, testPlayer.id)
+            logic.addDmRegistration(testEvent.id, testPlayer.id)
         }
         assertThat(captured).contains(TableCreated(Table(testEvent.id, testPlayer.id)))
     }
@@ -87,18 +87,18 @@ class EventCalendarLogicTest : CoreLogicTest() {
     @Test
     fun `should throw an error if a hosting player tries to register for play`() {
         setupTestEventAndPlayer()
-        logic.hostTable(testEvent.id, testPlayer.id)
+        logic.addDmRegistration(testEvent.id, testPlayer.id)
         assertThrows<PlayerAlreadyHosting> {
-            logic.registerPlayer(testEvent.id, testPlayer.id)
+            logic.addPlayerRegistration(testEvent.id, testPlayer.id)
         }
     }
 
     @Test
     fun `should throw an error if a registered player tries to host a table`() {
         setupTestEventAndPlayer()
-        logic.registerPlayer(testEvent.id, testPlayer.id)
+        logic.addPlayerRegistration(testEvent.id, testPlayer.id)
         assertThrows<PlayerAlreadyRegistered> {
-            logic.hostTable(testEvent.id, testPlayer.id)
+            logic.addDmRegistration(testEvent.id, testPlayer.id)
         }
     }
 }

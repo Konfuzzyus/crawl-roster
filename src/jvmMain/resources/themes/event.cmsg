@@ -4,11 +4,18 @@ The event on {$event.formatted_date} is now accepting registrations.
 Tables will be set at {$event.details.location:the usual place} and doors will open at {$event.details.time:the usual time}
 To register you can use the buttons on this message or head over to $rootUrl.
 
---- {$player_count} have registered with table space for {$table_space} ---
+--- {$table_count} dungeon masters have signed up ---
+{% loop in $tables as $tbl %}
+{$tbl.dungeon_master.discord_mention} - {$tbl.description}
+{% onEmpty %}
+No dungeon masters have signed up
+{% endloop %}
 
-**Eligible for a table seat**
-- ${it.asDiscordMention()}
+--- there are enough tables for {$table_space} players with {$player_count} signed up ---
+{% loop in $registrations as $reg %}
+{$reg.player.discord_mention} - {$reg.description}
+{% onEmpty %}
+No players have signed up
+{% endloop %}
 
-**Waiting List**
-- ${it.asDiscordMention()}
 {#}
