@@ -25,7 +25,7 @@ plugins {
 }
 
 group = "org.codecranachan"
-version = "2022.10.3"
+version = "2022.10.4"
 
 object Versions {
     const val kotlinReact = "18.2.0-pre.347"

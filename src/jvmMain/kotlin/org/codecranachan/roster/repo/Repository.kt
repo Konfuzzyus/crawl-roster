@@ -26,7 +26,7 @@ class Repository {
         }
 
         fun decodeLanguages(text: String): List<TableLanguage> {
-            return text.split(",").map { TableLanguage.ofShort(it) }
+            return text.split(",").mapNotNull { TableLanguage.ofShort(it) }
         }
     }
 

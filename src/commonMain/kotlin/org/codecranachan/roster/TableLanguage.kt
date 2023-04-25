@@ -10,6 +10,6 @@ enum class TableLanguage(val short: String, val flag: String) {
 
     companion object {
         private val shortMap = values().associateBy { it.short }
-        fun ofShort(short: String): TableLanguage = shortMap[short] ?: throw IllegalArgumentException(short)
+        fun ofShort(short: String): TableLanguage? = shortMap[short]
     }
 }
