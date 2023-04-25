@@ -25,9 +25,9 @@ class MessageTemplatesTest {
 
     @Test
     fun renderOpenEventContent() {
-        val players = testGen.makeMany(5) { testGen.makePlayer() }
-        val dms = testGen.makeMany(3) { testGen.makePlayer() }
-        val mysteryDms = testGen.makeMany(2) { testGen.makePlayer() }
+        val players = EntityGenerator.makeMany(5) { testGen.makePlayer() }
+        val dms = EntityGenerator.makeMany(3) { testGen.makePlayer() }
+        val mysteryDms = EntityGenerator.makeMany(2) { testGen.makePlayer() }
         val tables = dms.map { dm -> testGen.makeTable(expectedEvent, dm) }
         val registrations = (dms + mysteryDms).zip(players).map { (dm, pl) -> testGen.makeRegistration(expectedEvent, pl, dm) }
 

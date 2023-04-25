@@ -3,6 +3,7 @@ package org.codecranachan.roster.core
 import com.benasher44.uuid.Uuid
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 import org.codecranachan.roster.IntRangeSerializer
 import org.codecranachan.roster.UuidSerializer
 
@@ -27,8 +28,11 @@ data class Table(
         val canceledOn: Instant? = null
     )
 
+    @Transient
     val description: String = details.adventureDescription ?: "The DM did not provide a detailed description."
+    @Transient
     val title: String = "${details.adventureTitle ?: "Mystery adventure"} (${details.moduleDesignation ?: "Homebrew"})"
+    @Transient
     val settings: String =
         "${details.language.name} - Character levels ${details.levelRange.first} to ${details.levelRange.last}"
 }

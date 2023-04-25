@@ -12,8 +12,23 @@ import java.util.function.Supplier
 class EntityGenerator {
     private var entityCounter = 0
 
-    inline fun <reified T : Any> makeMany(amount: Int, supplier: Supplier<T>): Array<T> {
-        return (1..amount).map { supplier.get() }.toTypedArray()
+    companion object {
+        inline fun <reified T : Any> makeMany(amount: Int, supplier: Supplier<T>): Array<T> {
+            return (1..amount).map { supplier.get() }.toTypedArray()
+        }
+
+        fun insertEntities(repo: Repository, vararg items: Any) {
+            items.forEach {
+                when (it) {
+                    is LinkedGuild -> repo.guildRepository.addLinkedGuild(it)
+                    is Player -> repo.playerRepository.addPlayer(it)
+                    is Event -> repo.eventRepository.addEvent(it)
+                    is Registration -> repo.eventRepository.addRegistration(it)
+                    is Table -> repo.eventRepository.addTable(it)
+                    else -> throw java.lang.IllegalArgumentException("Unknown object $it.javaClass")
+                }
+            }
+        }
     }
 
     fun makeGuild(): LinkedGuild {
@@ -54,14 +69,4 @@ class EntityGenerator {
         )
     }
 
-    fun insertEntities(repo: Repository, vararg items: Any) {
-        items.forEach {
-            when (it) {
-                is LinkedGuild -> repo.guildRepository.addLinkedGuild(it)
-                is Player -> repo.playerRepository.addPlayer(it)
-                is Event -> repo.eventRepository.addEvent(it)
-                else -> throw java.lang.IllegalArgumentException("Unknown object $it.javaClass")
-            }
-        }
-    }
 }

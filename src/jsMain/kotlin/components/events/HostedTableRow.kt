@@ -26,7 +26,8 @@ import react.create
 import react.useContext
 import reducers.StoreContext
 import reducers.TableEditorOpened
-import reducers.joinTable
+import reducers.addRegistration
+import reducers.updateRegistration
 
 external interface HostedTableRowProps : Props {
     var me: Player
@@ -37,9 +38,11 @@ external interface HostedTableRowProps : Props {
 val HostedTableRow = FC<HostedTableRowProps> { props ->
     val store = useContext(StoreContext)
 
+    val isDm = props.tableData.isDungeonMaster(props.me.id)
+    val isPc = props.tableData.isPlayer(props.me.id)
+    val isHosting = props.eventData.isHosting(props.me.id)
     val isRegistered = props.eventData.isRegistered(props.me.id)
-    val isHost = props.eventData.isHosting(props.me.id)
-    val isPlayer = props.tableData.isPlayer(props.me.id)
+    val isFull = props.tableData.isFull
 
     TableRow {
         TableCell {
@@ -47,7 +50,7 @@ val HostedTableRow = FC<HostedTableRowProps> { props ->
                 size = Size.medium
                 label = ReactNode(props.tableData.name)
                 when {
-                    isHost -> {
+                    isDm -> {
                         color = ChipColor.primary
                         variant = ChipVariant.filled
                         icon = ModeEdit.create()
@@ -55,26 +58,30 @@ val HostedTableRow = FC<HostedTableRowProps> { props ->
                             store.dispatch(TableEditorOpened(props.tableData.table!!))
                         }
                     }
-                    isRegistered && isPlayer -> {
+                    isPc -> {
                         color = ChipColor.primary
                         variant = ChipVariant.filled
                         icon = CheckCircleOutline.create()
                         onClick = {
-                            store.dispatch(joinTable(props.eventData.event, null))
+                            store.dispatch(updateRegistration(props.eventData.event, null))
                         }
                     }
-                    isRegistered && !isPlayer -> {
+                    isHosting || isFull -> {
+                        icon = BlockOutlined.create()
+                        color = ChipColor.default
+                        variant = ChipVariant.filled
+                    }
+                    else -> {
                         color = ChipColor.default
                         variant = ChipVariant.outlined
                         icon = CircleOutlined.create()
                         onClick = {
-                            store.dispatch(joinTable(props.eventData.event, props.tableData.table!!))
+                            if (isRegistered) {
+                                store.dispatch(updateRegistration(props.eventData.event, props.tableData.table!!))
+                            } else {
+                                store.dispatch(addRegistration(props.eventData.event, props.tableData.table!!))
+                            }
                         }
-                    }
-                    else -> {
-                        icon = BlockOutlined.create()
-                        color = ChipColor.default
-                        variant = ChipVariant.filled
                     }
                 }
             }

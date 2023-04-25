@@ -3,6 +3,7 @@ package org.codecranachan.roster.core
 import com.benasher44.uuid.Uuid
 import com.benasher44.uuid.uuid4
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 import org.codecranachan.roster.UuidSerializer
 
 @Serializable
@@ -14,8 +15,11 @@ data class Player(
     val avatarUrl: String? = null,
     val details: Details = Details()
 ) {
+    @Transient
     val discordMention: String = listOfNotNull("<@${discordId}>", details.name).joinToString(" ")
-    val websiteMention: String = listOfNotNull(discordHandle, details.name?.let { "($it)" }).joinToString { " " }
+
+    @Transient
+    val websiteMention: String = listOfNotNull(discordHandle, details.name?.let { "($it)" }).joinToString(" ")
 
     @Serializable
     data class Details(

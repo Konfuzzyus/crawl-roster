@@ -4,7 +4,6 @@ import kotlinx.serialization.Serializable
 import org.codecranachan.roster.core.Player
 import org.codecranachan.roster.core.Table
 
-
 @Serializable
 data class TableQueryResult(
     val table: Table,

@@ -15,9 +15,9 @@ import react.useEffectOnce
 import react.useState
 import reducers.EventEditorOpened
 import reducers.StoreContext
-import reducers.registerPlayer
+import reducers.addRegistration
 import reducers.registerTable
-import reducers.unregisterPlayer
+import reducers.removeRegistration
 import reducers.unregisterTable
 
 external interface EventActionsProps : Props {
@@ -46,7 +46,7 @@ val EventActions = FC<EventActionsProps> { props ->
         when {
             isRegistered -> {
                 Button {
-                    onClick = { myStore.dispatch(unregisterPlayer(props.targetEvent.event)) }
+                    onClick = { myStore.dispatch(removeRegistration(props.targetEvent.event)) }
                     +"Cancel Registration"
                 }
             }
@@ -89,7 +89,7 @@ val EventActions = FC<EventActionsProps> { props ->
                     disabled = true
                 }
                 onClick = { e ->
-                    myStore.dispatch(registerPlayer(props.targetEvent.event, it.table))
+                    myStore.dispatch(addRegistration(props.targetEvent.event, it.table))
                     handleClose(e)
                 }
                 ListItemText { +"Join ${it.name}" }
@@ -98,7 +98,7 @@ val EventActions = FC<EventActionsProps> { props ->
 
         MenuItem {
             onClick = { e ->
-                myStore.dispatch(registerPlayer(props.targetEvent.event))
+                myStore.dispatch(addRegistration(props.targetEvent.event))
                 handleClose(e)
             }
             ListItemText { +"Join Waiting List" }

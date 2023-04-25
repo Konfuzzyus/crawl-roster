@@ -21,18 +21,13 @@ val EventLineup = FC<EventLineupProps> { props ->
         Table {
             size = Size.small
             TableBody {
-                props.result.tables.forEach { session ->
+                props.result.tables.forEach { (_, table) ->
                     HostedTableRow {
                         me = props.me
                         eventData = props.result
-                        tableData = session.value
+                        tableData = table
                     }
                 }
-            }
-        }
-        Table {
-            size = Size.small
-            TableBody {
                 props.result.registrations.forEach { reg ->
                     RegistrationRow {
                         me = props.me

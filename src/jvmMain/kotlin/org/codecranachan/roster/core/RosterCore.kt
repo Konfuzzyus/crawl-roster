@@ -3,6 +3,7 @@ package org.codecranachan.roster.core
 import org.codecranachan.roster.Configuration
 import org.codecranachan.roster.core.events.EventBus
 import org.codecranachan.roster.repo.Repository
+import org.codecranachan.roster.testkit.EntityGenerator
 
 open class RosterLogicException(message: String) : RuntimeException(message)
 
@@ -16,6 +17,10 @@ class RosterCore {
 
     fun initForDevelopment() {
         repo.reset()
+    }
+
+    fun injectEntities(vararg entities: Any) {
+        EntityGenerator.insertEntities(repo, *entities)
     }
 
     fun initForProduction() {

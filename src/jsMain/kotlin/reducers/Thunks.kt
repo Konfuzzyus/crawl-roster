@@ -1,17 +1,17 @@
 package reducers
 
+import api.addDmRegistration
 import api.addEvent
 import api.addPlayerRegistration
-import api.addDmRegistration
 import api.fetchEvents
 import api.fetchPlayerInfo
 import api.fetchServerSettings
-import api.removePlayerRegistration
 import api.removeDmRegistration
-import api.updateEvent
-import api.updatePlayerRegistration
-import api.updatePlayer
+import api.removePlayerRegistration
 import api.updateDmRegistration
+import api.updateEvent
+import api.updatePlayer
+import api.updatePlayerRegistration
 import com.benasher44.uuid.Uuid
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
@@ -19,7 +19,7 @@ import org.codecranachan.roster.LinkedGuild
 import org.codecranachan.roster.core.Event
 import org.codecranachan.roster.core.Player
 import org.codecranachan.roster.core.Table
-import org.reduxkotlin.Thunk
+import org.reduxkotlin.thunk.Thunk
 
 private val scope = MainScope()
 
@@ -54,7 +54,7 @@ fun createEvent(e: Event): Thunk<ApplicationState> = { dispatch, getState, _ ->
     }
 }
 
-fun registerPlayer(e: Event, t: Table? = null): Thunk<ApplicationState> = { dispatch, getState, _ ->
+fun addRegistration(e: Event, t: Table? = null): Thunk<ApplicationState> = { dispatch, getState, _ ->
     scope.launch {
         val account = getState().identity.player
         if (account != null) {
@@ -64,7 +64,17 @@ fun registerPlayer(e: Event, t: Table? = null): Thunk<ApplicationState> = { disp
     }
 }
 
-fun unregisterPlayer(e: Event): Thunk<ApplicationState> = { dispatch, getState, _ ->
+fun updateRegistration(e: Event, t: Table?): Thunk<ApplicationState> = { dispatch, getState, _ ->
+    scope.launch {
+        val account = getState().identity.player
+        if (account != null) {
+            updatePlayerRegistration(e.id, account.player.id, t?.dungeonMasterId)
+            dispatch(updateEvents(getState().calendar.selectedLinkedGuild))
+        }
+    }
+}
+
+fun removeRegistration(e: Event): Thunk<ApplicationState> = { dispatch, getState, _ ->
     scope.launch {
         val account = getState().identity.player
         if (account != null) {
@@ -104,17 +114,6 @@ fun unregisterTable(e: Event): Thunk<ApplicationState> = { dispatch, getState, _
         }
     }
 }
-
-fun joinTable(e: Event, t: Table?): Thunk<ApplicationState> = { dispatch, getState, _ ->
-    scope.launch {
-        val account = getState().identity.player
-        if (account != null) {
-            updatePlayerRegistration(e.id, account.player.id, t?.dungeonMasterId)
-            dispatch(updateEvents(getState().calendar.selectedLinkedGuild))
-        }
-    }
-}
-
 fun updateTableDetails(eventId: Uuid, dungeonMasterId: Uuid, details: Table.Details): Thunk<ApplicationState> = { dispatch, getState, _ ->
     scope.launch {
         updateDmRegistration(eventId, dungeonMasterId, details)

@@ -158,6 +158,7 @@ class EventRepository(private val base: Repository) {
         val evts = base.withJooq {
             selectFrom(EVENTS)
                 .where(condition)
+                .orderBy(EVENTS.EVENT_DATE)
                 .fetch()
         }
         val eventIds = evts.map { it[EVENTS.ID]!! }
@@ -177,13 +178,13 @@ class EventRepository(private val base: Repository) {
                 .groupBy { it[HOSTEDTABLES.EVENT_ID] }
         }
         return evts.map { evt ->
-            val r = regs.getOrElse(evt.id, ::emptyList)
-            val e = regs.getOrElse(evt.id, ::emptyList)
+            val pcs = regs.getOrElse(evt.id, ::emptyList)
+            val dms = tbls.getOrElse(evt.id, ::emptyList)
             EventQueryResult(
                 evt.asModel(),
                 regs.getOrElse(evt.id, ::emptyList).map { it.into(EventregistrationsRecord::class.java).asModel() },
                 tbls.getOrElse(evt.id, ::emptyList).map { it.into(HostedtablesRecord::class.java).asModel() },
-                (r + e).map { it.into(PlayersRecord::class.java).asModel() }.distinctBy { it.id }
+                (pcs + dms).map { it.into(PlayersRecord::class.java).asModel() }.distinctBy { it.id }
             )
         }
     }

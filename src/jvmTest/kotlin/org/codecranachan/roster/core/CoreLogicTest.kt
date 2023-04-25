@@ -24,12 +24,12 @@ abstract class CoreLogicTest {
     }
 
     protected fun setupTestEventAndPlayer() {
-        testGen.insertEntities(repository, testGuild, testPlayer, testEvent)
+        EntityGenerator.insertEntities(repository, testGuild, testPlayer, testEvent)
     }
 
     private inline fun <reified T : Any> insert(amount: Int, supplier: Supplier<T>): Array<T> {
-        val entities = testGen.makeMany(amount, supplier::get)
-        testGen.insertEntities(repository, *entities)
+        val entities = EntityGenerator.makeMany(amount, supplier::get)
+        EntityGenerator.insertEntities(repository, *entities)
         return entities
     }
 

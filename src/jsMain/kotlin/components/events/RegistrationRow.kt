@@ -16,7 +16,7 @@ val RegistrationRow = FC<RegistrationRowProps> { props ->
     TableRow {
         TableCell {
             val p = if (props.me.id == props.registration.player.id) "★" else ""
-            +"$p ${props.registration.player.websiteMention})"
+            +"$p ${props.registration.player.websiteMention}"
         }
         TableCell {
             val langs = props.registration.player.details.languages.joinToString(" ") { it.flag }
@@ -24,7 +24,7 @@ val RegistrationRow = FC<RegistrationRowProps> { props ->
             +"$langs $tier"
         }
         TableCell {
-            props.registration.description
+            +"${props.registration.description}"
         }
     }
 }

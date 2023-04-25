@@ -11,12 +11,12 @@ buildscript {
     }
 
     dependencies {
-        classpath("com.h2database:h2:2.1.212")
+        classpath("com.h2database:h2:2.1.214")
     }
 }
 
 plugins {
-    val kotlin = "1.8.0"
+    val kotlin = "1.8.20"
     kotlin("multiplatform") version kotlin
     kotlin("plugin.serialization") version kotlin
     id("org.flywaydb.flyway") version "8.5.10"
@@ -28,22 +28,22 @@ group = "org.codecranachan"
 version = "2022.10.3"
 
 object Versions {
-    const val kotlin = "1.8.0"
+    const val kotlin = "1.8.20"
     const val kotlinReact = "18.2.0-pre.347"
     const val kotlinMui = "5.8.3-pre.345"
     const val kotlinEmotion = "11.9.3-pre.347"
     const val kotlinCoroutines = "1.6.4"
     const val kotlinDateTime = "0.4.0"
-    const val kotlinRedux = "0.5.5"
+    const val kotlinRedux = "0.6.0"
     const val kotlinxSerJson = "1.4.1"
     const val ktor = "2.2.1"
-    const val jooq = "3.17.5"
+    const val jooq = "3.18.3"
     const val h2db = "2.1.214"
     const val flyway = "9.10.2"
     const val logback = "1.4.5"
     const val uuid = "0.6.0"
     const val jose4j = "0.7.12"
-    const val discord4j = "3.2.3"
+    const val discord4j = "3.2.4"
     const val reactor = "3.4.24"
     const val chunk = "3.6.2"
 }
@@ -52,6 +52,13 @@ repositories {
     mavenCentral()
     maven("https://maven.pkg.jetbrains.space/public/p/kotlinx-html/maven")
     maven("https://oss.sonatype.org/content/repositories/snapshots")
+}
+
+java {
+    sourceSets {
+        val generatedJooq by creating {
+        }
+    }
 }
 
 kotlin {
@@ -159,7 +166,7 @@ tasks.flywayMigrate {
 
 jooqGenerator {
     jooqVersion = "3.16.6"
-    configuration("jvm", java.sourceSets["main"]) {
+    configuration("jvm", project.java.sourceSets["generatedJooq"]) {
         configuration = jooqCodegenConfiguration {
             jdbc {
                 username = "sa"
