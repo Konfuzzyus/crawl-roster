@@ -14,6 +14,7 @@ import org.codecranachan.roster.jooq.tables.references.EVENTS
 import org.codecranachan.roster.jooq.tables.references.HOSTEDTABLES
 import org.codecranachan.roster.jooq.tables.references.PLAYERS
 import org.codecranachan.roster.query.EventQueryResult
+import org.codecranachan.roster.query.RegistrationQueryResult
 import org.codecranachan.roster.query.TableQueryResult
 import org.jooq.Condition
 
@@ -85,7 +86,8 @@ class EventRepository(private val base: Repository) {
         }
     }
 
-    fun getTable(eventId: Uuid, dungeonMasterId: Uuid): TableQueryResult? {
+    fun queryTableData(eventId: Uuid, dungeonMasterId: Uuid): TableQueryResult? {
+        val event = getEvent(eventId) ?: return null
         val regs = base.withJooq {
             select().from(EVENTREGISTRATIONS)
                 .join(PLAYERS).on(EVENTREGISTRATIONS.PLAYER_ID.eq(PLAYERS.ID))
@@ -107,6 +109,7 @@ class EventRepository(private val base: Repository) {
 
         return tbl?.let { t ->
             TableQueryResult(
+                event,
                 t.into(HostedtablesRecord::class.java).asModel(),
                 t.into(PlayersRecord::class.java).asModel(),
                 regs.into(PlayersRecord::class.java).map { it.asModel() }

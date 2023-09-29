@@ -1,5 +1,6 @@
 package org.codecranachan.roster.bot
 
+import com.benasher44.uuid.Uuid
 import discord4j.core.DiscordClient
 import discord4j.core.GatewayDiscordClient
 import discord4j.core.event.domain.guild.GuildCreateEvent
@@ -10,22 +11,26 @@ import discord4j.core.`object`.component.Button
 import discord4j.core.`object`.entity.User
 import discord4j.discordjson.json.InteractionApplicationCommandCallbackData
 import discord4j.discordjson.json.InteractionResponseData
-import kotlinx.datetime.toJavaLocalDate
 import org.codecranachan.roster.DiscordUser
+import org.codecranachan.roster.core.PlayerAlreadyRegistered
 import org.codecranachan.roster.core.Registration
 import org.codecranachan.roster.core.RosterCore
 import org.codecranachan.roster.core.RosterLogicException
+import org.codecranachan.roster.core.events.CalendarEventCanceled
+import org.codecranachan.roster.core.events.CalendarEventClosed
+import org.codecranachan.roster.core.events.CalendarEventCreated
+import org.codecranachan.roster.core.events.CalendarEventUpdated
 import org.codecranachan.roster.core.events.EventBus
 import org.codecranachan.roster.core.events.RosterEvent
+import org.codecranachan.roster.core.events.TableCanceled
+import org.codecranachan.roster.core.events.TableCreated
+import org.codecranachan.roster.core.events.TableUpdated
 import org.codecranachan.roster.query.EventQueryResult
-import org.codecranachan.roster.query.ResolvedTable
+import org.codecranachan.roster.query.PlayerQueryResult
+import org.codecranachan.roster.query.TableQueryResult
 import org.codecranachan.roster.util.orNull
 import org.slf4j.LoggerFactory
 import reactor.core.Disposable
-import java.time.format.DateTimeFormatter
-import java.time.format.DateTimeFormatterBuilder
-import java.time.format.SignStyle
-import java.time.temporal.ChronoField
 
 fun User.asDiscordUser(): DiscordUser =
     DiscordUser(
@@ -54,12 +59,14 @@ fun InteractionCreateEvent.sendEphemeralResponse(content: String) {
 }
 
 
-class RosterBot(val core: RosterCore, botToken: String, val rootUrl: String) {
+class RosterBot(val core: RosterCore, botToken: String, rootUrl: String) {
     private val logger = LoggerFactory.getLogger(javaClass)
     private val client: DiscordClient = botToken.let(DiscordClient::create)
     private val disposables = ArrayList<Disposable>()
 
     private val tracking = GuildTracking()
+
+    private val templates = MessageTemplates(rootUrl)
 
     fun start() {
         val gateway = client.login().block()
@@ -105,6 +112,42 @@ class RosterBot(val core: RosterCore, botToken: String, val rootUrl: String) {
         tracking.remove(event.guildId)
     }
 
+    private fun createPlayerReguistration(
+        interaction: InteractionCreateEvent,
+        p: PlayerQueryResult,
+        eventId: Uuid,
+        dmId: Uuid?
+    ) {
+        core.eventCalendar.addPlayerRegistration(
+            eventId,
+            p.player.id,
+            Registration.Details(dmId)
+        )
+        if (dmId == null) {
+            interaction.sendEphemeralResponse("I have added you to the waiting list.")
+        } else {
+            interaction.sendEphemeralResponse("I have added you to this table.")
+        }
+    }
+
+    private fun updatePlayerRegistration(
+        interaction: InteractionCreateEvent,
+        p: PlayerQueryResult,
+        eventId: Uuid,
+        dmId: Uuid?
+    ) {
+        core.eventCalendar.updatePlayerRegistration(
+            eventId,
+            p.player.id,
+            Registration.Details(dmId)
+        )
+        if (dmId == null) {
+            interaction.sendEphemeralResponse("I have moved you to the waiting list.")
+        } else {
+            interaction.sendEphemeralResponse("I have moved you to this table.")
+        }
+    }
+
     private fun handleInteraction(event: InteractionCreateEvent) {
         event.interaction.commandInteraction.ifPresent {
             val activeId = it.customId.orNull()?.let(ActiveId::fromCustomId)
@@ -112,18 +155,21 @@ class RosterBot(val core: RosterCore, botToken: String, val rootUrl: String) {
                 Action.RegisterPlayer -> {
                     val p = core.playerRoster.registerDiscordPlayer(event.interaction.user.asDiscordUser())
                     try {
-                        core.eventCalendar.addPlayerRegistration(
-                            activeId.getParam(0)!!,
-                            p.player.id,
-                            Registration.Details(activeId.getParam(1)!!)
-                        )
-                        event.sendEphemeralResponse("I have added you to the waiting list.")
+                        createPlayerReguistration(event, p, activeId.getParam(0)!!, activeId.getParam(1))
                     } catch (e: RosterLogicException) {
-                        event.sendEphemeralResponse(
-                            """
-                            I am afraid I could not add you to the waiting list.
-                            The computer said: `${e.message}`""".trimIndent()
-                        )
+                        when (e) {
+                            is PlayerAlreadyRegistered -> {
+                                updatePlayerRegistration(event, p, activeId.getParam(0)!!, activeId.getParam(1))
+                            }
+                            else -> {
+                                event.sendEphemeralResponse(
+                                    """
+                                    I am afraid I could not process your registration.
+                                    The computer said: `${e.message}`""".trimIndent()
+                                )
+                            }
+                        }
+
                     }
                 }
                 Action.UnregisterPlayer -> {
@@ -148,90 +194,88 @@ class RosterBot(val core: RosterCore, botToken: String, val rootUrl: String) {
 
     private fun handleRosterEvent(e: RosterEvent) {
         logger.debug("Handling event from RosterCore: $e")
-        // TODO: Handle Events
-        /*
         when (e) {
-            is CalendarEventCreated -> publishEventOnDiscord(e.event)
-            is CalendarEventUpdated -> publishEventOnDiscord(e.event)
-            is TableCanceled -> publishCanceledTable(e.event, e.table)
+            is CalendarEventCreated -> updateEventOnDiscord(e.event)
+            is CalendarEventUpdated -> updateEventOnDiscord(e.event)
+            is CalendarEventCanceled -> {}
+            is CalendarEventClosed -> {}
+            is TableCreated -> updateTableOnDiscord(e.table)
+            is TableUpdated -> updateTableOnDiscord(e.table)
+            is TableCanceled -> cancelTableOnDiscord(e.table)
             else -> {}
         }
-        */
     }
 
-    private fun publishCanceledTable(event: EventQueryResult, table: ResolvedTable) {
-        publishEventOnDiscord(event, listOf(table))
-    }
-
-    private fun publishEventOnDiscord(query: EventQueryResult, canceledTables: List<ResolvedTable> = emptyList()) {
-        tracking.get(query.event.guildId)?.apply {
-            withEventChannel(query) { channel ->
-                withPinnedEventMessage(channel, query) { msg ->
-                    val content = MessageTemplates.eventMessageContent(query)
+    private fun updateEventOnDiscord(data: EventQueryResult) {
+        tracking.get(data.event.guildId)?.apply {
+            withEventChannel(data.event) { channel ->
+                withEventMessage(channel, data.event) { msg ->
+                    val content = templates.eventMessageContent(data)
                     val components =
                         ActionRow.of(
-                            Button.primary(ActiveId(Action.RegisterPlayer, query.event.id).asCustomId(), "Sign Up"),
-                            Button.primary(ActiveId(Action.UnregisterPlayer, query.event.id).asCustomId(), "Cancel")
+                            Button.primary(
+                                ActiveId(Action.RegisterPlayer, data.event.id).asCustomId(),
+                                "Sign Up"
+                            ),
+                            Button.primary(
+                                ActiveId(Action.UnregisterPlayer, data.event.id).asCustomId(),
+                                "Cancel"
+                            )
                         )
 
-                    val botMessage = BotMessage(botId, query.getChannelName(), content)
+                    val botMessage = BotMessage(botId, data.event.getChannelName(), content)
 
                     msg.edit()
                         .withContentOrNull(botMessage.asContent())
                         .withComponents(components)
                         .subscribe()
                 }
-                query.tables.values.forEach { tbl ->
-                    withPinnedTableMessage(channel, tbl) { msg ->
-                        val content = MessageTemplates.openTableMessageContent(tbl)
+            }
+        }
+    }
 
-                        val components =
-                            ActionRow.of(
-                                Button.primary(
-                                    ActiveId(
-                                        Action.RegisterPlayer,
-                                        query.event.id,
-                                        tbl.table!!.dungeonMasterId
-                                    ).asCustomId(),
-                                    "Join table"
-                                )
+    private fun updateTableOnDiscord(data: TableQueryResult) {
+        tracking.get(data.event.guildId)?.apply {
+            withEventChannel(data.event) { channel ->
+                withPinnedTableMessage(channel, data) { msg ->
+                    val content = templates.openTableMessageContent(data)
+
+                    val components =
+                        ActionRow.of(
+                            Button.primary(
+                                ActiveId(
+                                    Action.RegisterPlayer,
+                                    data.event.id,
+                                    data.dm.id
+                                ).asCustomId(),
+                                "Join table"
                             )
+                        )
 
-                        val botMessage = BotMessage(botId, tbl.name, content)
+                    val botMessage = BotMessage(botId, data.getTableName(), content)
 
-                        msg.edit()
-                            .withContentOrNull(botMessage.asContent())
-                            .withComponents(components)
-                            .subscribe()
-                    }
-                }
-                canceledTables.forEach { tbl ->
-                    withPinnedTableMessage(channel, tbl) { msg ->
-                        val content = MessageTemplates.closedTableMessageContent(tbl)
-                        val botMessage = BotMessage(botId, tbl.name, content)
-                        msg.edit()
-                            .withContentOrNull(botMessage.asContent())
-                            .withComponents()
-                            .subscribe()
-                    }
+                    msg.edit()
+                        .withContentOrNull(botMessage.asContent())
+                        .withComponents(components)
+                        .subscribe()
                 }
             }
         }
     }
-}
 
-private val EVENT_DATE_FORMATTER: DateTimeFormatter = DateTimeFormatterBuilder()
-    .appendValue(ChronoField.DAY_OF_MONTH, 2)
-    .appendLiteral('-')
-    .appendValue(ChronoField.MONTH_OF_YEAR, 2)
-    .appendLiteral('-')
-    .appendValue(ChronoField.YEAR, 4, 10, SignStyle.EXCEEDS_PAD)
-    .toFormatter()
+    private fun cancelTableOnDiscord(table: TableQueryResult) {
+        tracking.get(table.event.guildId)?.apply {
+            withEventChannel(table.event) { channel ->
+                withPinnedTableMessage(channel, table) { msg ->
+                    val content = templates.closedTableMessageContent(table)
+                    val botMessage = BotMessage(botId, table.getTableName(), content)
+                    msg.edit()
+                        .withContentOrNull(botMessage.asContent())
+                        .withComponents()
+                        .subscribe()
+                }
+            }
+        }
+    }
 
-fun EventQueryResult.getChannelName(): String {
-    return EVENT_DATE_FORMATTER.format(event.date.toJavaLocalDate())
-}
-
-fun EventQueryResult.getChannelTopic(): String {
-    return "Role playing event on ${event.formattedDate} posted on Crawl Roster"
 }

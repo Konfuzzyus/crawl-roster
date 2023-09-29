@@ -1,6 +1,8 @@
 package org.codecranachan.roster.testkit
 
+import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.plus
 import org.codecranachan.roster.LinkedGuild
 import org.codecranachan.roster.core.Event
 import org.codecranachan.roster.core.Player
@@ -47,10 +49,11 @@ class EntityGenerator {
         )
     }
 
-    fun makeEvent(guild: LinkedGuild): Event {
+    fun makeEvent(guild: LinkedGuild, date: LocalDate = LocalDate.parse("2022-06-06")): Event {
+        val nr = ++entityCounter
         return Event(
             guildId = guild.id,
-            date = LocalDate.parse("2022-06-06")
+            date = LocalDate(2022,1,1).plus(nr, DateTimeUnit.DAY)
         )
     }
 

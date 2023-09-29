@@ -25,6 +25,8 @@ class MessageTemplatesTest {
 
     @Test
     fun renderOpenEventContent() {
+        val templates = MessageTemplates("http://root.evl")
+
         val players = EntityGenerator.makeMany(5) { testGen.makePlayer() }
         val dms = EntityGenerator.makeMany(3) { testGen.makePlayer() }
         val mysteryDms = EntityGenerator.makeMany(2) { testGen.makePlayer() }
@@ -38,7 +40,7 @@ class MessageTemplatesTest {
             listOf(*players, *dms, *mysteryDms)
         )
 
-        val content = MessageTemplates.eventMessageContent(result)
+        val content = templates.eventMessageContent(result)
         assertThat(content).all {
             contains(expectedEvent.formattedDate)
             contains(expectedEvent.details.location!!)

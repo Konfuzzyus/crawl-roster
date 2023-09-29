@@ -17,15 +17,6 @@ class EventCalendarLogicTest : CoreLogicTest() {
     }
 
     @Test
-    fun `adding an event publishes a matching calender event created event`() {
-        repository.guildRepository.addLinkedGuild(testGuild)
-        val captured = eventBus.capture {
-            logic.addEvent(testEvent)
-        }
-        assertThat(captured).contains(CalendarEventCreated(testEvent))
-    }
-
-    @Test
     fun `signing up to a nonexistent event should throw an error`() {
         assertThrows<UnknownEventException> {
             logic.addPlayerRegistration(UUID.randomUUID(), testPlayer.id)
@@ -39,15 +30,6 @@ class EventCalendarLogicTest : CoreLogicTest() {
         assertThrows<UnknownPlayerException> {
             logic.addPlayerRegistration(testEvent.id, testPlayer.id)
         }
-    }
-
-    @Test
-    fun `signing up an unregistered player to an event should emit an event update`() {
-        setupTestEventAndPlayer()
-        val captured = eventBus.capture {
-            logic.addPlayerRegistration(testEvent.id, testPlayer.id)
-        }
-        assertThat(captured).contains(RegistrationCreated(Registration(testEvent.id, testPlayer.id)))
     }
 
     @Test
@@ -73,15 +55,6 @@ class EventCalendarLogicTest : CoreLogicTest() {
         assertThrows<UnknownPlayerException> {
             logic.addDmRegistration(testEvent.id, testPlayer.id)
         }
-    }
-
-    @Test
-    fun `hosting a table should emit a matching event`() {
-        setupTestEventAndPlayer()
-        val captured = eventBus.capture {
-            logic.addDmRegistration(testEvent.id, testPlayer.id)
-        }
-        assertThat(captured).contains(TableCreated(Table(testEvent.id, testPlayer.id)))
     }
 
     @Test

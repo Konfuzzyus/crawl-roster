@@ -34,7 +34,7 @@ class EventApi(private val core: RosterCore) {
                 } else {
                     val event = call.receive<Event>()
                     if (core.playerRoster.isGuildAdmin(userSession.playerId, event.guildId)) {
-                        core.eventCalendar.addEvent(event.guildId, event)
+                        core.eventCalendar.addEvent(event)
                         call.respond(HttpStatusCode.Created)
                     } else {
                         call.respond(HttpStatusCode.Forbidden, "Only guild admins can create events")

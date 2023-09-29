@@ -1,19 +1,23 @@
 {#open}
-Dungeon Master: ${tblq.dm.asDiscordMention()}
-Adventure: $it (${tblq.table.details.moduleDesignation ?: "Homebrew"})" }
-Player Level: ${tblq.table.details.levelRange.first} to ${tblq.table.details.levelRange.last}
-Player Limit: ${tblq.table.details.playerRange.last}
-Language: ${tblq.table.details.language.flag} ${tblq.table.details.language.name}
+Dungeon Master: {$dm.discord_mention}
+Adventure: $it (${table.details.moduleDesignation ?: "Homebrew"})" }
+Player Level: ${table.details.levelRange.first} to ${table.details.levelRange.last}
+Player Limit: ${table.details.playerRange.last}
+Language: ${table.details.language.flag} ${table.details.language.name}
 
-${tblq.table.details.adventureDescription}
+${table.details.adventureDescription}
 
 Join this table using the button below. If you already joined another table you will automatically be removed from the other table.
 
-**Players**
-- ${it.asDiscordMention()}" }.ifEmpty { listOf("none")
+--- Players ---
+{% loop in players as plr %}
+{$plr.discord_mention}
+{% onEmpty %}
+No players have signed up
+{% endloop %}
 {#}
 
 {#closed}
-${tbl.dm.asDiscordMention()} has canceled this table.
+{$dm.discord_mention} has canceled this table.
 Do not fret, I have moved you back to the registration list and you are free to join another table of your liking.
 {#}

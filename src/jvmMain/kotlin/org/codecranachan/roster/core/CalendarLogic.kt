@@ -4,11 +4,17 @@ import com.benasher44.uuid.Uuid
 import org.codecranachan.roster.core.events.CalendarEventCreated
 import org.codecranachan.roster.core.events.CalendarEventUpdated
 import org.codecranachan.roster.core.events.EventBus
+import org.codecranachan.roster.core.events.RegistrationCanceled
 import org.codecranachan.roster.core.events.RegistrationCreated
+import org.codecranachan.roster.core.events.RegistrationUpdated
+import org.codecranachan.roster.core.events.RosterEvent
+import org.codecranachan.roster.core.events.TableCanceled
 import org.codecranachan.roster.core.events.TableCreated
 import org.codecranachan.roster.core.events.TableUpdated
 import org.codecranachan.roster.query.CalendarQueryResult
 import org.codecranachan.roster.query.EventQueryResult
+import org.codecranachan.roster.query.RegistrationQueryResult
+import org.codecranachan.roster.query.TableQueryResult
 import org.codecranachan.roster.repo.Repository
 
 class UnknownGuildException(guildId: Uuid) : RosterLogicException("Guild does not exist: $guildId")
@@ -44,6 +50,10 @@ class EventCalendarLogic(
         )
     }
 
+    fun queryTable(eventId: Uuid, dmId: Uuid): TableQueryResult? {
+        return eventRepository.queryTableData(eventId, dmId)
+    }
+
     // -----
     // Management
     // -----
@@ -51,18 +61,12 @@ class EventCalendarLogic(
     fun addEvent(event: Event) {
         guildRepository.getLinkedGuild(event.guildId) ?: throw UnknownGuildException(event.guildId)
         eventRepository.addEvent(event)
-        eventBus.publish(CalendarEventCreated(event))
+        publishEventChange(event.id, ::CalendarEventCreated)
     }
 
     fun updateEvent(eventId: Uuid, details: Event.Details) {
         eventRepository.updateEvent(eventId, details)
         publishEventChange(eventId)
-    }
-
-    fun addEvent(linkedGuildId: Uuid, event: Event) {
-        val e = event.copy(guildId = linkedGuildId)
-        eventRepository.addEvent(e)
-        publishEventChange(e.id)
     }
 
     /**
@@ -85,7 +89,7 @@ class EventCalendarLogic(
                     details = details
                 )
                 eventRepository.addRegistration(reg)
-                eventBus.publish(RegistrationCreated(reg))
+                publishPlayerRegistration(eventId, playerId, ::RegistrationCreated)
             } else {
                 throw PlayerAlreadyRegistered(eventId, playerId)
             }
@@ -95,7 +99,7 @@ class EventCalendarLogic(
     fun updatePlayerRegistration(eventId: Uuid, playerId: Uuid, details: Registration.Details) {
         if (eventRepository.isPlayerForEvent(playerId, eventId)) {
             eventRepository.updateRegistration(eventId, playerId, details.dungeonMasterId)
-            publishEventChange(eventId)
+            publishPlayerRegistration(eventId, playerId)
         } else {
             throw RosterLogicException("Player is not registered")
         }
@@ -103,8 +107,8 @@ class EventCalendarLogic(
 
     fun deletePlayerRegistration(eventId: Uuid, playerId: Uuid) {
         if (eventRepository.isPlayerForEvent(playerId, eventId)) {
+            publishPlayerRegistration(eventId, playerId, ::RegistrationCanceled)
             eventRepository.deleteRegistration(eventId, playerId)
-            publishEventChange(eventId)
         } else {
             throw RosterLogicException("Player is not registered")
         }
@@ -117,27 +121,51 @@ class EventCalendarLogic(
         if (eventRepository.isPlayerForEvent(dungeonMasterId, eventId)) {
             throw PlayerAlreadyRegistered(eventId, dungeonMasterId)
         } else {
-            val hostedTable = Table(eventId, dungeonMasterId)
+            val hostedTable = Table(eventId, dungeonMasterId, details)
             eventRepository.addTable(hostedTable)
-            eventBus.publish(TableCreated(hostedTable))
+            publishTableChange(eventId, dungeonMasterId, ::TableCreated)
         }
     }
 
     fun updateDmRegistration(eventId: Uuid, dungeonMasterId: Uuid, details: Table.Details) {
         eventRepository.updateHosting(eventId, dungeonMasterId, details)
-        val query = eventRepository.getTable(eventId, dungeonMasterId)
-        if (query != null) {
-            eventBus.publish(TableUpdated(query.table))
-        }
+        publishTableChange(eventId, dungeonMasterId)
     }
 
     fun cancelDmRegistration(eventId: Uuid, dungeonMasterId: Uuid) {
+        // needs to be published before deletion otherwise the data will already be gone
+        publishTableChange(eventId, dungeonMasterId, ::TableCanceled)
         eventRepository.deleteHosting(eventId, dungeonMasterId)
     }
 
-    private fun publishEventChange(eventId: Uuid) {
+    private fun publishEventChange(
+        eventId: Uuid,
+        factory: (EventQueryResult) -> RosterEvent = ::CalendarEventUpdated
+    ) {
         eventRepository.queryEventData(eventId)?.let {
-            eventBus.publish(CalendarEventUpdated(it.event))
+            eventBus.publish(factory(it))
+        }
+    }
+
+    private fun publishTableChange(
+        eventId: Uuid,
+        dungeonMasterId: Uuid,
+        factory: (TableQueryResult) -> RosterEvent = ::TableUpdated
+    ) {
+        eventRepository.queryTableData(eventId, dungeonMasterId)?.let {
+            eventBus.publish(factory(it))
+        }
+    }
+
+    private fun publishPlayerRegistration(
+        eventId: Uuid,
+        playerId: Uuid,
+        factory: (Registration) -> RosterEvent = ::RegistrationUpdated
+    ) {
+        eventRepository.getRegistration(eventId, playerId)?.let { reg ->
+            eventBus.publish(factory(reg))
+            publishEventChange(reg.eventId)
+            reg.details.dungeonMasterId?.let { dmId -> publishTableChange(eventId, dmId) }
         }
     }
 }

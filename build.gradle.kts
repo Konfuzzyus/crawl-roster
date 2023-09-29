@@ -16,7 +16,8 @@ buildscript {
 }
 
 plugins {
-    val kotlin = "1.8.20"
+    val kotlin = "1.8.22"
+
     kotlin("multiplatform") version kotlin
     kotlin("plugin.serialization") version kotlin
     id("org.flywaydb.flyway") version "8.5.10"
@@ -28,7 +29,7 @@ group = "org.codecranachan"
 version = "2022.10.3"
 
 object Versions {
-    const val kotlin = "1.8.20"
+    const val kotlin = "1.8.22"
     const val kotlinReact = "18.2.0-pre.347"
     const val kotlinMui = "5.8.3-pre.345"
     const val kotlinEmotion = "11.9.3-pre.347"
@@ -39,26 +40,23 @@ object Versions {
     const val ktor = "2.2.1"
     const val jooq = "3.18.3"
     const val h2db = "2.1.214"
-    const val flyway = "9.10.2"
+    const val flyway = "9.20.0"
     const val logback = "1.4.5"
     const val uuid = "0.6.0"
     const val jose4j = "0.7.12"
-    const val discord4j = "3.2.4"
+    const val discord4j = "3.3.0-M2"
     const val reactor = "3.4.24"
     const val chunk = "3.6.2"
 }
+
+val flywayGeneratedDir = "${project.buildDir}/generated/flyway"
+val flywayJdbc = "jdbc:h2:file:${flywayGeneratedDir}/database"
+val jooqGeneratedDir = "${project.buildDir}/generated/jooq"
 
 repositories {
     mavenCentral()
     maven("https://maven.pkg.jetbrains.space/public/p/kotlinx-html/maven")
     maven("https://oss.sonatype.org/content/repositories/snapshots")
-}
-
-java {
-    sourceSets {
-        val generatedJooq by creating {
-        }
-    }
 }
 
 kotlin {
@@ -95,8 +93,12 @@ kotlin {
                 implementation(kotlin("test"))
             }
         }
+        val jvmJooq by creating {
+            kotlin.srcDir(jooqGeneratedDir)
+        }
         val jvmMain by getting {
             dependsOn(flyway)
+            dependsOn(jvmJooq)
             dependencies {
                 implementation("io.projectreactor:reactor-core:${Versions.reactor}")
                 implementation("com.discord4j:discord4j-core:${Versions.discord4j}")
@@ -145,10 +147,6 @@ kotlin {
     }
 }
 
-val flywayGeneratedDir = "${project.buildDir}/generated/flyway"
-val flywayJdbc = "jdbc:h2:file:${flywayGeneratedDir}/database"
-val jooqGeneratedDir = "${project.buildDir}/generated/jooq"
-
 flyway {
     url = flywayJdbc
     user = "sa"
@@ -166,7 +164,7 @@ tasks.flywayMigrate {
 
 jooqGenerator {
     jooqVersion = "3.16.6"
-    configuration("jvm", project.java.sourceSets["generatedJooq"]) {
+    configuration("jvm", project.java.sourceSets["main"]) {
         configuration = jooqCodegenConfiguration {
             jdbc {
                 username = "sa"

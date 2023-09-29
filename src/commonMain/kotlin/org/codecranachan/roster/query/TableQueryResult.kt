@@ -1,16 +1,18 @@
 package org.codecranachan.roster.query
 
 import kotlinx.serialization.Serializable
+import org.codecranachan.roster.core.Event
 import org.codecranachan.roster.core.Player
 import org.codecranachan.roster.core.Table
 
 @Serializable
 data class TableQueryResult(
+    val event: Event,
     val table: Table,
     val dm: Player,
     val players: List<Player> = listOf()
 ) {
-    fun getName(): String = "${dm.discordHandle}'s Table"
+    fun getTableName(): String = "${dm.discordHandle}'s Table"
 
     fun getState(): TableState {
         return when {
