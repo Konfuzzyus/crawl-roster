@@ -13,6 +13,7 @@ import discord4j.rest.util.Permission
 import discord4j.rest.util.PermissionSet
 import org.codecranachan.roster.LinkedGuild
 import org.codecranachan.roster.core.Event
+import org.codecranachan.roster.core.Player
 import org.codecranachan.roster.query.TableQueryResult
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -114,8 +115,8 @@ class GuildTracker(
         withPinnedBotMessage(eventChannel, event.getChannelName(), block)
     }
 
-    fun withPinnedTableMessage(eventChannel: TextChannel, table: TableQueryResult, block: (Message) -> Unit) {
-        withPinnedBotMessage(eventChannel, table.getTableName(), block)
+    fun withPinnedTableMessage(eventChannel: TextChannel, dm: Player, block: (Message) -> Unit) {
+        withPinnedBotMessage(eventChannel, dm.getTableName(), block)
     }
 
     private fun withPinnedBotMessage(

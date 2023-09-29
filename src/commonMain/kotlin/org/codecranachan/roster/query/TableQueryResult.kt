@@ -12,7 +12,7 @@ data class TableQueryResult(
     val dm: Player,
     val players: List<Player> = listOf()
 ) {
-    fun getTableName(): String = "${dm.discordHandle}'s Table"
+    fun getTableName(): String = dm.getTableName()
 
     fun getState(): TableState {
         return when {

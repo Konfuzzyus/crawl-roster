@@ -117,6 +117,15 @@ class EventRepository(private val base: Repository) {
         }
     }
 
+    fun getTable(eventId: Uuid, dungeonMasterId: Uuid):Table? {
+        return base.withJooq {
+            selectFrom(HOSTEDTABLES).where(
+                HOSTEDTABLES.EVENT_ID.eq(eventId),
+                HOSTEDTABLES.DUNGEON_MASTER_ID.eq(dungeonMasterId)
+            ).fetchOne()?.asModel()
+        }
+    }
+
     fun addTable(table: Table) {
         return base.withJooq {
             insertInto(HOSTEDTABLES).set(table.asRecord()).execute()

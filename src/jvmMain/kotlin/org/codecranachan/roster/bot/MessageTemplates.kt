@@ -1,6 +1,7 @@
 package org.codecranachan.roster.bot
 
 import com.x5.template.Theme
+import org.codecranachan.roster.core.Player
 import org.codecranachan.roster.query.EventQueryResult
 import org.codecranachan.roster.query.ResolvedTable
 import org.codecranachan.roster.query.TableQueryResult
@@ -11,29 +12,30 @@ class MessageTemplates(private val rootUrl: String) {
 
     }
 
-    fun eventMessageContent(result: EventQueryResult): String {
+    fun eventMessageContent(data: EventQueryResult): String {
         val c = theme.makeChunk("event#open")
-        c.set("event", result.event)
-        c.set("tables", result.tables.values)
-        c.set("table_count", result.tables.size)
-        c.set("table_space", result.tableSpace)
-        c.set("registrations", result.registrations)
-        c.set("player_count", result.playerCount)
+        c.set("event", data.event)
+        c.set("tables", data.tables.values)
+        c.set("table_count", data.tables.size)
+        c.set("table_space", data.tableSpace)
+        c.set("registrations", data.registrations)
+        c.set("player_count", data.playerCount)
         c.set("root-url", rootUrl)
 
         return c.toString()
     }
 
-    fun openTableMessageContent(result: TableQueryResult): String {
+    fun openTableMessageContent(data: TableQueryResult): String {
         val c = theme.makeChunk("table#open")
-        c.set("table", result.table)
-        c.set("dm", result.dm)
-        c.set("players", result.players)
+        c.set("table", data.table)
+        c.set("dm", data.dm)
+        c.set("players", data.players)
         return c.toString()
     }
 
-    fun closedTableMessageContent(table: TableQueryResult): String {
-        val c = theme.makeChunk("table#close")
+    fun closedTableMessageContent(dm: Player): String {
+        val c = theme.makeChunk("table#closed")
+        c.set("dm", dm)
         return c.toString()
     }
 }

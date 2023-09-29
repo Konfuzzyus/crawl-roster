@@ -21,6 +21,8 @@ data class Player(
     @Transient
     val websiteMention: String = listOfNotNull(discordHandle, details.name?.let { "($it)" }).joinToString(" ")
 
+    fun getTableName(): String = "${discordHandle}'s Table"
+
     @Serializable
     data class Details(
         val name: String? = null,

@@ -1,16 +1,16 @@
 {#open}
 Dungeon Master: {$dm.discord_mention}
-Adventure: $it (${table.details.moduleDesignation ?: "Homebrew"})" }
-Player Level: ${table.details.levelRange.first} to ${table.details.levelRange.last}
-Player Limit: ${table.details.playerRange.last}
-Language: ${table.details.language.flag} ${table.details.language.name}
+Adventure: {$table.details.adventure_title:Mystery Adventure} ({$table.details.module_designation:Homebrew})
+Player Level: {$table.details.level_range.start} to {$table.details.level_range.end_inclusive}
+Player Limit: {$table.details.player_range.end_inclusive}
+Language: {$table.details.language.flag} {$table.details.language}
 
-${table.details.adventureDescription}
+{$table.details.adventure_description:No description given.}
 
 Join this table using the button below. If you already joined another table you will automatically be removed from the other table.
 
 --- Players ---
-{% loop in players as plr %}
+{% loop in $players as $plr %}
 {$plr.discord_mention}
 {% onEmpty %}
 No players have signed up

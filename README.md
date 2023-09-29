@@ -16,6 +16,7 @@ To start the BE dev server the following env vars must be set:
 ```
 DISCORD_CLIENT_ID=YOUR_ID
 DISCORD_CLIENT_SECRET=YOUR_SECRET
+DISCORD_BOT_TOKEN=YOUR_BOT_TOKEN
 ROSTER_DEV_MODE=true
 ```
 Configure your IDE to start the gradle `run` with these vars set

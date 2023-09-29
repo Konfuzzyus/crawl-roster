@@ -21,13 +21,14 @@ import org.codecranachan.roster.core.events.CalendarEventClosed
 import org.codecranachan.roster.core.events.CalendarEventCreated
 import org.codecranachan.roster.core.events.CalendarEventUpdated
 import org.codecranachan.roster.core.events.EventBus
+import org.codecranachan.roster.core.events.RegistrationCanceled
+import org.codecranachan.roster.core.events.RegistrationCreated
+import org.codecranachan.roster.core.events.RegistrationUpdated
 import org.codecranachan.roster.core.events.RosterEvent
 import org.codecranachan.roster.core.events.TableCanceled
 import org.codecranachan.roster.core.events.TableCreated
 import org.codecranachan.roster.core.events.TableUpdated
-import org.codecranachan.roster.query.EventQueryResult
 import org.codecranachan.roster.query.PlayerQueryResult
-import org.codecranachan.roster.query.TableQueryResult
 import org.codecranachan.roster.util.orNull
 import org.slf4j.LoggerFactory
 import reactor.core.Disposable
@@ -112,7 +113,7 @@ class RosterBot(val core: RosterCore, botToken: String, rootUrl: String) {
         tracking.remove(event.guildId)
     }
 
-    private fun createPlayerReguistration(
+    private fun createPlayerRegistration(
         interaction: InteractionCreateEvent,
         p: PlayerQueryResult,
         eventId: Uuid,
@@ -155,7 +156,7 @@ class RosterBot(val core: RosterCore, botToken: String, rootUrl: String) {
                 Action.RegisterPlayer -> {
                     val p = core.playerRoster.registerDiscordPlayer(event.interaction.user.asDiscordUser())
                     try {
-                        createPlayerReguistration(event, p, activeId.getParam(0)!!, activeId.getParam(1))
+                        createPlayerRegistration(event, p, activeId.getParam(0)!!, activeId.getParam(1))
                     } catch (e: RosterLogicException) {
                         when (e) {
                             is PlayerAlreadyRegistered -> {
@@ -195,18 +196,49 @@ class RosterBot(val core: RosterCore, botToken: String, rootUrl: String) {
     private fun handleRosterEvent(e: RosterEvent) {
         logger.debug("Handling event from RosterCore: $e")
         when (e) {
-            is CalendarEventCreated -> updateEventOnDiscord(e.event)
-            is CalendarEventUpdated -> updateEventOnDiscord(e.event)
+            is CalendarEventCreated -> updateEventOnDiscord(e.current.id)
+            is CalendarEventUpdated -> updateEventOnDiscord(e.current.id)
             is CalendarEventCanceled -> {}
             is CalendarEventClosed -> {}
-            is TableCreated -> updateTableOnDiscord(e.table)
-            is TableUpdated -> updateTableOnDiscord(e.table)
-            is TableCanceled -> cancelTableOnDiscord(e.table)
+            is TableCreated -> {
+                updateEventOnDiscord(e.current.eventId)
+                updateTableOnDiscord(e.current.eventId, e.current.dungeonMasterId)
+            }
+            is TableUpdated -> {
+                updateEventOnDiscord(e.current.eventId)
+                updateTableOnDiscord(e.current.eventId, e.current.dungeonMasterId)
+            }
+            is TableCanceled -> {
+                updateEventOnDiscord(e.previous.eventId)
+                cancelTableOnDiscord(e.previous.eventId, e.previous.dungeonMasterId)
+            }
+            is RegistrationCreated -> {
+                updateEventOnDiscord(e.current.eventId)
+                e.current.details.dungeonMasterId?.let { dmId ->
+                    updateTableOnDiscord(e.current.eventId, dmId)
+                }
+            }
+            is RegistrationUpdated -> {
+                updateEventOnDiscord(e.current.eventId)
+                e.previous.details.dungeonMasterId?.let { dmId ->
+                    updateTableOnDiscord(e.previous.eventId, dmId)
+                }
+                e.current.details.dungeonMasterId?.let { dmId ->
+                    updateTableOnDiscord(e.current.eventId, dmId)
+                }
+            }
+            is RegistrationCanceled -> {
+                updateEventOnDiscord(e.previous.eventId)
+                e.previous.details.dungeonMasterId?.let { dmId ->
+                    updateTableOnDiscord(e.previous.eventId, dmId)
+                }
+            }
             else -> {}
         }
     }
 
-    private fun updateEventOnDiscord(data: EventQueryResult) {
+    private fun updateEventOnDiscord(eventId: Uuid) {
+        val data = core.eventCalendar.queryEvent(eventId) ?: return
         tracking.get(data.event.guildId)?.apply {
             withEventChannel(data.event) { channel ->
                 withEventMessage(channel, data.event) { msg ->
@@ -234,10 +266,11 @@ class RosterBot(val core: RosterCore, botToken: String, rootUrl: String) {
         }
     }
 
-    private fun updateTableOnDiscord(data: TableQueryResult) {
+    private fun updateTableOnDiscord(eventId: Uuid, dmId: Uuid) {
+        val data = core.eventCalendar.queryTable(eventId, dmId) ?: return
         tracking.get(data.event.guildId)?.apply {
             withEventChannel(data.event) { channel ->
-                withPinnedTableMessage(channel, data) { msg ->
+                withPinnedTableMessage(channel, data.dm) { msg ->
                     val content = templates.openTableMessageContent(data)
 
                     val components =
@@ -263,12 +296,14 @@ class RosterBot(val core: RosterCore, botToken: String, rootUrl: String) {
         }
     }
 
-    private fun cancelTableOnDiscord(table: TableQueryResult) {
-        tracking.get(table.event.guildId)?.apply {
-            withEventChannel(table.event) { channel ->
-                withPinnedTableMessage(channel, table) { msg ->
-                    val content = templates.closedTableMessageContent(table)
-                    val botMessage = BotMessage(botId, table.getTableName(), content)
+    private fun cancelTableOnDiscord(eventId: Uuid, dmId: Uuid) {
+        val event = core.eventCalendar.queryEvent(eventId)?.event ?: return
+        val dm = core.playerRoster.getPlayer(dmId)?.player ?: return
+        tracking.get(event.guildId)?.apply {
+            withEventChannel(event) { channel ->
+                withPinnedTableMessage(channel, dm) { msg ->
+                    val content = templates.closedTableMessageContent(dm)
+                    val botMessage = BotMessage(botId, dm.getTableName(), content)
                     msg.edit()
                         .withContentOrNull(botMessage.asContent())
                         .withComponents()
