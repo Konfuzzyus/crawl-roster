@@ -2,22 +2,21 @@
 The event on {$event.formatted_date} is now accepting registrations.
 
 Tables will be set at {$event.details.location:the usual place} and doors will open at {$event.details.time:the usual time}
-To register you can use the buttons on this message or head over to {$root-url}.
+To register you can use the buttons on this message or head over to {$root_url}.
 
---- {$table_count} dungeon masters have signed up ---
+--- **{$table_count}** dungeon masters have signed up ---
 {% loop in $tables as $tbl %}
-{$tbl.dungeon_master.discord_mention} - {$tbl.description}
+- {$tbl.dungeon_master.discord_mention} - {$tbl.details.adventure_title:Mystery Adventure}
 {% onEmpty %}
 No dungeon masters have signed up
 {% endloop %}
 
---- there are enough tables for {$table_space} players with {$player_count} signed up ---
-{% loop in $registrations as $reg %}
-{$reg.player.discord_mention} - {$reg.description}
+--- We have **{$player_count}** players attending and enough tables for **{$table_space}** ---
+**Unseated players**
+{% loop in $unseated as $ust %}
+- {$ust.discord_mention}
 {% onEmpty %}
-No players have signed up
+All players are seated
 {% endloop %}
-
-Players are listed in the order they have registered for the event.
 
 {#}

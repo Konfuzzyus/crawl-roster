@@ -9,11 +9,11 @@ Language: {$table.details.language.flag} {$table.details.language}
 
 Join this table using the button below. If you already joined another table you will automatically be removed from the other table.
 
---- Players ---
+**Seated players**
 {% loop in $players as $plr %}
-{$plr.discord_mention}
+- {$plr.discord_mention}
 {% onEmpty %}
-No players have signed up
+No players are sitting at this table
 {% endloop %}
 {#}
 

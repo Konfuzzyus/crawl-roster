@@ -18,9 +18,9 @@ class MessageTemplates(private val rootUrl: String) {
         c.set("tables", data.tables.values)
         c.set("table_count", data.tables.size)
         c.set("table_space", data.tableSpace)
-        c.set("registrations", data.registrations)
+        c.set("unseated", data.unseated)
         c.set("player_count", data.playerCount)
-        c.set("root-url", rootUrl)
+        c.set("root_url", rootUrl)
 
         return c.toString()
     }

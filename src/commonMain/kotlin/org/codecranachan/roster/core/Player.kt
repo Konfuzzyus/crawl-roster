@@ -16,7 +16,7 @@ data class Player(
     val details: Details = Details()
 ) {
     @Transient
-    val discordMention: String = listOfNotNull("<@${discordId}>", details.name).joinToString(" ")
+    val discordMention: String = "<@${discordId}>"
 
     @Transient
     val websiteMention: String = listOfNotNull(discordHandle, details.name?.let { "($it)" }).joinToString(" ")

@@ -258,7 +258,7 @@ class RosterBot(val core: RosterCore, botToken: String, rootUrl: String) {
                     val botMessage = BotMessage(botId, data.event.getChannelName(), content)
 
                     msg.edit()
-                        .withContentOrNull(botMessage.asContent())
+                        .withContentOrNull(botMessage.asContent().take(2000))
                         .withComponents(components)
                         .subscribe()
                 }
@@ -288,7 +288,7 @@ class RosterBot(val core: RosterCore, botToken: String, rootUrl: String) {
                     val botMessage = BotMessage(botId, data.getTableName(), content)
 
                     msg.edit()
-                        .withContentOrNull(botMessage.asContent())
+                        .withContentOrNull(botMessage.asContent().take(2000))
                         .withComponents(components)
                         .subscribe()
                 }
@@ -305,7 +305,7 @@ class RosterBot(val core: RosterCore, botToken: String, rootUrl: String) {
                     val content = templates.closedTableMessageContent(dm)
                     val botMessage = BotMessage(botId, dm.getTableName(), content)
                     msg.edit()
-                        .withContentOrNull(botMessage.asContent())
+                        .withContentOrNull(botMessage.asContent().take(2000))
                         .withComponents()
                         .subscribe()
                 }
