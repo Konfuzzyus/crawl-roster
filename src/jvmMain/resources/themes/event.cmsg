@@ -4,9 +4,9 @@ The event on {$event.formatted_date} is now accepting registrations.
 Tables will be set at {$event.details.location:the usual place} and doors will open at {$event.details.time:the usual time}
 To register you can use the buttons on this message or head over to {$root_url}.
 
---- **{$table_count}** dungeon masters have signed up ---
+-- Table lineup ---
 {% loop in $tables as $tbl %}
-- {$tbl.dungeon_master.discord_mention} - {$tbl.details.adventure_title:Mystery Adventure}
+- {$tbl.dungeon_master.discord_mention} is hosting **{$tbl.table.details.adventure_title}** ({$tbl.occupancy_fraction} players)
 {% onEmpty %}
 No dungeon masters have signed up
 {% endloop %}

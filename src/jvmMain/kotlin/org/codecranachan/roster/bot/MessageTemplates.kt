@@ -15,7 +15,7 @@ class MessageTemplates(private val rootUrl: String) {
     fun eventMessageContent(data: EventQueryResult): String {
         val c = theme.makeChunk("event#open")
         c.set("event", data.event)
-        c.set("tables", data.tables.values)
+        c.set("tables", data.tables.values.toList())
         c.set("table_count", data.tables.size)
         c.set("table_space", data.tableSpace)
         c.set("unseated", data.unseated)

@@ -30,8 +30,12 @@ data class Table(
 
     @Transient
     val description: String = details.adventureDescription ?: "The DM did not provide a detailed description."
+
     @Transient
-    val title: String = "${details.adventureTitle ?: "Mystery adventure"} (${details.moduleDesignation ?: "Homebrew"})"
+    val title: String = listOfNotNull(
+        details.adventureTitle ?: "Mystery adventure",
+        details.moduleDesignation?.let { "($it)" }).joinToString(" ")
+
     @Transient
     val settings: String =
         "${details.language.name} - Character levels ${details.levelRange.first} to ${details.levelRange.last}"

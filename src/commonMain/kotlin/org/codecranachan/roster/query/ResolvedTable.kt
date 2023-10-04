@@ -25,9 +25,9 @@ data class ResolvedTable(
     @Transient
     val description: String? =
         when {
-            table == null -> "Has not confirmed attendance"
-            table.details.canceledOn != null -> "Has canceled and will not be attending"
-            else -> "Hosting ${table.title} ${table.settings}"
+            table == null -> "has not confirmed attendance"
+            table.details.canceledOn != null -> "has canceled and will not be attending"
+            else -> "is hosting ${table.title} ${table.settings}"
         }
 
     fun isPlayer(playerId: Uuid): Boolean {

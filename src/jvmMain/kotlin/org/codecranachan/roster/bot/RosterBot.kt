@@ -240,28 +240,26 @@ class RosterBot(val core: RosterCore, botToken: String, rootUrl: String) {
     private fun updateEventOnDiscord(eventId: Uuid) {
         val data = core.eventCalendar.queryEvent(eventId) ?: return
         tracking.get(data.event.guildId)?.apply {
-            withEventChannel(data.event) { channel ->
-                withEventMessage(channel, data.event) { msg ->
-                    val content = templates.eventMessageContent(data)
-                    val components =
-                        ActionRow.of(
-                            Button.primary(
-                                ActiveId(Action.RegisterPlayer, data.event.id).asCustomId(),
-                                "Sign Up"
-                            ),
-                            Button.primary(
-                                ActiveId(Action.UnregisterPlayer, data.event.id).asCustomId(),
-                                "Cancel"
-                            )
+            withEventMessage(data.event) { msg ->
+                val content = templates.eventMessageContent(data)
+                val components =
+                    ActionRow.of(
+                        Button.primary(
+                            ActiveId(Action.RegisterPlayer, data.event.id).asCustomId(),
+                            "Sign Up"
+                        ),
+                        Button.primary(
+                            ActiveId(Action.UnregisterPlayer, data.event.id).asCustomId(),
+                            "Cancel"
                         )
+                    )
 
-                    val botMessage = BotMessage(botId, data.event.getChannelName(), content)
+                val botMessage = BotMessage(botId, data.event.getChannelName(), content)
 
-                    msg.edit()
-                        .withContentOrNull(botMessage.asContent().take(2000))
-                        .withComponents(components)
-                        .subscribe()
-                }
+                msg.edit()
+                    .withContentOrNull(botMessage.asContent().take(2000))
+                    .withComponents(components)
+                    .subscribe()
             }
         }
     }
@@ -269,29 +267,27 @@ class RosterBot(val core: RosterCore, botToken: String, rootUrl: String) {
     private fun updateTableOnDiscord(eventId: Uuid, dmId: Uuid) {
         val data = core.eventCalendar.queryTable(eventId, dmId) ?: return
         tracking.get(data.event.guildId)?.apply {
-            withEventChannel(data.event) { channel ->
-                withPinnedTableMessage(channel, data.dm) { msg ->
-                    val content = templates.openTableMessageContent(data)
+            withTableMessage(data.event, data.dm) { msg ->
+                val content = templates.openTableMessageContent(data)
 
-                    val components =
-                        ActionRow.of(
-                            Button.primary(
-                                ActiveId(
-                                    Action.RegisterPlayer,
-                                    data.event.id,
-                                    data.dm.id
-                                ).asCustomId(),
-                                "Join table"
-                            )
+                val components =
+                    ActionRow.of(
+                        Button.primary(
+                            ActiveId(
+                                Action.RegisterPlayer,
+                                data.event.id,
+                                data.dm.id
+                            ).asCustomId(),
+                            "Join table"
                         )
+                    )
 
-                    val botMessage = BotMessage(botId, data.getTableName(), content)
+                val botMessage = BotMessage(botId, data.getTableName(), content)
 
-                    msg.edit()
-                        .withContentOrNull(botMessage.asContent().take(2000))
-                        .withComponents(components)
-                        .subscribe()
-                }
+                msg.edit()
+                    .withContentOrNull(botMessage.asContent().take(2000))
+                    .withComponents(components)
+                    .subscribe()
             }
         }
     }
@@ -300,15 +296,13 @@ class RosterBot(val core: RosterCore, botToken: String, rootUrl: String) {
         val event = core.eventCalendar.queryEvent(eventId)?.event ?: return
         val dm = core.playerRoster.getPlayer(dmId)?.player ?: return
         tracking.get(event.guildId)?.apply {
-            withEventChannel(event) { channel ->
-                withPinnedTableMessage(channel, dm) { msg ->
-                    val content = templates.closedTableMessageContent(dm)
-                    val botMessage = BotMessage(botId, dm.getTableName(), content)
-                    msg.edit()
-                        .withContentOrNull(botMessage.asContent().take(2000))
-                        .withComponents()
-                        .subscribe()
-                }
+            withTableMessage(event, dm) { msg ->
+                val content = templates.closedTableMessageContent(dm)
+                val botMessage = BotMessage(botId, dm.getTableName(), content)
+                msg.edit()
+                    .withContentOrNull(botMessage.asContent().take(2000))
+                    .withComponents()
+                    .subscribe()
             }
         }
     }

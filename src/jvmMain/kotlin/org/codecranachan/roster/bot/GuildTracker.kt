@@ -14,10 +14,11 @@ import discord4j.rest.util.PermissionSet
 import org.codecranachan.roster.LinkedGuild
 import org.codecranachan.roster.core.Event
 import org.codecranachan.roster.core.Player
-import org.codecranachan.roster.query.TableQueryResult
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import reactor.core.publisher.Mono
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ConcurrentHashMap
 
 class GuildTracker(
     val linkedGuild: LinkedGuild,
@@ -30,11 +31,12 @@ class GuildTracker(
         const val memberRoleName = "Member"
     }
 
-    private val logger: Logger = LoggerFactory.getLogger(javaClass)
-
     private val roles = HashMap<Snowflake, Role>()
     private val categories = HashMap<Snowflake, Category>()
     private val textChannels = HashMap<Snowflake, TextChannel>()
+
+    private val categoryMap: ConcurrentHashMap<String, CompletableFuture<Category>> = ConcurrentHashMap()
+    private val textChannelMap: ConcurrentHashMap<String, CompletableFuture<TextChannel>> = ConcurrentHashMap()
 
     fun initialize() {
         discordGuild.channels.subscribe { c -> putEntity(c) }
@@ -63,16 +65,52 @@ class GuildTracker(
         }
     }
 
-    fun getEventCalendarCategory(): Category? {
-        return categories.values.find { c -> c.name.equals(eventCalendarCategoryName, ignoreCase = true) }
+    private fun getEventCalendarCategory(): Mono<Category> {
+        return Mono.fromFuture(
+            categoryMap.getOrPut(eventCalendarCategoryName) {
+                Mono.justOrEmpty<Category>(
+                    categories.values.find {
+                        it.name.equals(
+                            eventCalendarCategoryName,
+                            ignoreCase = true
+                        )
+                    })
+                    .switchIfEmpty(
+                        discordGuild
+                            .createCategory(eventCalendarCategoryName)
+                            .withReason("Guild is missing $eventCalendarCategoryName category to post Crawl Roster events")
+                    )
+                    .toFuture()
+            })
     }
 
-    fun getEventChannel(event: Event, categoryChannel: Category? = getEventCalendarCategory()): TextChannel? {
-        return categoryChannel?.let { category ->
-            textChannels.values
-                .filter { c -> category.id.equals(c.categoryId.orElse(null)) }
-                .find { c -> c.name.equals(event.getChannelName()) }
-        }
+    private fun getEventChannel(event: Event): Mono<TextChannel> {
+        return Mono.fromFuture(textChannelMap.getOrPut(event.getChannelName()) {
+            getEventCalendarCategory()
+                .flatMap { category ->
+                    Mono.justOrEmpty(
+                        textChannels.values
+                            .filter { c -> category.id.equals(c.categoryId.orElse(null)) }
+                            .find { c -> c.name.equals(event.getChannelName()) }
+                    )
+                        .switchIfEmpty(
+                            discordGuild
+                                .createTextChannel(event.getChannelName())
+                                .withTopic(event.getChannelTopic())
+                                .withPosition(event.date.toEpochDays())
+                                .withParentId(category.id)
+                                .withPermissionOverwrites(
+                                    membersOnly(
+                                        Permission.VIEW_CHANNEL,
+                                        Permission.SEND_MESSAGES
+                                    )
+                                )
+                                .withReason("New event posted by Crawl Roster")
+                        )
+                }
+                .map { it!! }
+                .toFuture()
+        })
     }
 
     fun getEveryoneRole(): Role? {
@@ -87,36 +125,16 @@ class GuildTracker(
         return roles.values.find { it.name == dungeonMasterRoleName }
     }
 
-    fun withEventCalendarCategory(block: (Category) -> Unit) {
-        Mono.justOrEmpty<Category>(getEventCalendarCategory())
-            .switchIfEmpty(
-                discordGuild.createCategory(eventCalendarCategoryName)
-                    .withReason("Guild is missing $eventCalendarCategoryName category to post Crawl Roster events")
-            )
-            .subscribe(block)
-    }
-
-    fun withEventChannel(event: Event, block: (TextChannel) -> Unit) {
-        withEventCalendarCategory { category ->
-            Mono.justOrEmpty<TextChannel>(getEventChannel(event, category))
-                .switchIfEmpty(
-                    discordGuild.createTextChannel(event.getChannelName())
-                        .withTopic(event.getChannelTopic())
-                        .withPosition(event.date.toEpochDays())
-                        .withParentId(category.id)
-                        .withPermissionOverwrites(membersOnly(Permission.VIEW_CHANNEL, Permission.SEND_MESSAGES))
-                        .withReason("New event posted by Crawl Roster")
-                )
-                .subscribe(block)
+    fun withEventMessage(event: Event, block: (Message) -> Unit) {
+        getEventChannel(event).subscribe { eventChannel ->
+            withPinnedBotMessage(eventChannel, event.getChannelName(), block)
         }
     }
 
-    fun withEventMessage(eventChannel: TextChannel, event: Event, block: (Message) -> Unit) {
-        withPinnedBotMessage(eventChannel, event.getChannelName(), block)
-    }
-
-    fun withPinnedTableMessage(eventChannel: TextChannel, dm: Player, block: (Message) -> Unit) {
-        withPinnedBotMessage(eventChannel, dm.getTableName(), block)
+    fun withTableMessage(event: Event, dm: Player, block: (Message) -> Unit) {
+        getEventChannel(event).subscribe { eventChannel ->
+            withPinnedBotMessage(eventChannel, dm.getTableName(), block)
+        }
     }
 
     private fun withPinnedBotMessage(
@@ -129,11 +147,9 @@ class GuildTracker(
         channel.pinnedMessages
             .filter { msg -> expected.hasSameAuthor(msg) && expected.hasSameTitle(msg) }
             .take(1)
-            .switchIfEmpty { sub ->
-                channel.createMessage(expected.asContent()).doOnNext {
-                    it.pin().subscribe()
-                }.subscribe(sub)
-            }.subscribe(block)
+            .switchIfEmpty(
+                channel.createMessage(expected.asContent()).doOnNext { it.pin().subscribe() }
+            ).subscribe(block)
     }
 
     private fun membersOnly(vararg permissions: Permission): List<PermissionOverwrite> {
