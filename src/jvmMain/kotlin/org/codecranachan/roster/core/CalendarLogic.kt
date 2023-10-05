@@ -1,6 +1,7 @@
 package org.codecranachan.roster.core
 
 import com.benasher44.uuid.Uuid
+import kotlinx.datetime.LocalDate
 import org.codecranachan.roster.core.events.CalendarEventCreated
 import org.codecranachan.roster.core.events.CalendarEventUpdated
 import org.codecranachan.roster.core.events.EventBus
@@ -40,11 +41,11 @@ class EventCalendarLogic(
         return eventRepository.queryEventData(eventId)
     }
 
-    fun queryCalendar(linkedGuildId: Uuid): CalendarQueryResult? {
+    fun queryCalendar(linkedGuildId: Uuid, after: LocalDate? = null, before: LocalDate? = null): CalendarQueryResult? {
         guildRepository.getLinkedGuild(linkedGuildId) ?: return null
         return CalendarQueryResult(
             linkedGuildId,
-            eventRepository.getEventsByGuild(linkedGuildId)
+            eventRepository.getEventsByGuild(linkedGuildId, after, before)
         )
     }
 

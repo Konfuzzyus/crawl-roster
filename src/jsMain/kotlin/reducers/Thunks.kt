@@ -84,16 +84,18 @@ fun removeRegistration(e: Event): Thunk<ApplicationState> = { dispatch, getState
     }
 }
 
-fun updateEvents(g: LinkedGuild?): Thunk<ApplicationState> = { dispatch, _, _ ->
-    scope.launch {
-        if (g == null) {
-            dispatch(EventsUpdated(listOf()))
-        } else {
-            val events = fetchEvents(g)
-            dispatch(EventsUpdated(events))
+fun updateEvents(g: LinkedGuild?): Thunk<ApplicationState> =
+    { dispatch, getState, _ ->
+        scope.launch {
+            val (after, before) = getState().calendar.selectedDateRange
+            if (g == null) {
+                dispatch(EventsUpdated(listOf()))
+            } else {
+                val events = fetchEvents(g, after, before)
+                dispatch(EventsUpdated(events))
+            }
         }
     }
-}
 
 fun registerTable(e: Event): Thunk<ApplicationState> = { dispatch, getState, _ ->
     scope.launch {
@@ -114,12 +116,14 @@ fun unregisterTable(e: Event): Thunk<ApplicationState> = { dispatch, getState, _
         }
     }
 }
-fun updateTableDetails(eventId: Uuid, dungeonMasterId: Uuid, details: Table.Details): Thunk<ApplicationState> = { dispatch, getState, _ ->
-    scope.launch {
-        updateDmRegistration(eventId, dungeonMasterId, details)
-        dispatch(updateEvents(getState().calendar.selectedLinkedGuild))
+
+fun updateTableDetails(eventId: Uuid, dungeonMasterId: Uuid, details: Table.Details): Thunk<ApplicationState> =
+    { dispatch, getState, _ ->
+        scope.launch {
+            updateDmRegistration(eventId, dungeonMasterId, details)
+            dispatch(updateEvents(getState().calendar.selectedLinkedGuild))
+        }
     }
-}
 
 fun updatePlayerDetails(details: Player.Details): Thunk<ApplicationState> = { dispatch, getState, _ ->
     scope.launch {

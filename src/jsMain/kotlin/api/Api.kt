@@ -8,6 +8,7 @@ import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
+import kotlinx.datetime.LocalDate
 import org.codecranachan.roster.GuildRoster
 import org.codecranachan.roster.LinkedGuild
 import org.codecranachan.roster.core.Event
@@ -46,8 +47,15 @@ suspend fun fetchServerSettings(): GuildRoster {
     }
 }
 
-suspend fun fetchEvents(linkedGuild: LinkedGuild): List<EventQueryResult> {
-    return client.get("/api/v1/guilds/${linkedGuild.id}/events").body()
+suspend fun fetchEvents(
+    linkedGuild: LinkedGuild,
+    after: LocalDate? = null,
+    before: LocalDate? = null
+): List<EventQueryResult> {
+    return client.get("/api/v1/guilds/${linkedGuild.id}/events") {
+        after?.let { parameter("after", it) }
+        before?.let { parameter("before", it) }
+    }.body()
 }
 
 suspend fun addEvent(e: Event) {

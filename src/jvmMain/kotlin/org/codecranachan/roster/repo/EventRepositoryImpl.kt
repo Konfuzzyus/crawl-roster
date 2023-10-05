@@ -1,6 +1,8 @@
 package org.codecranachan.roster.repo
 
 import com.benasher44.uuid.Uuid
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.toJavaLocalDate
 import kotlinx.datetime.toJavaLocalTime
 import org.codecranachan.roster.core.Event
 import org.codecranachan.roster.core.Registration
@@ -14,9 +16,9 @@ import org.codecranachan.roster.jooq.tables.references.EVENTS
 import org.codecranachan.roster.jooq.tables.references.HOSTEDTABLES
 import org.codecranachan.roster.jooq.tables.references.PLAYERS
 import org.codecranachan.roster.query.EventQueryResult
-import org.codecranachan.roster.query.RegistrationQueryResult
 import org.codecranachan.roster.query.TableQueryResult
 import org.jooq.Condition
+import org.jooq.impl.DSL
 
 class EventRepository(private val base: Repository) {
 
@@ -24,8 +26,16 @@ class EventRepository(private val base: Repository) {
         return fetchEventsWhere(EVENTS.ID.eq(eventId)).singleOrNull()
     }
 
-    fun getEventsByGuild(linkedGuildId: Uuid): List<EventQueryResult> {
-        return fetchEventsWhere(EVENTS.GUILD_ID.eq(linkedGuildId))
+    fun getEventsByGuild(linkedGuildId: Uuid, after: LocalDate?, before: LocalDate?): List<EventQueryResult> {
+        val conditions = listOfNotNull(
+            EVENTS.GUILD_ID.eq(linkedGuildId),
+            after?.let { EVENTS.EVENT_DATE.ge(it.toJavaLocalDate()) },
+            before?.let { EVENTS.EVENT_DATE.le(it.toJavaLocalDate()) },
+        )
+
+        return fetchEventsWhere(
+            DSL.and(conditions)
+        )
     }
 
     fun getEvent(eventId: Uuid): Event? {
@@ -117,7 +127,7 @@ class EventRepository(private val base: Repository) {
         }
     }
 
-    fun getTable(eventId: Uuid, dungeonMasterId: Uuid):Table? {
+    fun getTable(eventId: Uuid, dungeonMasterId: Uuid): Table? {
         return base.withJooq {
             selectFrom(HOSTEDTABLES).where(
                 HOSTEDTABLES.EVENT_ID.eq(eventId),
