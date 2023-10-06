@@ -40,9 +40,9 @@ class CalendarQueryTest : CoreLogicTest() {
         val calendar = logic.queryCalendar(testGuild.id)
         assertNotNull(calendar)
         assertThat(calendar.events).hasSize(2)
-        assertThat(calendar.events).each {
-            it.prop(EventQueryResult::tables).isEmpty()
-            it.prop(EventQueryResult::unseated).containsExactlyInAnyOrder(*players)
+        assertThat(calendar.events).each { result ->
+            result.prop(EventQueryResult::tables).isEmpty()
+            result.prop(EventQueryResult::unseated).containsExactlyInAnyOrder(*players)
         }
     }
 

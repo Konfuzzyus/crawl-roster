@@ -46,6 +46,7 @@ val HostedTableRow = FC<HostedTableRowProps> { props ->
 
     TableRow {
         TableCell {
+            colSpan = 2
             Chip {
                 size = Size.medium
                 label = ReactNode(props.tableData.name)
