@@ -13,7 +13,6 @@ data class BotCoordinates(
         "https://discord.com/api/oauth2/authorize?client_id=${clientId}&scope=bot&permissions=${botPermissions}"
 }
 
-
 @Serializable
 data class GuildRoster(
     val guildLimit: Int = 0,

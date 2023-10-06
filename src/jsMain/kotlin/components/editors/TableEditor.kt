@@ -14,9 +14,8 @@ import mui.material.Stack
 import mui.material.StackDirection
 import mui.material.TextField
 import mui.system.responsive
-import org.codecranachan.roster.Table
-import org.codecranachan.roster.TableDetails
-import org.codecranachan.roster.TableLanguage
+import org.codecranachan.roster.core.Table
+import org.codecranachan.roster.core.TableLanguage
 import org.w3c.dom.HTMLInputElement
 import react.FC
 import react.Props
@@ -44,8 +43,8 @@ val TableEditor = FC<Props> {
     val store = useContext(StoreContext)
     val (isOpen, setIsOpen) = useState(false)
 
-    val (tableId, setTableId) = useState(null as Uuid?)
-    val (tableName, setTableName) = useState("Unknown Table")
+    val (eventId, setEventId) = useState(null as Uuid?)
+    val (dmId, setDmId) = useState(null as Uuid?)
     val (title, setTitle) = useState("")
     val (description, setDescription) = useState("")
     val (designation, setDesignation) = useState("")
@@ -56,8 +55,8 @@ val TableEditor = FC<Props> {
     val (maxLevel, setMaxLevel) = useState(4)
 
     fun updateTable(table: Table) {
-        setTableId(table.id)
-        setTableName(table.getName())
+        setEventId(table.eventId)
+        setDmId(table.dungeonMasterId)
         setTitle(table.details.adventureTitle ?: "")
         setDescription(table.details.adventureDescription ?: "")
         setDesignation(table.details.moduleDesignation ?: "")
@@ -88,7 +87,7 @@ val TableEditor = FC<Props> {
         }
 
         DialogTitle {
-            +tableName
+            +"Your table"
         }
 
         DialogContent {
@@ -211,8 +210,9 @@ val TableEditor = FC<Props> {
                 onClick = { _ ->
                     store.dispatch(
                         updateTableDetails(
-                            tableId!!,
-                            TableDetails(
+                            eventId!!,
+                            dmId!!,
+                            Table.Details(
                                 title,
                                 description,
                                 designation,

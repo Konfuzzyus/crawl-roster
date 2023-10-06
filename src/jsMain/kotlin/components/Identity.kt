@@ -60,10 +60,10 @@ val Identity = FC<Props> {
         Chip {
             id = "identity-chip"
             avatar = Avatar.create {
-                src = profile.avatarUrl
-                +profile.details.name
+                src = profile.player.avatarUrl
+                +(profile.player.details.name ?: "A")
             }
-            label = ReactNode(profile.discordHandle)
+            label = ReactNode(profile.player.discordHandle)
             variant = ChipVariant.outlined
             onClick = { anchor = it.currentTarget }
             onDelete = {
@@ -81,7 +81,7 @@ val Identity = FC<Props> {
 
             MenuItem {
                 onClick = {
-                    store.dispatch(PlayerEditorOpened(profile))
+                    store.dispatch(PlayerEditorOpened(profile.player))
                     handleClose()
                 }
                 ListItemIcon { ManageAccounts {} }

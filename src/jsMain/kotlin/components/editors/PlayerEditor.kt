@@ -17,9 +17,8 @@ import mui.material.Stack
 import mui.material.StackDirection
 import mui.material.TextField
 import mui.system.responsive
-import org.codecranachan.roster.Player
-import org.codecranachan.roster.PlayerDetails
-import org.codecranachan.roster.TableLanguage
+import org.codecranachan.roster.core.Player
+import org.codecranachan.roster.core.TableLanguage
 import org.w3c.dom.HTMLInputElement
 import react.FC
 import react.Props
@@ -44,7 +43,7 @@ val PlayerEditor = FC<Props> {
     var playTier by useState(0)
 
     fun setPlayer(player: Player) {
-        name = player.details.name
+        name = player.details.name ?: "Anonymous"
         languages = player.details.languages.toTypedArray()
         playTier = player.details.playTier
     }
@@ -159,7 +158,7 @@ val PlayerEditor = FC<Props> {
                 onClick = { _ ->
                     store.dispatch(
                         updatePlayerDetails(
-                            PlayerDetails(
+                            Player.Details(
                                 name,
                                 languages.asList(),
                                 playTier

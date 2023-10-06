@@ -1,23 +1,19 @@
 package components
 
-import components.events.SeatedTableRow
-import components.events.UnseatedRow
-import mui.material.Divider
-import mui.material.DividerTextAlign
+import components.events.HostedTableRow
+import components.events.RegistrationRow
+import components.events.UnseatedPlayersRow
 import mui.material.Size
 import mui.material.Table
 import mui.material.TableBody
-import mui.material.TableCell
 import mui.material.TableContainer
-import mui.material.TableRow
-import mui.material.Typography
-import org.codecranachan.roster.Event
-import org.codecranachan.roster.Player
+import org.codecranachan.roster.core.Player
+import org.codecranachan.roster.query.EventQueryResult
 import react.FC
 import react.Props
 
 external interface EventLineupProps : Props {
-    var event: Event
+    var result: EventQueryResult
     var me: Player
 }
 
@@ -26,73 +22,34 @@ val EventLineup = FC<EventLineupProps> { props ->
         Table {
             size = Size.small
             TableBody {
-                props.event.tables.forEach { session ->
-                    SeatedTableRow {
-                        event = props.event
+                props.result.tables.forEach { (_, table) ->
+                    HostedTableRow {
                         me = props.me
-                        occupancy = session
+                        eventData = props.result
+                        tableData = table
                     }
-                    PlayerRow {
-                        me = props.me
-                        players = session.players
-                        capacity = session.details.playerRange.last
-                    }
+                    props.result.registrations
+                        .filter { it.dungeonMaster?.id == table.dungeonMaster.id }
+                        .forEach { reg ->
+                            RegistrationRow {
+                                me = props.me
+                                registration = reg
+                            }
+                        }
                 }
-
-                UnseatedRow {
-                    event = props.event
-                    me = props.me
+                UnseatedPlayersRow {
+                    unseatedPlayers = props.result.unseated
                 }
-                PlayerRow {
-                    me = props.me
-                    players = props.event.unseated
-                    capacity = props.event.unclaimedSeatCount()
-                }
-            }
-        }
-    }
-}
-
-external interface PlayerRowProps : Props {
-    var me: Player
-    var players: List<Player>
-    var capacity: Int?
-}
-
-val PlayerRow = FC<PlayerRowProps> { props ->
-    props.players.forEachIndexed { idx, player ->
-        if (idx == props.capacity) {
-            TableRow {
-                TableCell {
-                    colSpan = 4
-                    Divider {
-                        textAlign = DividerTextAlign.left
-                        Typography {
-                            +"WAITING LIST"
+                props.result.registrations
+                    .filter { it.dungeonMaster?.id == null }
+                    .forEach { reg ->
+                        RegistrationRow {
+                            me = props.me
+                            registration = reg
                         }
                     }
-                }
             }
-        }
-        TableRow {
-            val cap = props.capacity ?: Int.MAX_VALUE
-            val unseatedCount = minOf(props.players.size, cap)
-            val waitingCount = maxOf(0, props.players.size - cap)
-            when {
-                idx == 0 && unseatedCount > 0 -> TableCell { rowSpan = unseatedCount }
-                idx == props.capacity && waitingCount > 0 -> TableCell { rowSpan = waitingCount }
-                else -> {}
-            }
-            TableCell {
-                val p = if (props.me.id == player.id) "★" else ""
-                +"$p ${player.details.name} (${player.discordHandle})"
-            }
-            TableCell {
-                val langs = player.details.languages.joinToString(" ") { it.flag }
-                val tier = player.details.playTier.let { if (it == 0) "Beginner" else "Tier $it" }
-                +"$langs $tier"
-            }
-            TableCell { }
         }
     }
 }
+

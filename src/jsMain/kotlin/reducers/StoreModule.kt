@@ -4,7 +4,7 @@ import org.reduxkotlin.Store
 import org.reduxkotlin.applyMiddleware
 import org.reduxkotlin.combineReducers
 import org.reduxkotlin.createStore
-import org.reduxkotlin.createThunkMiddleware
+import org.reduxkotlin.thunk.createThunkMiddleware
 import react.FC
 import react.PropsWithChildren
 import react.createContext

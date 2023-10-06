@@ -1,10 +1,8 @@
 package components.events
 
-import mui.icons.material.PriorityHigh
-import mui.icons.material.QuestionMark
 import mui.material.Avatar
 import mui.material.AvatarGroup
-import org.codecranachan.roster.Player
+import org.codecranachan.roster.core.Player
 import react.FC
 import react.Props
 
@@ -21,7 +19,7 @@ val Seating = FC<SeatingProps> { props ->
             props.seatedPlayers.forEach {
                 Avatar {
                     src = it.avatarUrl
-                    +it.details.name.substring(0, 1)
+                    +it.discordHandle.substring(0, 1)
                 }
             }
         } else {
@@ -29,7 +27,7 @@ val Seating = FC<SeatingProps> { props ->
                 Avatar {
                     if (idx < props.seatedPlayers.size) {
                         src = props.seatedPlayers[idx].avatarUrl
-                        +props.seatedPlayers[idx].details.name.substring(0, 1)
+                        +props.seatedPlayers[idx].discordHandle.substring(0, 1)
                     } else {
                         if (idx < seatRange.first) {
                             mui.icons.material.PriorityHigh {}

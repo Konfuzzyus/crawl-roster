@@ -41,7 +41,7 @@ val EventCalendar = FC<EventCalendarProps> { props ->
                     TableBody {
                         events!!.forEach {
                             EventCalendarBodyRow {
-                                event = it
+                                result = it
                             }
                         }
                     }

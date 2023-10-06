@@ -17,8 +17,8 @@ import kotlinx.html.p
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import org.codecranachan.roster.auth.DiscordAuthorizationInfo
+import org.codecranachan.roster.core.RosterCore
 import org.codecranachan.roster.discord.DiscordApiClient
-import org.codecranachan.roster.logic.RosterCore
 import kotlin.collections.set
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
@@ -144,9 +144,9 @@ class AuthenticationSettings(
                         val principal: OAuthAccessTokenResponse.OAuth2? = call.principal()
                         val authInfo = oidProvider.identitySupplier(principal!!, oidProvider)
 
-                        val player = core.playerRoster.registerDiscordPlayer(authInfo.user)
+                        val query = core.playerRoster.registerDiscordPlayer(authInfo.user)
                         core.playerRoster.refreshGuildRoles(
-                            player.id,
+                            query.player.id,
                             DiscordApiClient(RosterServer.httpClient, principal.accessToken)
                         )
 
@@ -155,7 +155,7 @@ class AuthenticationSettings(
                                 oidProvider.name,
                                 principal.accessToken,
                                 principal.expiresIn,
-                                player.id,
+                                query.player.id,
                                 authInfo
                             )
                         )

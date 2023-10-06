@@ -11,12 +11,13 @@ buildscript {
     }
 
     dependencies {
-        classpath("com.h2database:h2:2.1.212")
+        classpath("com.h2database:h2:2.1.214")
     }
 }
 
 plugins {
-    val kotlin = "1.7.0"
+    val kotlin = "1.8.22"
+
     kotlin("multiplatform") version kotlin
     kotlin("plugin.serialization") version kotlin
     id("org.flywaydb.flyway") version "8.5.10"
@@ -25,26 +26,32 @@ plugins {
 }
 
 group = "org.codecranachan"
-version = "2022.10.3"
+version = "2023.10.1"
 
 object Versions {
+    const val kotlin = "1.8.22"
     const val kotlinReact = "18.2.0-pre.347"
     const val kotlinMui = "5.8.3-pre.345"
     const val kotlinEmotion = "11.9.3-pre.347"
-    const val kotlinCoroutines = "1.6.3"
-    const val kotlinSerialization = "1.3.3"
+    const val kotlinCoroutines = "1.6.4"
     const val kotlinDateTime = "0.4.0"
-    const val kotlinRedux = "0.5.5"
-    const val ktor = "2.0.2"
-    const val jooq = "3.17.0"
+    const val kotlinRedux = "0.6.0"
+    const val kotlinxSerJson = "1.4.1"
+    const val ktor = "2.2.1"
+    const val jooq = "3.18.3"
     const val h2db = "2.1.214"
-    const val flyway = "8.5.13"
-    const val logback = "1.2.11"
-    const val uuid = "0.4.0"
+    const val flyway = "9.20.0"
+    const val logback = "1.4.5"
+    const val uuid = "0.6.0"
     const val jose4j = "0.7.12"
-    const val discord4j = "3.3.0-SNAPSHOT"
-    const val reactor = "3.4.12"
+    const val discord4j = "3.3.0-M2"
+    const val reactor = "3.4.24"
+    const val chunk = "3.6.2"
 }
+
+val flywayGeneratedDir = "${project.buildDir}/generated/flyway"
+val flywayJdbc = "jdbc:h2:file:${flywayGeneratedDir}/database"
+val jooqGeneratedDir = "${project.buildDir}/generated/jooq"
 
 repositories {
     mavenCentral()
@@ -66,7 +73,8 @@ kotlin {
         binaries.executable()
         browser {
             commonWebpackConfig {
-                cssSupport.enabled = true
+                cssSupport {
+                }
             }
         }
     }
@@ -75,7 +83,7 @@ kotlin {
         }
         val commonMain by getting {
             dependencies {
-                compileOnly("org.jetbrains.kotlinx:kotlinx-serialization-json:${Versions.kotlinSerialization}")
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:${Versions.kotlinxSerJson}")
                 implementation("org.jetbrains.kotlinx:kotlinx-datetime:${Versions.kotlinDateTime}")
                 implementation("com.benasher44:uuid:${Versions.uuid}")
             }
@@ -85,8 +93,12 @@ kotlin {
                 implementation(kotlin("test"))
             }
         }
+        val jvmJooq by creating {
+            kotlin.srcDir(jooqGeneratedDir)
+        }
         val jvmMain by getting {
             dependsOn(flyway)
+            dependsOn(jvmJooq)
             dependencies {
                 implementation("io.projectreactor:reactor-core:${Versions.reactor}")
                 implementation("com.discord4j:discord4j-core:${Versions.discord4j}")
@@ -106,11 +118,13 @@ kotlin {
                 implementation("com.h2database:h2:${Versions.h2db}")
                 implementation("org.flywaydb:flyway-core:${Versions.flyway}")
                 implementation("ch.qos.logback:logback-classic:${Versions.logback}")
+                implementation("com.x5dev:chunk-templates:${Versions.chunk}")
             }
         }
         val jvmTest by getting {
             dependencies {
                 implementation("com.willowtreeapps.assertk:assertk:0.25")
+                implementation("io.projectreactor:reactor-test:${Versions.reactor}")
             }
         }
         val jsMain by getting {
@@ -133,10 +147,6 @@ kotlin {
     }
 }
 
-val flywayGeneratedDir = "${project.buildDir}/generated/flyway"
-val flywayJdbc = "jdbc:h2:file:${flywayGeneratedDir}/database"
-val jooqGeneratedDir = "${project.buildDir}/generated/jooq"
-
 flyway {
     url = flywayJdbc
     user = "sa"
@@ -154,7 +164,7 @@ tasks.flywayMigrate {
 
 jooqGenerator {
     jooqVersion = "3.16.6"
-    configuration("jvm", java.sourceSets["main"]) {
+    configuration("jvm", project.java.sourceSets["main"]) {
         configuration = jooqCodegenConfiguration {
             jdbc {
                 username = "sa"
@@ -164,6 +174,7 @@ jooqGenerator {
             }
 
             generator {
+                name = "org.jooq.codegen.KotlinGenerator"
                 target {
                     packageName = "${project.group}.roster.jooq"
                     directory = jooqGeneratedDir

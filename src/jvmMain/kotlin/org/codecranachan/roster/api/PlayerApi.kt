@@ -6,9 +6,9 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.sessions.*
-import org.codecranachan.roster.PlayerDetails
-import org.codecranachan.roster.logic.RosterCore
 import org.codecranachan.roster.UserSession
+import org.codecranachan.roster.core.Player
+import org.codecranachan.roster.core.RosterCore
 
 class PlayerApi(private val core: RosterCore) {
 
@@ -27,7 +27,7 @@ class PlayerApi(private val core: RosterCore) {
 
             patch("/api/v1/me") {
                 val userSession = call.sessions.get<UserSession>()
-                val details = call.receive<PlayerDetails>()
+                val details = call.receive<Player.Details>()
                 if (userSession == null) {
                     // not logged in
                     call.respond(HttpStatusCode.Unauthorized, "Not logged in")

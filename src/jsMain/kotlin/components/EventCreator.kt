@@ -13,7 +13,7 @@ import mui.material.DialogContent
 import mui.material.DialogTitle
 import mui.material.FormControlMargin
 import mui.material.TextField
-import org.codecranachan.roster.Event
+import org.codecranachan.roster.core.Event
 import org.codecranachan.roster.LinkedGuild
 import org.w3c.dom.HTMLInputElement
 import react.FC
