@@ -26,7 +26,7 @@ plugins {
 }
 
 group = "org.codecranachan"
-version = "2023.10.1"
+version = "2023.10.2"
 
 object Versions {
     const val kotlin = "1.8.22"
