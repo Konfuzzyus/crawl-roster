@@ -7,8 +7,9 @@ import discord4j.core.`object`.entity.Guild
 import discord4j.core.`object`.entity.Message
 import discord4j.core.`object`.entity.Role
 import discord4j.core.`object`.entity.channel.Category
-import discord4j.core.`object`.entity.channel.GuildMessageChannel
 import discord4j.core.`object`.entity.channel.TextChannel
+import discord4j.core.`object`.entity.channel.ThreadChannel
+import discord4j.core.spec.StartThreadWithoutMessageSpec
 import discord4j.rest.util.Permission
 import discord4j.rest.util.PermissionSet
 import org.codecranachan.roster.LinkedGuild
@@ -16,140 +17,166 @@ import org.codecranachan.roster.core.Event
 import org.codecranachan.roster.core.Player
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.ConcurrentHashMap
+import kotlin.jvm.optionals.getOrNull
 
 class GuildTracker(
     val linkedGuild: LinkedGuild,
-    val discordGuild: Guild,
+    private val discordGuild: Guild,
     val botId: Snowflake
 ) {
     companion object {
         const val eventCalendarCategoryName = "Organisation"
         const val dungeonMasterRoleName = "DM"
         const val memberRoleName = "Member"
+        const val everyoneRoleName = "__Everyone"
     }
 
-    private val roles = HashMap<Snowflake, Role>()
-    private val categories = HashMap<Snowflake, Category>()
-    private val textChannels = HashMap<Snowflake, TextChannel>()
+    private val logger: Logger = LoggerFactory.getLogger(javaClass)
+    private val entityCache = EntityCache()
 
-    private val categoryMap: ConcurrentHashMap<String, CompletableFuture<Category>> = ConcurrentHashMap()
-    private val textChannelMap: ConcurrentHashMap<String, CompletableFuture<TextChannel>> = ConcurrentHashMap()
+    private val channelProcessingOrder =
+        listOf(Category::class.java, TextChannel::class.java, ThreadChannel::class.java).reversed()
+
+    private fun Message.isAuthoredByBot(): Boolean = botId == author.getOrNull()?.id && isPinned
 
     fun initialize() {
-        discordGuild.channels.subscribe { c -> putEntity(c) }
         discordGuild.roles.subscribe { r -> putEntity(r) }
+        discordGuild.channels.concatWith(discordGuild.activeThreads.flatMapIterable { it.threads })
+            .sort { a, b -> channelProcessingOrder.indexOf(b.javaClass) - channelProcessingOrder.indexOf(a.javaClass) }
+            .doOnNext { channel -> putEntity(channel) }
+            .flatMap { channel ->
+                val msgs: Flux<Message> = when (channel) {
+                    is TextChannel -> channel.pinnedMessages
+                        .flatMap { msg ->
+                            if (getEntityName(msg) != null && getEntityName(msg) != getEntityName(channel)
+                            ) {
+                                logger.debug("Rempving message")
+                                msg.delete().ofType(Message::class.java)
+                            } else {
+                                Mono.just(msg)
+                            }
+                        }
+                    is ThreadChannel -> channel.pinnedMessages
+                    else -> Flux.empty()
+                }
+                msgs
+            }.subscribe(::putEntity)
+        discordGuild.activeThreads.subscribe()
+    }
+
+    private fun getEntityName(e: Entity): String? {
+        return when (e) {
+            is Category -> e.name
+            is TextChannel -> e.name
+            is ThreadChannel -> e.name
+            is Message -> {
+                if (e.isAuthoredByBot()) BotMessage.getMessageTitle(e) else null
+            }
+            is Role -> if (e.isEveryone) everyoneRoleName else e.name
+            else -> null
+        }
     }
 
     fun putEntity(e: Entity) {
-        when (e) {
-            is TextChannel -> textChannels[e.id] = e
-            is Category -> categories[e.id] = e
-            is Role -> roles[e.id] = e
+        val name = getEntityName(e)
+        name?.apply {
+            logger.debug("Adding {}({}) as {}", e.javaClass.simpleName, e.id, name)
+            entityCache.put(this, e)
         }
     }
 
     fun removeEntity(e: Snowflake) {
-        textChannels.remove(e)
-        categories.remove(e)
-        roles.remove(e)
+        entityCache.remove(e)
     }
 
-    fun removeEntity(e: Entity) {
-        when (e) {
-            is TextChannel -> textChannels.remove(e.id)
-            is Category -> categories.remove(e.id)
-            is Role -> roles.remove(e.id)
+    private fun getEventCalendarCategory(): CompletableFuture<Category> =
+        entityCache.get(eventCalendarCategoryName) { name ->
+            discordGuild
+                .createCategory(name)
+                .withReason("Guild is missing $eventCalendarCategoryName category to post Crawl Roster events")
+                .toFuture()
+        }
+
+    private fun getEventChannel(event: Event): CompletableFuture<TextChannel> =
+        entityCache.get(event.getChannelName()) { name ->
+            getEventCalendarCategory().thenCompose { category ->
+                discordGuild
+                    .createTextChannel(name)
+                    .withTopic(event.getChannelTopic())
+                    .withPosition(event.date.toEpochDays())
+                    .withParentId(category.id)
+                    .withPermissionOverwrites(
+                        membersOnly(
+                            Permission.VIEW_CHANNEL,
+                            Permission.SEND_MESSAGES
+                        )
+                    )
+                    .withReason("New event posted by Crawl Roster")
+                    .toFuture()
+            }
+        }
+
+    private fun getEventMessage(event: Event): CompletableFuture<Message> {
+        return entityCache.get(event.getChannelName()) { name ->
+            getEventChannel(event).thenCompose { channel ->
+                val template = BotMessage(botId, name)
+                channel.createMessage(template.asContent())
+                    .doOnNext { it.pin().subscribe() }
+                    .toFuture()
+            }
         }
     }
 
-    private fun getEventCalendarCategory(): Mono<Category> {
-        return Mono.fromFuture(
-            categoryMap.getOrPut(eventCalendarCategoryName) {
-                Mono.justOrEmpty<Category>(
-                    categories.values.find {
-                        it.name.equals(
-                            eventCalendarCategoryName,
-                            ignoreCase = true
-                        )
-                    })
-                    .switchIfEmpty(
-                        discordGuild
-                            .createCategory(eventCalendarCategoryName)
-                            .withReason("Guild is missing $eventCalendarCategoryName category to post Crawl Roster events")
-                    )
+    private fun getTableThread(event: Event, dm: Player): CompletableFuture<ThreadChannel> {
+        return entityCache.get(BotMessage.getTableTitle(event, dm)) { name ->
+            getEventChannel(event).thenCompose { channel ->
+                val spec = StartThreadWithoutMessageSpec.of(name, ThreadChannel.Type.GUILD_PUBLIC_THREAD)
+                    .withAutoArchiveDuration(ThreadChannel.AutoArchiveDuration.DURATION4)
+                    .withReason("New Table Posted by Crawl Roster")
+                channel.startThread(spec).toFuture()
+            }
+        }
+    }
+
+    private fun getTableMessage(event: Event, dm: Player): CompletableFuture<Message> {
+        return entityCache.get(BotMessage.getTableTitle(event, dm)) { name ->
+            getTableThread(event, dm).thenCompose { thread ->
+                val template = BotMessage(botId, name)
+                thread
+                    .createMessage(template.asContent())
+                    .doOnNext { it.pin().subscribe() }
                     .toFuture()
-            })
+            }
+        }
     }
 
-    private fun getEventChannel(event: Event): Mono<TextChannel> {
-        return Mono.fromFuture(textChannelMap.getOrPut(event.getChannelName()) {
-            getEventCalendarCategory()
-                .flatMap { category ->
-                    Mono.justOrEmpty(
-                        textChannels.values
-                            .filter { c -> category.id.equals(c.categoryId.orElse(null)) }
-                            .find { c -> c.name.equals(event.getChannelName()) }
-                    )
-                        .switchIfEmpty(
-                            discordGuild
-                                .createTextChannel(event.getChannelName())
-                                .withTopic(event.getChannelTopic())
-                                .withPosition(event.date.toEpochDays())
-                                .withParentId(category.id)
-                                .withPermissionOverwrites(
-                                    membersOnly(
-                                        Permission.VIEW_CHANNEL,
-                                        Permission.SEND_MESSAGES
-                                    )
-                                )
-                                .withReason("New event posted by Crawl Roster")
-                        )
-                }
-                .map { it!! }
-                .toFuture()
-        })
+    private fun getRole(name: String): Role? {
+        return entityCache
+            .get(name) { CompletableFuture.failedFuture<Role>(UnsupportedOperationException("Can not create Roles")) }
+            .getNow(null)
     }
 
-    fun getEveryoneRole(): Role? {
-        return roles.values.find { it.isEveryone }
+    private fun getEveryoneRole(): Role? {
+        return getRole(everyoneRoleName)
     }
 
-    fun getMemberRole(): Role? {
-        return roles.values.find { it.name == memberRoleName }
+    private fun getMemberRole(): Role? {
+        return getRole(memberRoleName)
     }
 
-    fun getDungeonMasterRole(): Role? {
-        return roles.values.find { it.name == dungeonMasterRoleName }
+    private fun getDungeonMasterRole(): Role? {
+        return getRole(dungeonMasterRoleName)
     }
 
     fun withEventMessage(event: Event, block: (Message) -> Unit) {
-        getEventChannel(event).subscribe { eventChannel ->
-            withPinnedBotMessage(eventChannel, event.getChannelName(), block)
-        }
+        getEventMessage(event).thenAccept(block)
     }
 
     fun withTableMessage(event: Event, dm: Player, block: (Message) -> Unit) {
-        getEventChannel(event).subscribe { eventChannel ->
-            withPinnedBotMessage(eventChannel, dm.getTableName(), block)
-        }
-    }
-
-    private fun withPinnedBotMessage(
-        channel: GuildMessageChannel,
-        title: String,
-        block: (Message) -> Unit
-    ) {
-        val expected = BotMessage(botId, title)
-
-        channel.pinnedMessages
-            .filter { msg -> expected.hasSameAuthor(msg) && expected.hasSameTitle(msg) }
-            .take(1)
-            .switchIfEmpty(
-                channel.createMessage(expected.asContent()).doOnNext { it.pin().subscribe() }
-            ).subscribe(block)
+        getTableMessage(event, dm).thenAccept(block)
     }
 
     private fun membersOnly(vararg permissions: Permission): List<PermissionOverwrite> {
