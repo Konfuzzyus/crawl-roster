@@ -6,7 +6,7 @@ To register you can use the buttons on this message or head over to {$root_url}.
 
 -- Table lineup ---
 {% loop in $tables as $tbl %}
-- {$tbl.dungeon_master.discord_mention} is hosting **{$tbl.table.details.adventure_title}** ({$tbl.occupancy_fraction} players)
+- {$tbl.dungeon_master.discord_mention} is hosting **{$tbl.table.details.adventure_title:Mystery Adventure}** ({$tbl.occupancy_fraction} players)
 {% onEmpty %}
 No dungeon masters have signed up
 {% endloop %}

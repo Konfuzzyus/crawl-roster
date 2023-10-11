@@ -65,7 +65,7 @@ class RosterBot(val core: RosterCore, botToken: String, rootUrl: String) {
     private val client: DiscordClient = botToken.let(DiscordClient::create)
     private val disposables = ArrayList<Disposable>()
 
-    private val tracking = GuildTracking()
+    private val tracking = DiscordTracking()
 
     private val templates = MessageTemplates(rootUrl)
 
@@ -282,7 +282,7 @@ class RosterBot(val core: RosterCore, botToken: String, rootUrl: String) {
                         )
                     )
 
-                val botMessage = BotMessage(botId, data.getTableName(), content)
+                val botMessage = BotMessage(botId, BotMessage.getTableTitle(data.event, data.dm), content)
 
                 msg.edit()
                     .withContentOrNull(botMessage.asContent().take(2000))
@@ -298,7 +298,7 @@ class RosterBot(val core: RosterCore, botToken: String, rootUrl: String) {
         tracking.get(event.guildId)?.apply {
             withTableMessage(event, dm) { msg ->
                 val content = templates.closedTableMessageContent(dm)
-                val botMessage = BotMessage(botId, dm.getTableName(), content)
+                val botMessage = BotMessage(botId, BotMessage.getTableTitle(event, dm), content)
                 msg.edit()
                     .withContentOrNull(botMessage.asContent().take(2000))
                     .withComponents()

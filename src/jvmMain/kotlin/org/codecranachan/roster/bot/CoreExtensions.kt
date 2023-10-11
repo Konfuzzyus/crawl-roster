@@ -2,7 +2,7 @@ package org.codecranachan.roster.bot
 
 import kotlinx.datetime.toJavaLocalDate
 import org.codecranachan.roster.core.Event
-import org.codecranachan.roster.query.EventQueryResult
+import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeFormatterBuilder
 import java.time.format.SignStyle
@@ -23,4 +23,10 @@ fun Event.getChannelName(): String {
 
 fun Event.getChannelTopic(): String {
     return "Role playing event on ${formattedDate} posted on Crawl Roster"
+}
+
+fun String.parseAsEventDate(): LocalDate? {
+    return runCatching {
+        EVENT_DATE_FORMATTER.parse(this, LocalDate::from)
+    }.getOrElse { null }
 }
