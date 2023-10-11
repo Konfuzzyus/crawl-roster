@@ -49,10 +49,10 @@ val TableEditor = FC<Props> {
     val (description, setDescription) = useState("")
     val (designation, setDesignation) = useState("")
     val (language, setLanguage) = useState(TableLanguage.SwissGerman)
-    val (minPlayers, setMinPlayers) = useState(3)
-    val (maxPlayers, setMaxPlayers) = useState(7)
-    val (minLevel, setMinLevel) = useState(1)
-    val (maxLevel, setMaxLevel) = useState(4)
+    val (minPlayers, setMinPlayers) = useState("3")
+    val (maxPlayers, setMaxPlayers) = useState("7")
+    val (minLevel, setMinLevel) = useState("1")
+    val (maxLevel, setMaxLevel) = useState("4")
 
     fun updateTable(table: Table) {
         setEventId(table.eventId)
@@ -61,10 +61,10 @@ val TableEditor = FC<Props> {
         setDescription(table.details.adventureDescription ?: "")
         setDesignation(table.details.moduleDesignation ?: "")
         setLanguage(table.details.language)
-        setMinPlayers(table.details.playerRange.first)
-        setMaxPlayers(table.details.playerRange.last)
-        setMinLevel(table.details.levelRange.first)
-        setMaxLevel(table.details.levelRange.last)
+        setMinPlayers(table.details.playerRange.first.toString())
+        setMaxPlayers(table.details.playerRange.last.toString())
+        setMinLevel(table.details.levelRange.first.toString())
+        setMaxLevel(table.details.levelRange.last.toString())
     }
 
     useEffectOnce {
@@ -154,8 +154,7 @@ val TableEditor = FC<Props> {
                         type = InputType.number
                         onChange = {
                             val e = it.unsafeCast<ChangeEvent<HTMLInputElement>>()
-                            val v = toIntInRange(e.target.value, Boundaries.MIN_PLAYERS..maxPlayers)
-                            setMinPlayers(v)
+                            setMinPlayers(e.target.value)
                         }
                     }
                     TextField {
@@ -165,8 +164,7 @@ val TableEditor = FC<Props> {
                         type = InputType.number
                         onChange = {
                             val e = it.unsafeCast<ChangeEvent<HTMLInputElement>>()
-                            val v = toIntInRange(e.target.value, minPlayers..Boundaries.MAX_PLAYERS)
-                            setMaxPlayers(v)
+                            setMaxPlayers(e.target.value)
                         }
                     }
                 }
@@ -179,8 +177,7 @@ val TableEditor = FC<Props> {
                         type = InputType.number
                         onChange = {
                             val e = it.unsafeCast<ChangeEvent<HTMLInputElement>>()
-                            val v = toIntInRange(e.target.value, Boundaries.MIN_LEVEL..maxLevel)
-                            setMinLevel(v)
+                            setMinLevel(e.target.value)
                         }
                     }
                     TextField {
@@ -190,8 +187,7 @@ val TableEditor = FC<Props> {
                         type = InputType.number
                         onChange = {
                             val e = it.unsafeCast<ChangeEvent<HTMLInputElement>>()
-                            val v = toIntInRange(e.target.value, minLevel..Boundaries.MAX_LEVEL)
-                            setMaxLevel(v)
+                            setMaxLevel(e.target.value)
                         }
                     }
                 }
@@ -208,6 +204,11 @@ val TableEditor = FC<Props> {
             Button {
                 startIcon = Save.create()
                 onClick = { _ ->
+                    val truncatedMaxPlayers = toIntInRange(maxPlayers, Boundaries.MIN_PLAYERS..Boundaries.MAX_PLAYERS)
+                    val truncatedMinPlayers = toIntInRange(minPlayers, Boundaries.MIN_PLAYERS..truncatedMaxPlayers)
+                    val truncatedMaxLevel = toIntInRange(maxLevel, Boundaries.MIN_LEVEL..Boundaries.MAX_LEVEL)
+                    val truncatedMinLevel = toIntInRange(minLevel, Boundaries.MIN_LEVEL..truncatedMaxLevel)
+
                     store.dispatch(
                         updateTableDetails(
                             eventId!!,
@@ -217,8 +218,8 @@ val TableEditor = FC<Props> {
                                 description,
                                 designation,
                                 language,
-                                minPlayers..maxPlayers,
-                                minLevel..maxLevel
+                                truncatedMinPlayers..truncatedMaxPlayers,
+                                truncatedMinLevel..truncatedMaxLevel
                             )
                         )
                     )
