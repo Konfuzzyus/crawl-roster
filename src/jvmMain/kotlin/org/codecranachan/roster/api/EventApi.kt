@@ -90,11 +90,16 @@ class EventApi(private val core: RosterCore) {
                     val evtId = Uuid.fromString(call.parameters["evtId"])
                     val plrId = Uuid.fromString(call.parameters["plrId"])
                     val reg = call.receive<Registration.Details>()
-                    if (plrId == userSession.playerId) {
+
+                    val current = core.eventCalendar.getPlayerRegistration(evtId, plrId)
+                    val isKickByDm = reg.dungeonMasterId == null && current?.details?.dungeonMasterId == userSession.playerId
+                    val isInviteByDm = reg.dungeonMasterId == userSession.playerId && current?.details?.dungeonMasterId == null
+
+                    if (plrId == userSession.playerId || isKickByDm || isInviteByDm) {
                         core.eventCalendar.updatePlayerRegistration(evtId, plrId, reg)
                         call.respond(HttpStatusCode.OK)
                     } else {
-                        call.respond(HttpStatusCode.Forbidden, "You can only edit your own registration")
+                        call.respond(HttpStatusCode.Forbidden, "Only you or your DM cam edit your registration")
                     }
                 }
             }
