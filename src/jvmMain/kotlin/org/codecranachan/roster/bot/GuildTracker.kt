@@ -15,6 +15,7 @@ import discord4j.rest.util.PermissionSet
 import org.codecranachan.roster.LinkedGuild
 import org.codecranachan.roster.core.Event
 import org.codecranachan.roster.core.Player
+import org.codecranachan.roster.util.orNull
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import reactor.core.publisher.Flux
@@ -44,27 +45,41 @@ class GuildTracker(
 
     fun initialize() {
         discordGuild.roles.subscribe { r -> putEntity(r) }
-        discordGuild.channels.concatWith(discordGuild.activeThreads.flatMapIterable { it.threads })
-            .sort { a, b -> channelProcessingOrder.indexOf(b.javaClass) - channelProcessingOrder.indexOf(a.javaClass) }
-            .doOnNext { channel -> putEntity(channel) }
+        val categoryMono = discordGuild.channels.filter { it is Category }
+            .filter { it.name == eventCalendarCategoryName }
+            .map { it as Category }
+            .doOnNext(::putEntity)
+            .single()
+
+        val channelFlux = categoryMono.flatMapMany { category ->
+            discordGuild.channels
+                .filter { it is TextChannel }
+                .map { it as TextChannel }
+                .filter { it.categoryId.orNull() == category.id }
+                .doOnNext(::putEntity)
+        }
+
+        channelFlux
             .flatMap { channel ->
-                val msgs: Flux<Message> = when (channel) {
-                    is TextChannel -> channel.pinnedMessages
-                        .flatMap { msg ->
-                            if (getEntityName(msg) != null && getEntityName(msg) != getEntityName(channel)
-                            ) {
-                                logger.debug("Rempving message")
-                                msg.delete().ofType(Message::class.java)
-                            } else {
-                                Mono.just(msg)
-                            }
+                channel
+                    .pinnedMessages
+                    .flatMap { msg ->
+                        if (getEntityName(msg) != null && getEntityName(msg) != getEntityName(channel)
+                        ) {
+                            msg.delete().ofType(Message::class.java)
+                        } else {
+                            Mono.just(msg)
                         }
-                    is ThreadChannel -> channel.pinnedMessages
-                    else -> Flux.empty()
-                }
-                msgs
-            }.subscribe(::putEntity)
-        discordGuild.activeThreads.subscribe()
+                    }
+                    .concatWith(
+                        discordGuild.activeThreads
+                            .flatMapIterable { it.threads }
+                            .filter { channel.id == it.parentId.orNull() }
+                            .doOnNext(::putEntity)
+                            .flatMap { it.pinnedMessages }
+                    )
+            }
+            .subscribe(::putEntity)
     }
 
     private fun getEntityName(e: Entity): String? {

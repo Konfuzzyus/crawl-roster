@@ -36,24 +36,17 @@ class DiscordTracking {
         val disposables = ArrayList<Disposable>()
 
         // Categories
-        gateway.on(CategoryCreateEvent::class.java).subscribe(this::handleCategoryCreateEvent).apply(disposables::add)
         gateway.on(CategoryDeleteEvent::class.java).subscribe(this::handleCategoryDeleteEvent).apply(disposables::add)
 
         // Text Channels
-        gateway.on(TextChannelCreateEvent::class.java).subscribe(this::handleTextChannelCreateEvent)
-            .apply(disposables::add)
         gateway.on(TextChannelDeleteEvent::class.java).subscribe(this::handleTextChannelDeleteEvent)
             .apply(disposables::add)
 
         // Text Messages
-        gateway.on(MessageCreateEvent::class.java).subscribe(this::handleMessageCreateEvent)
-            .apply(disposables::add)
         gateway.on(MessageDeleteEvent::class.java).subscribe(this::handleMessageDeleteEvent)
             .apply(disposables::add)
 
         // Thread Channels
-        gateway.on(ThreadChannelCreateEvent::class.java).subscribe(this::handleThreadChannelCreateEvent)
-            .apply(disposables::add)
         gateway.on(ThreadChannelDeleteEvent::class.java).subscribe(this::handleThreadChannelDeleteEvent)
             .apply(disposables::add)
 
@@ -82,19 +75,9 @@ class DiscordTracking {
         return tendedGuilds.values.find { t -> t.linkedGuild.id == linkedGuildId }
     }
 
-    private fun handleCategoryCreateEvent(event: CategoryCreateEvent) {
-        logger.debug("Category created: {}", event.category.name)
-        tendedGuilds[event.category.guildId]?.putEntity(event.category)
-    }
-
     private fun handleCategoryDeleteEvent(event: CategoryDeleteEvent) {
         logger.debug("Category deleted: {}", event.category.name)
         tendedGuilds[event.category.guildId]?.removeEntity(event.category.id)
-    }
-
-    private fun handleTextChannelCreateEvent(event: TextChannelCreateEvent) {
-        logger.debug("Text channel created: {}", event.channel.name)
-        tendedGuilds[event.channel.guildId]?.putEntity(event.channel)
     }
 
     private fun handleTextChannelDeleteEvent(event: TextChannelDeleteEvent) {
@@ -102,19 +85,9 @@ class DiscordTracking {
         tendedGuilds[event.channel.guildId]?.removeEntity(event.channel.id)
     }
 
-    private fun handleThreadChannelCreateEvent(event: ThreadChannelCreateEvent) {
-        logger.debug("Thread channel created: {}", event.channel.name)
-        tendedGuilds[event.channel.guildId]?.putEntity(event.channel)
-    }
-
     private fun handleThreadChannelDeleteEvent(event: ThreadChannelDeleteEvent) {
         logger.debug("Thread channel deleted {}", event.channel.name)
         tendedGuilds[event.channel.guildId]?.removeEntity(event.channel.id)
-    }
-
-    private fun handleMessageCreateEvent(event: MessageCreateEvent) {
-        logger.debug("Message created: {}", event.message.id)
-        event.guildId.getOrNull()?.apply { tendedGuilds[this]?.putEntity(event.message) }
     }
 
     private fun handleMessageDeleteEvent(event: MessageDeleteEvent) {
