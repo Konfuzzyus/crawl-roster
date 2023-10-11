@@ -1,11 +1,17 @@
 package components.events
 
+import api.updatePlayerRegistration
 import csstype.Border
 import csstype.LineStyle
 import csstype.px
 import mui.icons.material.AccessAlarm
 import mui.icons.material.AccountCircle
+import mui.icons.material.ErrorOutline
 import mui.icons.material.Person
+import mui.material.Button
+import mui.material.ButtonGroup
+import mui.material.Chip
+import mui.material.Size
 import mui.material.SvgIconColor
 import mui.material.SvgIconSize
 import mui.material.TableCell
@@ -15,13 +21,22 @@ import org.codecranachan.roster.core.Player
 import org.codecranachan.roster.query.ResolvedRegistration
 import react.FC
 import react.Props
+import react.ReactNode
+import react.create
+import react.useContext
+import reducers.StoreContext
+import reducers.removeRegistration
+import reducers.updateRegistration
 
 external interface RegistrationRowProps : Props {
     var me: Player
+    var meIsHosting: Boolean
     var registration: ResolvedRegistration
 }
 
 val RegistrationRow = FC<RegistrationRowProps> { props ->
+    val myStore = useContext(StoreContext)
+
     TableRow {
         TableCell {
             if (props.me.id == props.registration.player.id)
@@ -39,6 +54,37 @@ val RegistrationRow = FC<RegistrationRowProps> { props ->
             +"$langs $tier"
         }
         TableCell {
+            ButtonGroup {
+                if (props.me.id == props.registration.dungeonMaster?.id) {
+                    Button {
+                        onClick = {
+                            myStore.dispatch(
+                                updateRegistration(
+                                    props.registration.registration.eventId,
+                                    props.registration.registration.playerId,
+                                    null
+                                )
+                            )
+                        }
+                        size = Size.small
+                        +"Kick"
+                    }
+                } else if (props.meIsHosting) {
+                    Button {
+                        onClick = {
+                            myStore.dispatch(
+                                updateRegistration(
+                                    props.registration.registration.eventId,
+                                    props.registration.registration.playerId,
+                                    props.me.id
+                                )
+                            )
+                        }
+                        size = Size.small
+                        +"Invite"
+                    }
+                }
+            }
         }
     }
 }

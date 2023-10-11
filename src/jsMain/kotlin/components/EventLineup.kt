@@ -18,6 +18,8 @@ external interface EventLineupProps : Props {
 }
 
 val EventLineup = FC<EventLineupProps> { props ->
+    val isHosting = props.result.isHosting(props.me.id)
+
     TableContainer {
         Table {
             size = Size.small
@@ -33,6 +35,7 @@ val EventLineup = FC<EventLineupProps> { props ->
                         .forEach { reg ->
                             RegistrationRow {
                                 me = props.me
+                                meIsHosting = false
                                 registration = reg
                             }
                         }
@@ -45,6 +48,7 @@ val EventLineup = FC<EventLineupProps> { props ->
                     .forEach { reg ->
                         RegistrationRow {
                             me = props.me
+                            meIsHosting = isHosting
                             registration = reg
                         }
                     }

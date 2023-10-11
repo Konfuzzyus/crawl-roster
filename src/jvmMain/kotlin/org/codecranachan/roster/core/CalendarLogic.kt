@@ -70,6 +70,10 @@ class EventCalendarLogic(
         eventBus.publish(CalendarEventUpdated(previous!!, current!!))
     }
 
+    fun getPlayerRegistration(eventId: Uuid, playerId: Uuid): Registration? {
+        return eventRepository.getRegistration(eventId, playerId)
+    }
+
     /**
      * Registers a player for a given event.
      */

@@ -74,6 +74,13 @@ fun updateRegistration(e: Event, t: Table?): Thunk<ApplicationState> = { dispatc
     }
 }
 
+fun updateRegistration(eventId: Uuid, playerId: Uuid, dmId: Uuid?): Thunk<ApplicationState> = { dispatch, getState, _ ->
+    scope.launch {
+            updatePlayerRegistration(eventId, playerId, dmId)
+            dispatch(updateEvents(getState().calendar.selectedLinkedGuild))
+    }
+}
+
 fun removeRegistration(e: Event): Thunk<ApplicationState> = { dispatch, getState, _ ->
     scope.launch {
         val account = getState().identity.player

@@ -11,7 +11,7 @@ Join this table using the button below. If you already joined another table you 
 
 **Seated players**
 {% loop in $players as $plr %}
-- {$plr.discord_mention}
+- {$plr.discord_mention} {% loop in $plr.details.languages as $lng divider=" " %}{$lng.flag}{% endloop %}
 {% onEmpty %}
 No players are sitting at this table
 {% endloop %}
