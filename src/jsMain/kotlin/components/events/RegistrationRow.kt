@@ -1,31 +1,19 @@
 package components.events
 
-import api.updatePlayerRegistration
-import csstype.Border
-import csstype.LineStyle
-import csstype.px
-import mui.icons.material.AccessAlarm
-import mui.icons.material.AccountCircle
-import mui.icons.material.ErrorOutline
 import mui.icons.material.Person
 import mui.material.Button
 import mui.material.ButtonGroup
-import mui.material.Chip
 import mui.material.Size
 import mui.material.SvgIconColor
 import mui.material.SvgIconSize
 import mui.material.TableCell
 import mui.material.TableRow
-import mui.system.sx
 import org.codecranachan.roster.core.Player
 import org.codecranachan.roster.query.ResolvedRegistration
 import react.FC
 import react.Props
-import react.ReactNode
-import react.create
-import react.useContext
+import react.use
 import reducers.StoreContext
-import reducers.removeRegistration
 import reducers.updateRegistration
 
 external interface RegistrationRowProps : Props {
@@ -35,7 +23,7 @@ external interface RegistrationRowProps : Props {
 }
 
 val RegistrationRow = FC<RegistrationRowProps> { props ->
-    val myStore = useContext(StoreContext)
+    val myStore = use(StoreContext)!!
 
     TableRow {
         TableCell {

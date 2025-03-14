@@ -13,33 +13,33 @@ import mui.material.ListItemIcon
 import mui.material.ListItemText
 import mui.material.Menu
 import mui.material.MenuItem
-import org.w3c.dom.Element
-import org.w3c.dom.HTMLDivElement
+import web.dom.Element
+import web.html.HTMLDivElement
 import react.FC
 import react.Props
 import react.ReactNode
 import react.create
 import react.dom.events.MouseEvent
 import react.dom.events.MouseEventHandler
-import react.useContext
-import react.useEffect
+import react.use
+import react.useEffectWithCleanup
 import react.useState
 import reducers.PlayerEditorOpened
 import reducers.StoreContext
 import reducers.UserLoggedOut
 
 val Identity = FC<Props> {
-    val store = useContext(StoreContext)
+    val store = use(StoreContext)!!
     val (profile, setProfile) = useState(store.state.identity.player)
     val (botCoordinates, setBotCoordinates) = useState(store.state.server.settings.botCoordinates)
     var anchor by useState<Element>()
 
-    useEffect {
+    useEffectWithCleanup {
         val unsubscribe = store.subscribe {
             setProfile(store.state.identity.player)
             setBotCoordinates(store.state.server.settings.botCoordinates)
         }
-        cleanup(unsubscribe)
+        onCleanup(unsubscribe)
     }
 
     val handleClose = { anchor = null }

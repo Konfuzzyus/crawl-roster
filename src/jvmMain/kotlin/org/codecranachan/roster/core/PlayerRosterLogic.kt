@@ -7,7 +7,7 @@ import discord4j.rest.util.PermissionSet
 import org.codecranachan.roster.DiscordUser
 import org.codecranachan.roster.core.events.EventBus
 import org.codecranachan.roster.core.events.PlayerCreated
-import org.codecranachan.roster.discord.DiscordApiClient
+import org.codecranachan.roster.bot.discord.DiscordApiClient
 import org.codecranachan.roster.query.PlayerQueryResult
 import org.codecranachan.roster.repo.Repository
 

@@ -1,17 +1,18 @@
 package components.events
 
+import kotlinx.browser.window
 import mui.material.Button
 import mui.material.ButtonGroup
 import mui.material.ListItemText
 import mui.material.Menu
 import mui.material.MenuItem
 import org.codecranachan.roster.query.EventQueryResult
-import org.w3c.dom.Element
+import web.dom.Element
 import react.FC
 import react.Props
 import react.dom.events.MouseEventHandler
-import react.useContext
-import react.useEffectOnce
+import react.use
+import react.useEffectOnceWithCleanup
 import react.useState
 import reducers.EventEditorOpened
 import reducers.StoreContext
@@ -25,18 +26,18 @@ external interface EventActionsProps : Props {
 }
 
 val EventActions = FC<EventActionsProps> { props ->
-    val myStore = useContext(StoreContext)
+    val myStore = use(StoreContext)!!
     var anchor by useState<Element>()
 
     var userIdentity by useState(myStore.state.identity.player)
     var currentGuild by useState(myStore.state.calendar.selectedLinkedGuild)
 
-    useEffectOnce {
+    useEffectOnceWithCleanup {
         val unsubscribe = myStore.subscribe {
             userIdentity = myStore.state.identity.player
             currentGuild = myStore.state.calendar.selectedLinkedGuild
         }
-        cleanup(unsubscribe)
+        onCleanup(unsubscribe)
     }
 
     val isRegistered = userIdentity?.let { props.targetEvent.isRegistered(it.player.id) } == true
@@ -79,7 +80,7 @@ val EventActions = FC<EventActionsProps> { props ->
     Menu {
         open = anchor != null
         if (anchor != null) {
-            anchorEl = { anchor as Element }
+            anchorEl = { anchor as web.dom.Element }
         }
         onClose = handleClose
 

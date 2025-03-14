@@ -1,6 +1,8 @@
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
 import io.ktor.client.plugins.contentnegotiation.*
+import io.ktor.client.request.*
+import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
@@ -10,6 +12,7 @@ import io.ktor.server.html.*
 import io.ktor.server.http.content.*
 import io.ktor.server.netty.*
 import io.ktor.server.plugins.forwardedheaders.*
+import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import kotlinx.html.HTML
 import kotlinx.html.body
@@ -41,7 +44,7 @@ fun HTML.index() {
         div {
             id = "root"
         }
-        script(src = "/static/crawl-roster.js") {}
+        script(src = "/crawl-roster.js") {}
     }
 }
 
@@ -103,11 +106,16 @@ class RosterServer(private val core: RosterCore) {
                         TestApi(core).install(this)
                     }
                 }
-                static("/") {
-                    resource("/favicon.ico", "favicon.ico")
-                }
-                static("/static") {
-                    resources()
+                if (Configuration.devMode) {
+                    get("/{file...}") {
+                        val file = call.parameters["file"]
+                        val proxyCall = httpClient.get("http://localhost:8081/$file")
+                        val contentType = proxyCall.headers["Content-Type"]?.let(ContentType::parse)
+                            ?: ContentType.Application.OctetStream
+                        call.respondBytes(proxyCall.readRawBytes(), contentType)
+                    }
+                } else {
+                    staticResources("/", "")
                 }
             }
         }.start(wait = true)

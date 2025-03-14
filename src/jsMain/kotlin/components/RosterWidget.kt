@@ -6,22 +6,22 @@ import components.editors.TableEditor
 import mui.material.Paper
 import react.FC
 import react.Props
-import react.useContext
-import react.useEffectOnce
+import react.use
+import react.useEffectOnceWithCleanup
 import react.useState
 import reducers.StoreContext
 
 val RosterWidget = FC<Props> {
-    val myStore = useContext(StoreContext)
+    val myStore = use(StoreContext)!!
     val (userIdentity, setUserIdentity) = useState(myStore.state.identity.player)
     val (currentGuild, setCurrentGuild) = useState(myStore.state.calendar.selectedLinkedGuild)
 
-    useEffectOnce {
+    useEffectOnceWithCleanup {
         val unsubscribe = myStore.subscribe {
             setUserIdentity(myStore.state.identity.player)
             setCurrentGuild(myStore.state.calendar.selectedLinkedGuild)
         }
-        cleanup(unsubscribe)
+        onCleanup(unsubscribe)
     }
     Paper {
         if (userIdentity == null) {

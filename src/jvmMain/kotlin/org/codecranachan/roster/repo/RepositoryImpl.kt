@@ -43,7 +43,6 @@ class Repository(jdbcUri: String) {
     fun reset(hard: Boolean = false) {
         val flyway = baseFlyway()
             .cleanDisabled(false)
-            .cleanOnValidationError(true)
             .load()
         if (hard) flyway.clean()
         flyway.migrate()

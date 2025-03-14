@@ -7,25 +7,22 @@ import mui.material.Stack
 import mui.material.StackDirection
 import mui.material.Typography
 import mui.material.styles.TypographyVariant
+import mui.system.Breakpoint
 import mui.system.responsive
-import react.FC
-import react.Props
-import react.useContext
-import react.useEffectOnce
-import react.useState
+import react.*
 import reducers.StoreContext
 import reducers.updateUserId
 
 val App = FC<Props> {
-    val store = useContext(StoreContext)
+    val store = use(StoreContext)!!
     val (isLoaded, setIsLoaded) = useState(store.state.identity.isLoaded)
 
-    useEffectOnce {
+    useEffectOnceWithCleanup {
         val unsubscribe = store.subscribe {
             setIsLoaded(store.state.identity.isLoaded)
         }
         store.dispatch(updateUserId())
-        cleanup(unsubscribe)
+        onCleanup(unsubscribe)
     }
 
     Container {
@@ -35,8 +32,7 @@ val App = FC<Props> {
             spacing = responsive(2)
             Grid {
                 item = true
-                xs = 8
-
+                columns = responsive(8)
                 Typography {
                     variant = TypographyVariant.h5
                     +"Crawl-Roster"
@@ -44,7 +40,7 @@ val App = FC<Props> {
             }
             Grid {
                 item = true
-                xs = 4
+                columns = responsive( 4)
 
                 if (isLoaded) {
                     Stack {
@@ -57,7 +53,7 @@ val App = FC<Props> {
             }
             Grid {
                 item = true
-                xs = 12
+                columns = responsive(12)
                 if (isLoaded) {
                     RosterWidget { }
                 } else {
