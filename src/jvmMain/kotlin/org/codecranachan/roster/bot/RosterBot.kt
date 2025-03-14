@@ -5,6 +5,7 @@ import discord4j.core.DiscordClient
 import discord4j.core.GatewayDiscordClient
 import discord4j.core.event.domain.guild.GuildCreateEvent
 import discord4j.core.event.domain.guild.GuildDeleteEvent
+import discord4j.core.event.domain.guild.GuildUpdateEvent
 import discord4j.core.event.domain.interaction.InteractionCreateEvent
 import discord4j.core.`object`.component.ActionRow
 import discord4j.core.`object`.component.Button
@@ -86,13 +87,13 @@ class RosterBot(val core: RosterCore, botToken: String, rootUrl: String) {
         eventBus.getFlux().subscribe(this::handleRosterEvent).apply(disposables::add)
 
         gateway.on(GuildCreateEvent::class.java).subscribe(this::handleGuildCreateEvent).apply(disposables::add)
+        gateway.on(GuildUpdateEvent::class.java).subscribe(this::handleGuildUpdateEvent).apply(disposables::add)
         gateway.on(GuildDeleteEvent::class.java).subscribe(this::handleGuildDeleteEvent).apply(disposables::add)
 
         gateway.on(InteractionCreateEvent::class.java).subscribe(this::handleInteraction).apply(disposables::add)
 
         tracking.subscribeHandlers(gateway).apply(disposables::addAll)
     }
-
 
     private fun handleGuildCreateEvent(event: GuildCreateEvent) {
         val link = core.guildRoster.link(event.guild)
@@ -102,6 +103,10 @@ class RosterBot(val core: RosterCore, botToken: String, rootUrl: String) {
             logger.info("Butler tending to ${event.guild.id.asString()}")
             tracking.add(link, event.guild)
         }
+    }
+
+    private fun handleGuildUpdateEvent(event: GuildUpdateEvent) {
+        core.guildRoster.update(event.current)
     }
 
     private fun handleGuildDeleteEvent(event: GuildDeleteEvent) {

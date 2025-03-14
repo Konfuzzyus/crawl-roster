@@ -25,6 +25,15 @@ class GuildRepository(private val base: Repository) {
         }
     }
 
+    fun updateGuild(linkedGuild: LinkedGuild) {
+        return base.withJooq {
+            update(GUILDS)
+                .set(GUILDS.NAME, linkedGuild.name)
+                .where(GUILDS.ID.eq(linkedGuild.id))
+                .execute()
+        }
+    }
+
     private fun GuildsRecord.toModel(): LinkedGuild {
         return LinkedGuild(id!!, name!!, discordId!!)
     }
