@@ -7,6 +7,7 @@ import discord4j.core.`object`.entity.Guild
 import discord4j.core.`object`.entity.Message
 import discord4j.core.`object`.entity.Role
 import discord4j.core.`object`.entity.channel.Category
+import discord4j.core.`object`.entity.channel.Channel
 import discord4j.core.`object`.entity.channel.TextChannel
 import discord4j.core.`object`.entity.channel.ThreadChannel
 import discord4j.core.spec.StartThreadWithoutMessageSpec
@@ -184,6 +185,10 @@ class GuildTracker(
 
     private fun getDungeonMasterRole(): Role? {
         return getRole(dungeonMasterRoleName)
+    }
+
+    fun withEventChannel(event: Event, block: (Channel) -> Unit) {
+        getEventChannel(event).thenAccept(block)
     }
 
     fun withEventMessage(event: Event, block: (Message) -> Unit) {

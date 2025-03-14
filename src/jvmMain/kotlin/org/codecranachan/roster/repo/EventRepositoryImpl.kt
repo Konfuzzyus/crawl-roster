@@ -63,6 +63,20 @@ class EventRepository(private val base: Repository) {
         }
     }
 
+    fun deleteEvent(eventId: Uuid) {
+        base.withJooq {
+            deleteFrom(EVENTREGISTRATIONS)
+                .where(EVENTREGISTRATIONS.EVENT_ID.eq(eventId))
+                .execute()
+            deleteFrom(HOSTEDTABLES)
+                .where(HOSTEDTABLES.EVENT_ID.eq(eventId))
+                .execute()
+            deleteFrom(EVENTS)
+                .where(EVENTS.ID.eq(eventId))
+                .execute()
+        }
+    }
+
     fun getRegistration(eventId: Uuid, playerId: Uuid): Registration? {
         return base.withJooq {
             selectFrom(EVENTREGISTRATIONS).where(

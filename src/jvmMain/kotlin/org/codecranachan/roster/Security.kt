@@ -31,7 +31,7 @@ data class UserSession(
     @Serializable(with = UuidSerializer::class)
     val playerId: Uuid,
     val authInfo: DiscordAuthorizationInfo
-) : Principal
+)
 
 @Serializable
 data class OpenIdConfiguration(

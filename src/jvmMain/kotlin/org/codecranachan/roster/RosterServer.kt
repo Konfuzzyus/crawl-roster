@@ -106,17 +106,7 @@ class RosterServer(private val core: RosterCore) {
                         TestApi(core).install(this)
                     }
                 }
-                if (Configuration.devMode) {
-                    get("/{file...}") {
-                        val file = call.parameters["file"]
-                        val proxyCall = httpClient.get("http://localhost:8081/$file")
-                        val contentType = proxyCall.headers["Content-Type"]?.let(ContentType::parse)
-                            ?: ContentType.Application.OctetStream
-                        call.respondBytes(proxyCall.readRawBytes(), contentType)
-                    }
-                } else {
-                    staticResources("/", "")
-                }
+                staticResources("/", "")
             }
         }.start(wait = true)
     }

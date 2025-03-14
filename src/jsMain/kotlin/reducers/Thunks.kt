@@ -3,6 +3,7 @@ package reducers
 import api.addDmRegistration
 import api.addEvent
 import api.addPlayerRegistration
+import api.deleteEvent
 import api.fetchEvents
 import api.fetchPlayerInfo
 import api.fetchServerSettings
@@ -50,6 +51,13 @@ fun selectGuild(g: LinkedGuild): Thunk<ApplicationState> = { dispatch, _, _ ->
 fun createEvent(e: Event): Thunk<ApplicationState> = { dispatch, getState, _ ->
     scope.launch {
         addEvent(e)
+        dispatch(updateEvents(getState().calendar.selectedLinkedGuild))
+    }
+}
+
+fun cancelEvent(e: Event): Thunk<ApplicationState> = { dispatch, getState, _ ->
+    scope.launch {
+        deleteEvent(e.id)
         dispatch(updateEvents(getState().calendar.selectedLinkedGuild))
     }
 }

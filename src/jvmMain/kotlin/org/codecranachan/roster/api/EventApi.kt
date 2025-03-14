@@ -63,6 +63,26 @@ class EventApi(private val core: RosterCore) {
                 }
             }
 
+            delete("/api/v1/events/{evtId}") {
+                val userSession = call.sessions.get<UserSession>()
+                if (userSession == null) {
+                    call.respond(HttpStatusCode.Unauthorized, "Not logged in")
+                } else {
+                    val evtId = Uuid.fromString(call.parameters["evtId"])
+                    val query = core.eventCalendar.queryEvent(evtId)
+                    if (query == null) {
+                        call.respond(HttpStatusCode.NotFound)
+                    } else {
+                        if (core.playerRoster.isGuildAdmin(userSession.playerId, query.event.guildId)) {
+                            core.eventCalendar.cancelEvent(evtId)
+                            call.respond(HttpStatusCode.OK)
+                        } else {
+                            call.respond(HttpStatusCode.Forbidden, "Only guild admins can cancel events")
+                        }
+                    }
+                }
+            }
+
             // player registrations
 
             put("/api/v1/events/{evtId}/players/{plrId}") {
@@ -92,8 +112,10 @@ class EventApi(private val core: RosterCore) {
                     val reg = call.receive<Registration.Details>()
 
                     val current = core.eventCalendar.getPlayerRegistration(evtId, plrId)
-                    val isKickByDm = reg.dungeonMasterId == null && current?.details?.dungeonMasterId == userSession.playerId
-                    val isInviteByDm = reg.dungeonMasterId == userSession.playerId && current?.details?.dungeonMasterId == null
+                    val isKickByDm =
+                        reg.dungeonMasterId == null && current?.details?.dungeonMasterId == userSession.playerId
+                    val isInviteByDm =
+                        reg.dungeonMasterId == userSession.playerId && current?.details?.dungeonMasterId == null
 
                     if (plrId == userSession.playerId || isKickByDm || isInviteByDm) {
                         core.eventCalendar.updatePlayerRegistration(evtId, plrId, reg)

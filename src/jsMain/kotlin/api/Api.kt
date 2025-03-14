@@ -50,7 +50,7 @@ suspend fun fetchServerSettings(): GuildRoster {
 suspend fun fetchEvents(
     linkedGuild: LinkedGuild,
     after: LocalDate? = null,
-    before: LocalDate? = null
+    before: LocalDate? = null,
 ): List<EventQueryResult> {
     return client.get("/api/v1/guilds/${linkedGuild.id}/events") {
         after?.let { parameter("after", it) }
@@ -70,6 +70,10 @@ suspend fun updateEvent(eventId: Uuid, details: Event.Details) {
         contentType(ContentType.Application.Json)
         setBody(details)
     }
+}
+
+suspend fun deleteEvent(eventId: Uuid) {
+    client.delete("/api/v1/events/${eventId}")
 }
 
 suspend fun addPlayerRegistration(eventId: Uuid, playerId: Uuid, dungeonMasterId: Uuid? = null) {

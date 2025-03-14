@@ -2,6 +2,7 @@ package components.events
 
 import kotlinx.browser.window
 import mui.material.Button
+import mui.material.ButtonColor
 import mui.material.ButtonGroup
 import mui.material.ListItemText
 import mui.material.Menu
@@ -17,6 +18,7 @@ import react.useState
 import reducers.EventEditorOpened
 import reducers.StoreContext
 import reducers.addRegistration
+import reducers.cancelEvent
 import reducers.registerTable
 import reducers.removeRegistration
 import reducers.unregisterTable
@@ -51,12 +53,14 @@ val EventActions = FC<EventActionsProps> { props ->
                     +"Cancel Registration"
                 }
             }
+
             isHosting -> {
                 Button {
                     onClick = { myStore.dispatch(unregisterTable(props.targetEvent.event)) }
                     +"Cancel Table"
                 }
             }
+
             else -> {
                 Button {
                     onClick = { anchor = it.currentTarget }
@@ -72,6 +76,11 @@ val EventActions = FC<EventActionsProps> { props ->
             Button {
                 onClick = { myStore.dispatch(EventEditorOpened(props.targetEvent.event)) }
                 +"Edit Event"
+            }
+            Button {
+                color = ButtonColor.warning
+                onClick = { myStore.dispatch(cancelEvent(props.targetEvent.event)) }
+                +"Delete Event"
             }
         }
     }

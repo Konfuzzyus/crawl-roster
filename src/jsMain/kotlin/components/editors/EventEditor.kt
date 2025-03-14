@@ -24,7 +24,6 @@ import react.create
 import react.dom.events.ChangeEvent
 import react.dom.onChange
 import react.use
-import react.useEffectOnce
 import react.useEffectOnceWithCleanup
 import react.useState
 import reducers.EditorClosed

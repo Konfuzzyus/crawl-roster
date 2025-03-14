@@ -2,6 +2,7 @@ package org.codecranachan.roster.core
 
 import com.benasher44.uuid.Uuid
 import kotlinx.datetime.LocalDate
+import org.codecranachan.roster.core.events.CalendarEventCanceled
 import org.codecranachan.roster.core.events.CalendarEventCreated
 import org.codecranachan.roster.core.events.CalendarEventUpdated
 import org.codecranachan.roster.core.events.EventBus
@@ -28,7 +29,7 @@ class PlayerAlreadyHosting(eventId: Uuid, playerId: Uuid) :
 
 class EventCalendarLogic(
     repository: Repository,
-    private val eventBus: EventBus
+    private val eventBus: EventBus,
 ) {
     private val eventRepository = repository.eventRepository
     private val guildRepository = repository.guildRepository
@@ -54,7 +55,11 @@ class EventCalendarLogic(
         return eventRepository.queryTableData(eventId, dmId)
     }
 
-    fun queryStats(linkedGuildId: Uuid, after: LocalDate? = null, before: LocalDate? = null): EventStatisticsQueryResult? {
+    fun queryStats(
+        linkedGuildId: Uuid,
+        after: LocalDate? = null,
+        before: LocalDate? = null,
+    ): EventStatisticsQueryResult? {
 
         return null
     }
@@ -74,6 +79,14 @@ class EventCalendarLogic(
         eventRepository.updateEvent(eventId, details)
         val current = eventRepository.getEvent(eventId)
         eventBus.publish(CalendarEventUpdated(previous!!, current!!))
+    }
+
+    fun cancelEvent(eventId: Uuid) {
+        val previous = eventRepository.getEvent(eventId)
+        if (previous != null) {
+            eventRepository.deleteEvent(eventId)
+            eventBus.publish(CalendarEventCanceled(previous))
+        }
     }
 
     fun getPlayerRegistration(eventId: Uuid, playerId: Uuid): Registration? {

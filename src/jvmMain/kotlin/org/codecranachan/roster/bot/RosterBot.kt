@@ -12,6 +12,7 @@ import discord4j.core.`object`.entity.User
 import discord4j.discordjson.json.InteractionApplicationCommandCallbackData
 import discord4j.discordjson.json.InteractionResponseData
 import org.codecranachan.roster.DiscordUser
+import org.codecranachan.roster.core.Event
 import org.codecranachan.roster.core.PlayerAlreadyRegistered
 import org.codecranachan.roster.core.Registration
 import org.codecranachan.roster.core.RosterCore
@@ -37,8 +38,7 @@ fun User.asDiscordUser(): DiscordUser =
     DiscordUser(
         id.asString(),
         username,
-        avatarUrl,
-        discriminator
+        avatarUrl
     )
 
 fun InteractionCreateEvent.sendEphemeralResponse(content: String) {
@@ -117,7 +117,7 @@ class RosterBot(val core: RosterCore, botToken: String, rootUrl: String) {
         interaction: InteractionCreateEvent,
         p: PlayerQueryResult,
         eventId: Uuid,
-        dmId: Uuid?
+        dmId: Uuid?,
     ) {
         core.eventCalendar.addPlayerRegistration(
             eventId,
@@ -135,7 +135,7 @@ class RosterBot(val core: RosterCore, botToken: String, rootUrl: String) {
         interaction: InteractionCreateEvent,
         p: PlayerQueryResult,
         eventId: Uuid,
-        dmId: Uuid?
+        dmId: Uuid?,
     ) {
         core.eventCalendar.updatePlayerRegistration(
             eventId,
@@ -162,6 +162,7 @@ class RosterBot(val core: RosterCore, botToken: String, rootUrl: String) {
                             is PlayerAlreadyRegistered -> {
                                 updatePlayerRegistration(event, p, activeId.getParam(0)!!, activeId.getParam(1))
                             }
+
                             else -> {
                                 event.sendEphemeralResponse(
                                     """
@@ -173,6 +174,7 @@ class RosterBot(val core: RosterCore, botToken: String, rootUrl: String) {
 
                     }
                 }
+
                 Action.UnregisterPlayer -> {
                     val p = core.playerRoster.registerDiscordPlayer(event.interaction.user.asDiscordUser())
                     try {
@@ -186,6 +188,7 @@ class RosterBot(val core: RosterCore, botToken: String, rootUrl: String) {
                         )
                     }
                 }
+
                 else -> {}
             }
         }
@@ -198,26 +201,30 @@ class RosterBot(val core: RosterCore, botToken: String, rootUrl: String) {
         when (e) {
             is CalendarEventCreated -> updateEventOnDiscord(e.current.id)
             is CalendarEventUpdated -> updateEventOnDiscord(e.current.id)
-            is CalendarEventCanceled -> {}
+            is CalendarEventCanceled -> cancelEventOnDiscord(e.previous)
             is CalendarEventClosed -> {}
             is TableCreated -> {
                 updateEventOnDiscord(e.current.eventId)
                 updateTableOnDiscord(e.current.eventId, e.current.dungeonMasterId)
             }
+
             is TableUpdated -> {
                 updateEventOnDiscord(e.current.eventId)
                 updateTableOnDiscord(e.current.eventId, e.current.dungeonMasterId)
             }
+
             is TableCanceled -> {
                 updateEventOnDiscord(e.previous.eventId)
                 cancelTableOnDiscord(e.previous.eventId, e.previous.dungeonMasterId)
             }
+
             is RegistrationCreated -> {
                 updateEventOnDiscord(e.current.eventId)
                 e.current.details.dungeonMasterId?.let { dmId ->
                     updateTableOnDiscord(e.current.eventId, dmId)
                 }
             }
+
             is RegistrationUpdated -> {
                 updateEventOnDiscord(e.current.eventId)
                 e.previous.details.dungeonMasterId?.let { dmId ->
@@ -227,12 +234,14 @@ class RosterBot(val core: RosterCore, botToken: String, rootUrl: String) {
                     updateTableOnDiscord(e.current.eventId, dmId)
                 }
             }
+
             is RegistrationCanceled -> {
                 updateEventOnDiscord(e.previous.eventId)
                 e.previous.details.dungeonMasterId?.let { dmId ->
                     updateTableOnDiscord(e.previous.eventId, dmId)
                 }
             }
+
             else -> {}
         }
     }
@@ -303,6 +312,15 @@ class RosterBot(val core: RosterCore, botToken: String, rootUrl: String) {
                     .withContentOrNull(botMessage.asContent().take(2000))
                     .withComponents()
                     .subscribe()
+            }
+        }
+    }
+
+    private fun cancelEventOnDiscord(event: Event) {
+        tracking.get(event.guildId)?.apply {
+            withEventChannel(event) { channel ->
+                channel.delete("Event has been canceled by admin")
+                    .subscribe({}, { err -> logger.error("Failed to delete event channel", err) })
             }
         }
     }
