@@ -7,7 +7,6 @@ import mui.material.Stack
 import mui.material.StackDirection
 import mui.material.Typography
 import mui.material.styles.TypographyVariant
-import mui.system.Breakpoint
 import mui.system.responsive
 import react.*
 import reducers.StoreContext
