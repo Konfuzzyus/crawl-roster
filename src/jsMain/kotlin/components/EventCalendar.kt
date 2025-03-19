@@ -1,7 +1,14 @@
 package components
 
+import kotlinx.datetime.Clock
+import kotlinx.datetime.DatePeriod
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.minus
+import kotlinx.datetime.todayIn
 import mui.material.Box
 import mui.material.CircularProgress
+import mui.material.FormControlMargin
 import mui.material.Table
 import mui.material.TableBody
 import mui.material.TableContainer
@@ -10,7 +17,6 @@ import org.codecranachan.roster.LinkedGuild
 import react.FC
 import react.Props
 import react.use
-import react.useEffectOnce
 import react.useEffectOnceWithCleanup
 import react.useState
 import reducers.StoreContext
@@ -30,6 +36,7 @@ val EventCalendar = FC<EventCalendarProps> { props ->
     }
 
     Box {
+        CalendarSpanSelector {}
         if (events == null) {
             CircularProgress {}
         } else {

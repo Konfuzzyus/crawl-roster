@@ -55,15 +55,6 @@ class EventCalendarLogic(
         return eventRepository.queryTableData(eventId, dmId)
     }
 
-    fun queryStats(
-        linkedGuildId: Uuid,
-        after: LocalDate? = null,
-        before: LocalDate? = null,
-    ): EventStatisticsQueryResult? {
-
-        return null
-    }
-
     // -----
     // Management
     // -----

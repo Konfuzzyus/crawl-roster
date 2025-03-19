@@ -16,6 +16,7 @@ import api.updatePlayerRegistration
 import com.benasher44.uuid.Uuid
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
+import kotlinx.datetime.LocalDate
 import org.codecranachan.roster.LinkedGuild
 import org.codecranachan.roster.core.Event
 import org.codecranachan.roster.core.Player
@@ -45,6 +46,13 @@ fun selectGuild(g: LinkedGuild): Thunk<ApplicationState> = { dispatch, _, _ ->
     scope.launch {
         dispatch(GuildSelected(g))
         dispatch(updateEvents(g))
+    }
+}
+
+fun selectCalendarRange(after: LocalDate?, before: LocalDate?): Thunk<ApplicationState> = { dispatch, getState, _ ->
+    scope.launch {
+        dispatch(DateRangeSelected(after, before))
+        dispatch(updateEvents(getState().calendar.selectedLinkedGuild))
     }
 }
 
@@ -84,8 +92,8 @@ fun updateRegistration(e: Event, t: Table?): Thunk<ApplicationState> = { dispatc
 
 fun updateRegistration(eventId: Uuid, playerId: Uuid, dmId: Uuid?): Thunk<ApplicationState> = { dispatch, getState, _ ->
     scope.launch {
-            updatePlayerRegistration(eventId, playerId, dmId)
-            dispatch(updateEvents(getState().calendar.selectedLinkedGuild))
+        updatePlayerRegistration(eventId, playerId, dmId)
+        dispatch(updateEvents(getState().calendar.selectedLinkedGuild))
     }
 }
 

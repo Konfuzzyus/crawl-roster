@@ -12,23 +12,6 @@ class GuildApi(private val core: RosterCore) {
 
     fun install(r: Route) {
         with(r) {
-            get("/api/v1/guilds/{id}/stats") {
-                try {
-                    val id = Uuid.fromString(call.parameters["id"])
-                    val after = call.request.queryParameters["after"]?.let { LocalDate.parse(it) }
-                    val before = call.request.queryParameters["before"]?.let { LocalDate.parse(it) }
-
-                    val stats = core.eventCalendar.queryStats(id, after, before)
-                    if (stats == null) {
-                        call.respond(HttpStatusCode.NotFound)
-                    } else {
-                        call.respond(stats)
-                    }
-                } catch (e: IllegalArgumentException) {
-                    call.respond(HttpStatusCode.BadRequest)
-                }
-            }
-
             get("/api/v1/guilds/{id}/events") {
                 try {
                     val id = Uuid.fromString(call.parameters["id"])
