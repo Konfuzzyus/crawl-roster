@@ -16,7 +16,7 @@ class RosterCore {
     val eventCalendar = EventCalendarLogic(repo, eventBus)
 
     fun initForDevelopment() {
-        repo.reset(true)
+        repo.reset()
     }
 
     fun injectEntities(vararg entities: Any) {

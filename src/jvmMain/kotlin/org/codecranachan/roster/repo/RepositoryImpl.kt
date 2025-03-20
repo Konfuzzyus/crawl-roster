@@ -2,6 +2,7 @@ package org.codecranachan.roster.repo
 
 import org.codecranachan.roster.core.TableLanguage
 import org.flywaydb.core.Flyway
+import org.flywaydb.core.api.FlywayException
 import org.h2.jdbcx.JdbcConnectionPool
 import org.jooq.DSLContext
 import org.jooq.SQLDialect
@@ -36,16 +37,24 @@ class Repository(jdbcUri: String) {
     }
 
     fun migrate() {
-        val flyway = baseFlyway().load()
-        flyway.migrate()
+        baseFlyway()
+            .load()
+            .migrate()
     }
 
     fun reset(hard: Boolean = false) {
-        val flyway = baseFlyway()
+        baseFlyway()
             .cleanDisabled(false)
             .load()
-        if (hard) flyway.clean()
-        flyway.migrate()
+            .apply {
+                try {
+                    if (hard) clean()
+                    migrate()
+                } catch (e: FlywayException) {
+                    clean()
+                    migrate()
+                }
+            }
     }
 
     private fun baseFlyway() = Flyway.configure()
