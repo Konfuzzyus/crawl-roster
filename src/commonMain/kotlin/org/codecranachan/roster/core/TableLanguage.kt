@@ -9,7 +9,7 @@ enum class TableLanguage(val short: String, val flag: String) {
     Romansh("roh", "\uD83C\uDDE8\uD83C\uDDED");
 
     companion object {
-        private val shortMap = values().associateBy { it.short }
+        private val shortMap = entries.associateBy { it.short }
         fun ofShort(short: String): TableLanguage? = shortMap[short]
     }
 }

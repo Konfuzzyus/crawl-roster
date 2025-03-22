@@ -14,6 +14,7 @@ import mui.material.Stack
 import mui.material.StackDirection
 import mui.material.TextField
 import mui.system.responsive
+import org.codecranachan.roster.core.Audience
 import org.codecranachan.roster.core.Table
 import org.codecranachan.roster.core.TableLanguage
 import web.html.HTMLInputElement
@@ -52,6 +53,8 @@ val TableEditor = FC<Props> {
     val (maxPlayers, setMaxPlayers) = useState("7")
     val (minLevel, setMinLevel) = useState("1")
     val (maxLevel, setMaxLevel) = useState("4")
+    val (gameSystem, setGameSystem) = useState("")
+    val (audience, setAudience) = useState(Audience.Regular)
 
     fun updateTable(table: Table) {
         setEventId(table.eventId)
@@ -64,6 +67,8 @@ val TableEditor = FC<Props> {
         setMaxPlayers(table.details.playerRange.last.toString())
         setMinLevel(table.details.levelRange.first.toString())
         setMaxLevel(table.details.levelRange.last.toString())
+        setGameSystem(table.details.gameSystem ?: "")
+        setAudience(table.details.audience)
     }
 
     useEffectOnceWithCleanup {
@@ -113,6 +118,17 @@ val TableEditor = FC<Props> {
                     onChange = {
                         val e = it.unsafeCast<ChangeEvent<HTMLInputElement>>()
                         setDescription(e.target.value)
+                    }
+                }
+                TextField {
+                    margin = FormControlMargin.dense
+                    fullWidth = true
+                    label = ReactNode("Game System")
+                    value = gameSystem
+                    placeholder = "The game system used"
+                    onChange = {
+                        val e = it.unsafeCast<ChangeEvent<HTMLInputElement>>()
+                        setGameSystem(e.target.value)
                     }
                 }
                 TextField {
@@ -190,6 +206,23 @@ val TableEditor = FC<Props> {
                         }
                     }
                 }
+                TextField {
+                    margin = FormControlMargin.dense
+                    label = ReactNode("Audience")
+                    value = audience.name
+                    select = true
+                    onChange = {
+                        val e = it.unsafeCast<ChangeEvent<HTMLInputElement>>()
+                        setAudience(Audience.valueOf(e.target.value))
+                    }
+                    Audience.entries.forEach {
+                        MenuItem {
+                            key = it.name
+                            value = it.name
+                            +it.name
+                        }
+                    }
+                }
             }
         }
         DialogActions {
@@ -218,7 +251,9 @@ val TableEditor = FC<Props> {
                                 designation,
                                 language,
                                 truncatedMinPlayers..truncatedMaxPlayers,
-                                truncatedMinLevel..truncatedMaxLevel
+                                truncatedMinLevel..truncatedMaxLevel,
+                                audience,
+                                gameSystem
                             )
                         )
                     )

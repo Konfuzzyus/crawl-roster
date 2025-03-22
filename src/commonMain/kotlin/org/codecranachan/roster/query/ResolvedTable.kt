@@ -23,10 +23,9 @@ data class ResolvedTable(
     @Transient
     val name: String = dungeonMaster.let { "${it.discordHandle}'s Table" }
     @Transient
-    val description: String? =
+    val description: String =
         when {
             table == null -> "has not confirmed attendance"
-            table.details.canceledOn != null -> "has canceled and will not be attending"
             else -> "is hosting ${table.title} ${table.settings}"
         }
 

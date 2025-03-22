@@ -7,6 +7,7 @@ import kotlinx.datetime.toJavaLocalTime
 import org.codecranachan.roster.core.Event
 import org.codecranachan.roster.core.Registration
 import org.codecranachan.roster.core.Table
+import org.codecranachan.roster.jooq.enums.Tableaudience
 import org.codecranachan.roster.jooq.enums.Tablelanguage
 import org.codecranachan.roster.jooq.tables.records.EventregistrationsRecord
 import org.codecranachan.roster.jooq.tables.records.HostedtablesRecord
@@ -170,6 +171,8 @@ class EventRepository(private val base: Repository) {
                 maxPlayers = details.playerRange.last
                 minCharacterLevel = details.levelRange.first
                 maxCharacterLevel = details.levelRange.last
+                audience = Tableaudience.valueOf(details.audience.name)
+                gameSystem = details.gameSystem?.ifBlank { null }
             }.store()
         }
     }

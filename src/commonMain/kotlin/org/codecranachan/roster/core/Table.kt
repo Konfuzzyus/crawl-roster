@@ -25,7 +25,8 @@ data class Table(
         val playerRange: IntRange = 3..7,
         @Serializable(with = IntRangeSerializer::class)
         val levelRange: IntRange = 1..4,
-        val canceledOn: Instant? = null
+        val audience: Audience = Audience.Regular,
+        val gameSystem: String? = null
     )
 
     @Transient
