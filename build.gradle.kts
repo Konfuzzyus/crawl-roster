@@ -19,6 +19,7 @@ plugins {
     kotlin("plugin.serialization") version kotlin
     id("org.flywaydb.flyway") version "11.3.4"
     id("org.jooq.jooq-codegen-gradle") version "3.20.1"
+    application
 }
 
 group = "org.codecranachan"
@@ -52,6 +53,7 @@ repositories {
 
 kotlin {
     jvm {
+        withJava()
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_21)
             languageVersion.set(KotlinVersion.KOTLIN_2_1)
@@ -63,7 +65,10 @@ kotlin {
         browser {
             commonWebpackConfig {
                 cssSupport {
+                    enabled.set(true)
                 }
+                devServer?.open = false
+                devServer?.port = 9090
             }
         }
     }
@@ -138,6 +143,9 @@ kotlin {
     }
 }
 
+application {
+    mainClass.set("${project.group}.roster.ServerKt")
+}
 
 val flywayGeneratedDir = "${project.layout.projectDirectory}/generated/flyway"
 val flywayJdbc = "jdbc:h2:file:${flywayGeneratedDir}/database"
@@ -195,7 +203,12 @@ tasks.named("compileKotlinJvm") {
     dependsOn(tasks.named("jooqCodegen"))
 }
 
-tasks.named<Copy>("jvmProcessResources") {
-    val jsBrowserDistribution = tasks.named("jsBrowserDistribution")
-    from(jsBrowserDistribution)
+// include JS artifacts on production builds JAR we generate
+tasks.getByName<Jar>("jvmJar") {
+    val webpackTask =
+        tasks.getByName<org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpack>("jsBrowserProductionWebpack")
+    // make sure JS gets compiled first
+    dependsOn(webpackTask)
+    // bring output file along into the JAR
+    from(webpackTask.outputDirectory)
 }
