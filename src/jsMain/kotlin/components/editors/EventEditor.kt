@@ -1,6 +1,7 @@
 package components.editors
 
 import com.benasher44.uuid.Uuid
+import js.objects.jso
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
 import mui.icons.material.Cancel
@@ -92,6 +93,9 @@ val EventEditor = FC<Props> {
                     label = ReactNode("Event Time")
                     value = eventTime?.toString()
                     type = InputType.time
+                    InputLabelProps = jso {
+                        shrink = true
+                    }
                     onChange = {
                         val e = it.unsafeCast<ChangeEvent<HTMLInputElement>>()
                         if (e.target.value.isBlank()) {

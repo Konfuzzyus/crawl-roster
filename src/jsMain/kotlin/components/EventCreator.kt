@@ -1,6 +1,7 @@
 package components
 
 import com.benasher44.uuid.uuid4
+import js.objects.jso
 import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
@@ -56,9 +57,13 @@ val SubmitEvent = FC<SubmitEventProps> { props ->
                 label = ReactNode("Event Date")
                 value = selectedDate.toString()
                 type = InputType.date
+                InputLabelProps = jso {
+                    shrink = true
+                }
                 onChange = {
                     val e = it.unsafeCast<ChangeEvent<HTMLInputElement>>()
-                    setSelectedDate(LocalDate.parse(e.target.value))
+                    val date = if (e.target.value.isBlank()) null else LocalDate.parse(e.target.value)
+                    date?.apply { setSelectedDate(this) }
                 }
             }
         }

@@ -80,7 +80,8 @@ class RosterServer(private val core: RosterCore) {
 
                     if (Configuration.devMode) {
                         TestApi(core).install(this)
-                        // DEV MODE - get the static content form the webpack dev server
+
+                        // DEV MODE - get the static content from the webpack dev server
                         get("/{file...}") {
                             val file = call.parameters["file"]
                             val client = HttpClient() {
