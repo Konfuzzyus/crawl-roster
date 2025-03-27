@@ -1,20 +1,18 @@
 package components.events
 
-import mui.icons.material.Delete
-import mui.icons.material.Share
 import mui.material.Button
 import mui.material.ButtonColor
 import mui.material.ButtonGroup
-import mui.material.ButtonVariant
 import mui.material.ListItemText
 import mui.material.Menu
 import mui.material.MenuItem
+import mui.material.Tooltip
 import org.codecranachan.roster.query.EventQueryResult
 import org.reduxkotlin.Store
 import web.dom.Element
 import react.FC
 import react.Props
-import react.create
+import react.ReactNode
 import react.dom.events.MouseEventHandler
 import react.use
 import react.useEffectOnceWithCleanup
@@ -61,50 +59,66 @@ val EventActions = FC<EventActionsProps> { props ->
     ButtonGroup {
         when {
             isRegistered -> {
-                Button {
-                    onClick = { myStore.dispatch(removeRegistration(props.targetEvent.event)) }
-                    +"Cancel Registration"
+                Tooltip {
+                    title = ReactNode("Cancel your attendance")
+                    Button {
+                        onClick = { myStore.dispatch(removeRegistration(props.targetEvent.event)) }
+                        +"Cancel Registration"
+                    }
                 }
             }
 
             isHosting -> {
-                Button {
-                    onClick = { myStore.dispatch(unregisterTable(props.targetEvent.event)) }
-                    +"Cancel Table"
+                Tooltip {
+                    title = ReactNode("Cancel your attendance and your table")
+                    Button {
+                        onClick = { myStore.dispatch(unregisterTable(props.targetEvent.event)) }
+                        +"Cancel Table"
+                    }
                 }
             }
 
             else -> {
-                Button {
-                    onClick = { anchor = it.currentTarget }
-                    +"Sign Up"
+                Tooltip {
+                    title = ReactNode("Sign up as a player")
+                    Button {
+                        onClick = { anchor = it.currentTarget }
+                        +"Sign Up"
+                    }
                 }
-                Button {
-                    onClick = { myStore.dispatch(registerTable(props.targetEvent.event)) }
-                    +"Host Table"
+                Tooltip {
+                    title = ReactNode("Sign up as DM and host a table")
+                    Button {
+                        onClick = { myStore.dispatch(registerTable(props.targetEvent.event)) }
+                        +"Host Table"
+                    }
                 }
+            }
+        }
+        Tooltip {
+            title = ReactNode("Copy announcement message to clipboard")
+            Button {
+                onClick = {
+                    navigator.clipboard.writeTextAsync(compileAnnouncementString(myStore, props.targetEvent))
+                }
+                +"Share"
             }
         }
         if (currentGuild?.let { userIdentity?.isAdminOf(it.id) } == true) {
-            Button {
-                onClick = { myStore.dispatch(EventEditorOpened(props.targetEvent.event)) }
-                +"Edit Event"
-            }
-            Button {
-                startIcon = Delete.create()
-                color = ButtonColor.warning
-                onClick = { myStore.dispatch(cancelEvent(props.targetEvent.event)) }
-                +"Cancel Event"
-            }
-        }
-        if (navigator.canShare(testFileShare)) {
-            Button {
-                startIcon = Share.create()
-                onClick = {
-                    val shareData = compileShareData(myStore, props.targetEvent)
-                    navigator.shareAsync(shareData)
+            Tooltip {
+                title = ReactNode("Edit event details")
+                Button {
+                    onClick = { myStore.dispatch(EventEditorOpened(props.targetEvent.event)) }
+                    +"Edit Event"
                 }
-                +"Share"
+            }
+            Tooltip {
+                title = ReactNode("Cancel the event")
+                Button {
+                    color = ButtonColor.warning
+                    onClick = { myStore.dispatch(cancelEvent(props.targetEvent.event)) }
+                    +"Cancel Event"
+                }
             }
         }
     }
@@ -140,8 +154,8 @@ val EventActions = FC<EventActionsProps> { props ->
     }
 }
 
-fun compileShareData(store: Store<ApplicationState>, event: EventQueryResult): ShareData {
-    val content = buildString {
+fun compileAnnouncementString(store: Store<ApplicationState>, event: EventQueryResult): String {
+    return buildString {
         append("The ${store.state.calendar.selectedLinkedGuild?.name} is hosting an event on ${event.event.formattedDate} and is currently accepting registrations.\n")
         append("\n")
         append("Available Tables:\n")
@@ -156,10 +170,4 @@ fun compileShareData(store: Store<ApplicationState>, event: EventQueryResult): S
             }
         )
     }
-    val shareFile = File(
-        arrayOf(content),
-        "${event.event.date}_announcement.txt",
-        FilePropertyBag(type = "text/plain")
-    )
-    return ShareData(files = arrayOf(shareFile))
 }
