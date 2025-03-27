@@ -3,7 +3,6 @@ package org.codecranachan.roster.bot
 import com.x5.template.Theme
 import org.codecranachan.roster.core.Player
 import org.codecranachan.roster.query.EventQueryResult
-import org.codecranachan.roster.query.ResolvedTable
 import org.codecranachan.roster.query.TableQueryResult
 
 class MessageTemplates(private val rootUrl: String) {

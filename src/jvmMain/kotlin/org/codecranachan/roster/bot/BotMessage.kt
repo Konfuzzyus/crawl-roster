@@ -5,7 +5,6 @@ import discord4j.core.`object`.entity.Message
 import org.codecranachan.roster.core.Event
 import org.codecranachan.roster.core.Player
 import org.codecranachan.roster.util.Quotes
-import org.codecranachan.roster.util.orNull
 
 data class BotMessage(val authorId: Snowflake, val title: String, val text: String = Quotes.getRandom()) {
 
