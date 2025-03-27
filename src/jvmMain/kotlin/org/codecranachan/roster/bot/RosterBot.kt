@@ -10,6 +10,7 @@ import discord4j.core.event.domain.interaction.InteractionCreateEvent
 import discord4j.core.`object`.component.ActionRow
 import discord4j.core.`object`.component.Button
 import discord4j.core.`object`.entity.User
+import discord4j.core.`object`.entity.channel.ThreadChannel
 import discord4j.discordjson.json.InteractionApplicationCommandCallbackData
 import discord4j.discordjson.json.InteractionResponseData
 import org.codecranachan.roster.DiscordUser
@@ -34,6 +35,7 @@ import org.codecranachan.roster.query.PlayerQueryResult
 import org.codecranachan.roster.util.orNull
 import org.slf4j.LoggerFactory
 import reactor.core.Disposable
+import kotlin.jvm.optionals.getOrNull
 
 fun User.asDiscordUser(): DiscordUser =
     DiscordUser(
@@ -326,6 +328,7 @@ class RosterBot(val core: RosterCore, botToken: String, rootUrl: String) {
             withEventChannel(event) { channel ->
                 channel.delete("Event has been canceled by admin")
                     .subscribe({}, { err -> logger.error("Failed to delete event channel", err) })
+
             }
         }
     }

@@ -27,7 +27,7 @@ import kotlin.jvm.optionals.getOrNull
 class GuildTracker(
     val linkedGuild: LinkedGuild,
     private val discordGuild: Guild,
-    val botId: Snowflake
+    val botId: Snowflake,
 ) {
     companion object {
         const val eventCalendarCategoryName = "Organisation"
@@ -91,6 +91,7 @@ class GuildTracker(
             is Message -> {
                 if (e.isAuthoredByBot()) BotMessage.getMessageTitle(e) else null
             }
+
             is Role -> if (e.isEveryone) everyoneRoleName else e.name
             else -> null
         }
@@ -102,6 +103,17 @@ class GuildTracker(
             logger.debug("Adding {}({}) as {}", e.javaClass.simpleName, e.id, name)
             entityCache.put(this, e)
         }
+    }
+
+    fun <T : Entity> removeEntities(clazz: Class<T>, predicate: (T) -> Boolean) {
+        getEntities(clazz)
+            .filterValues { predicate(it) }
+            .forEach { (_, v) -> entityCache.remove(v.id) }
+    }
+
+    fun <T : Entity> getEntities(clazz: Class<T>): Map<EntityCache.Key, T> {
+        return entityCache.getAll(clazz)
+            .mapValues { (_, v) -> v.get() }
     }
 
     fun removeEntity(e: Snowflake) {

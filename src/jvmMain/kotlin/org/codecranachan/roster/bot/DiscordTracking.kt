@@ -19,6 +19,8 @@ import discord4j.core.event.domain.role.RoleUpdateEvent
 import discord4j.core.event.domain.thread.ThreadChannelCreateEvent
 import discord4j.core.event.domain.thread.ThreadChannelDeleteEvent
 import discord4j.core.`object`.entity.Guild
+import discord4j.core.`object`.entity.Message
+import discord4j.core.`object`.entity.channel.ThreadChannel
 import org.codecranachan.roster.LinkedGuild
 import org.slf4j.LoggerFactory
 import reactor.core.Disposable
@@ -82,12 +84,24 @@ class DiscordTracking {
 
     private fun handleTextChannelDeleteEvent(event: TextChannelDeleteEvent) {
         logger.debug("Text channel deleted {}", event.channel.name)
-        tendedGuilds[event.channel.guildId]?.removeEntity(event.channel.id)
+        tendedGuilds[event.channel.guildId]?.apply {
+            removeEntity(event.channel.id)
+            removeEntities(Message::class.java) { it.channelId == event.channel.id }
+            getEntities(ThreadChannel::class.java)
+                .filterValues { it.parentId.getOrNull() == event.channel.id }
+                .forEach { (_, thread) ->
+                    removeEntity(thread.id)
+                    removeEntities(Message::class.java) { it.channelId == thread.id }
+                }
+        }
     }
 
     private fun handleThreadChannelDeleteEvent(event: ThreadChannelDeleteEvent) {
-        logger.debug("Thread channel deleted {}", event.channel.name)
-        tendedGuilds[event.channel.guildId]?.removeEntity(event.channel.id)
+        logger.debug("Thread channel deleted {}", event.channel.id)
+        tendedGuilds[event.channel.guildId]?.apply {
+            removeEntity(event.channel.id)
+            removeEntities(Message::class.java) { it.channelId == event.channel.id }
+        }
     }
 
     private fun handleMessageDeleteEvent(event: MessageDeleteEvent) {
