@@ -10,10 +10,13 @@ import discord4j.core.event.domain.interaction.InteractionCreateEvent
 import discord4j.core.`object`.component.ActionRow
 import discord4j.core.`object`.component.Button
 import discord4j.core.`object`.entity.User
+import discord4j.core.`object`.reaction.ReactionEmoji
 import discord4j.discordjson.json.InteractionApplicationCommandCallbackData
 import discord4j.discordjson.json.InteractionResponseData
+import discord4j.rest.util.MultipartRequest
 import org.codecranachan.roster.DiscordUser
 import org.codecranachan.roster.core.Event
+import org.codecranachan.roster.core.Player
 import org.codecranachan.roster.core.PlayerAlreadyRegistered
 import org.codecranachan.roster.core.Registration
 import org.codecranachan.roster.core.RosterCore
@@ -48,15 +51,17 @@ fun InteractionCreateEvent.sendEphemeralResponse(content: String) {
     client.restClient.interactionService.createInteractionResponse(
         interaction.id.asLong(),
         interaction.token,
-        InteractionResponseData.builder()
-            .type(channelMessageWithSource)
-            .data(
-                InteractionApplicationCommandCallbackData.builder()
-                    .content(content)
-                    .flags(ephemeralFlag)
-                    .build()
-            )
-            .build()
+        MultipartRequest.ofRequest(
+            InteractionResponseData.builder()
+                .type(channelMessageWithSource)
+                .data(
+                    InteractionApplicationCommandCallbackData.builder()
+                        .content(content)
+                        .flags(ephemeralFlag)
+                        .build()
+                )
+                .build()
+        )
     ).subscribe()
 }
 
@@ -122,17 +127,17 @@ class RosterBot(val core: RosterCore, botToken: String, rootUrl: String) {
         interaction: InteractionCreateEvent,
         p: PlayerQueryResult,
         eventId: Uuid,
-        dmId: Uuid?,
+        dm: Player?,
     ) {
         core.eventCalendar.addPlayerRegistration(
             eventId,
             p.player.id,
-            Registration.Details(dmId)
+            Registration.Details(dm?.id)
         )
-        if (dmId == null) {
+        if (dm == null) {
             interaction.sendEphemeralResponse("I have added you to the waiting list.")
         } else {
-            interaction.sendEphemeralResponse("I have added you to this table.")
+            interaction.sendEphemeralResponse("I have added you to ${dm.discordMention}'s table.")
         }
     }
 
@@ -140,17 +145,17 @@ class RosterBot(val core: RosterCore, botToken: String, rootUrl: String) {
         interaction: InteractionCreateEvent,
         p: PlayerQueryResult,
         eventId: Uuid,
-        dmId: Uuid?,
+        dm: Player?,
     ) {
         core.eventCalendar.updatePlayerRegistration(
             eventId,
             p.player.id,
-            Registration.Details(dmId)
+            Registration.Details(dm?.id)
         )
-        if (dmId == null) {
+        if (dm == null) {
             interaction.sendEphemeralResponse("I have moved you to the waiting list.")
         } else {
-            interaction.sendEphemeralResponse("I have moved you to this table.")
+            interaction.sendEphemeralResponse("I have moved you to ${dm.discordMention}'s table.")
         }
     }
 
@@ -160,12 +165,14 @@ class RosterBot(val core: RosterCore, botToken: String, rootUrl: String) {
             when (activeId?.action) {
                 Action.RegisterPlayer -> {
                     val p = core.playerRoster.registerDiscordPlayer(event.interaction.user.asDiscordUser())
+                    val eventId = activeId.getParam(0)!!
+                    val dm = activeId.getParam(1)?.let { dmId -> core.playerRoster.getPlayer(dmId)?.player }
                     try {
-                        createPlayerRegistration(event, p, activeId.getParam(0)!!, activeId.getParam(1))
+                        createPlayerRegistration(event, p, eventId, dm)
                     } catch (e: RosterLogicException) {
                         when (e) {
                             is PlayerAlreadyRegistered -> {
-                                updatePlayerRegistration(event, p, activeId.getParam(0)!!, activeId.getParam(1))
+                                updatePlayerRegistration(event, p, eventId, dm)
                             }
 
                             else -> {
@@ -182,15 +189,40 @@ class RosterBot(val core: RosterCore, botToken: String, rootUrl: String) {
 
                 Action.UnregisterPlayer -> {
                     val p = core.playerRoster.registerDiscordPlayer(event.interaction.user.asDiscordUser())
+                    val eventId = activeId.getParam(0)!!
                     try {
-                        core.eventCalendar.deletePlayerRegistration(activeId.getParam(0)!!, p.player.id)
-                        event.sendEphemeralResponse("I have canceled your registration. I Hope you can make it next time.")
+                        core.eventCalendar.deletePlayerRegistration(eventId, p.player.id)
+                        event.sendEphemeralResponse("I have canceled your registration. I hope you can make it next time.")
                     } catch (e: RosterLogicException) {
                         event.sendEphemeralResponse(
                             """
                             I am afraid I could not cancel your registration.
                             The computer said: `${e.message}`""".trimIndent()
                         )
+                    }
+                }
+
+                Action.RegisterBeginner -> {
+                    val p = core.playerRoster.registerDiscordPlayer(event.interaction.user.asDiscordUser())
+                    val eventId = activeId.getParam(0)!!
+                    val e = core.eventCalendar.queryEvent(eventId)!!
+                    val dm = e.beginnerTables.values.filter { t -> !t.isFull }.random().dungeonMaster
+                    try {
+                        createPlayerRegistration(event, p, eventId, dm)
+                    } catch (e: RosterLogicException) {
+                        when (e) {
+                            is PlayerAlreadyRegistered -> {
+                                updatePlayerRegistration(event, p, eventId, dm)
+                            }
+
+                            else -> {
+                                event.sendEphemeralResponse(
+                                    """
+                                    I am afraid I could not process your registration.
+                                    The computer said: `${e.message}`""".trimIndent()
+                                )
+                            }
+                        }
                     }
                 }
 
@@ -257,16 +289,30 @@ class RosterBot(val core: RosterCore, botToken: String, rootUrl: String) {
             withEventMessage(data.event) { msg ->
                 val content = templates.eventMessageContent(data)
                 val components =
-                    ActionRow.of(
-                        Button.primary(
-                            ActiveId(Action.RegisterPlayer, data.event.id).asCustomId(),
-                            "Sign Up"
-                        ),
-                        Button.primary(
-                            ActiveId(Action.UnregisterPlayer, data.event.id).asCustomId(),
-                            "Cancel"
+                    buildList {
+                        add(
+                            Button.primary(
+                                ActiveId(Action.RegisterPlayer, data.event.id).asCustomId(),
+                                "Sign Up"
+                            )
                         )
-                    )
+                        add(
+                            Button.secondary(
+                                ActiveId(Action.UnregisterPlayer, data.event.id).asCustomId(),
+                                "Cancel"
+                            )
+                        )
+                        val beginnerButton = Button.secondary(
+                            ActiveId(Action.RegisterBeginner, data.event.id).asCustomId(),
+                            ReactionEmoji.of(null, "\uD83D\uDD30", false),
+                            "Join Beginner Table"
+                        )
+                        add(
+                            if (data.beginnerTables.isEmpty()) beginnerButton.disabled() else beginnerButton
+                        )
+                    }.let {
+                        ActionRow.of(*it.toTypedArray())
+                    }
 
                 val botMessage = BotMessage(botId, data.event.getChannelName(), content)
 
