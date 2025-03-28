@@ -3,6 +3,7 @@ package org.codecranachan.roster.query
 import com.benasher44.uuid.Uuid
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
+import org.codecranachan.roster.core.Audience
 import org.codecranachan.roster.core.Event
 import org.codecranachan.roster.core.Player
 import org.codecranachan.roster.core.Registration
@@ -20,6 +21,12 @@ data class EventQueryResult(
 
     @Transient
     val tables: Map<Uuid, ResolvedTable> = resolveTables()
+
+    @Transient
+    val beginnerTables: Map<Uuid, ResolvedTable> = tables.filter { (_,v) -> v.table?.details?.audience == Audience.Beginner }
+
+    @Transient
+    val regularTables: Map<Uuid, ResolvedTable> = tables.filter { (_,v) -> v.table?.details?.audience != Audience.Beginner }
 
     @Transient
     val registrations: List<ResolvedRegistration> = resolveRegistrations()
