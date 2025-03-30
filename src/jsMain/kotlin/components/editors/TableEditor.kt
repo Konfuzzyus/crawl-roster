@@ -1,8 +1,11 @@
 package components.editors
 
 import com.benasher44.uuid.Uuid
+import js.objects.jso
 import mui.icons.material.Cancel
 import mui.icons.material.Save
+import mui.material.Autocomplete
+import mui.material.AutocompleteProps
 import mui.material.Button
 import mui.material.Dialog
 import mui.material.DialogActions
@@ -120,15 +123,22 @@ val TableEditor = FC<Props> {
                         setDescription(e.target.value)
                     }
                 }
-                TextField {
-                    margin = FormControlMargin.dense
+                Autocomplete<AutocompleteProps<String>> {
+                    freeSolo = true
+                    options = gameSystems
+                    disablePortal = true
                     fullWidth = true
-                    label = ReactNode("Game System")
-                    value = gameSystem
-                    placeholder = "The game system used"
-                    onChange = {
-                        val e = it.unsafeCast<ChangeEvent<HTMLInputElement>>()
-                        setGameSystem(e.target.value)
+                    onInputChange = { _, value, _ ->
+                        setGameSystem(value)
+                    }
+                    inputValue = gameSystem
+                    renderInput = { params ->
+                        TextField.create {
+                            +params
+                            margin = FormControlMargin.dense
+                            label = ReactNode("Game System")
+                            placeholder = "The game system used"
+                        }
                     }
                 }
                 TextField {
@@ -267,5 +277,5 @@ val TableEditor = FC<Props> {
 
 private fun toIntInRange(
     value: String,
-    range: IntRange
+    range: IntRange,
 ) = minOf(maxOf(value.toIntOrNull() ?: 1, range.first), range.last)
