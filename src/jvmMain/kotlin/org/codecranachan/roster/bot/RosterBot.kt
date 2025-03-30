@@ -206,15 +206,21 @@ class RosterBot(val core: RosterCore, botToken: String, rootUrl: String) {
                     val p = core.playerRoster.registerDiscordPlayer(event.interaction.user.asDiscordUser())
                     val eventId = activeId.getParam(0)!!
                     val e = core.eventCalendar.queryEvent(eventId)!!
-                    val dm = e.beginnerTables.values.filter { t -> !t.isFull }.random().dungeonMaster
+                    val dm = e.beginnerTables.values.filter { t -> !t.isFull }.randomOrNull()?.dungeonMaster
                     try {
-                        createPlayerRegistration(event, p, eventId, dm)
+                        if (dm == null) {
+                            event.sendEphemeralResponse(
+                                """
+                                I am afraid there are no beginner tables with free seats at the moment.""".trimIndent()
+                            )
+                        }  else {
+                            createPlayerRegistration(event, p, eventId, dm)
+                        }
                     } catch (e: RosterLogicException) {
                         when (e) {
                             is PlayerAlreadyRegistered -> {
                                 updatePlayerRegistration(event, p, eventId, dm)
                             }
-
                             else -> {
                                 event.sendEphemeralResponse(
                                     """
@@ -234,7 +240,7 @@ class RosterBot(val core: RosterCore, botToken: String, rootUrl: String) {
 
 
     private fun handleRosterEvent(e: RosterEvent) {
-        logger.debug("Handling event from RosterCore: $e")
+        logger.debug("Handling event from RosterCore: {}", e)
         when (e) {
             is CalendarEventCreated -> updateEventOnDiscord(e.current.id)
             is CalendarEventUpdated -> updateEventOnDiscord(e.current.id)

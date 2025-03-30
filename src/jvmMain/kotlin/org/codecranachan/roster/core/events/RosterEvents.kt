@@ -4,8 +4,6 @@ import org.codecranachan.roster.core.Event
 import org.codecranachan.roster.core.Player
 import org.codecranachan.roster.core.Registration
 import org.codecranachan.roster.core.Table
-import org.codecranachan.roster.query.EventQueryResult
-import org.codecranachan.roster.query.TableQueryResult
 
 interface RosterEvent
 data class PlayerCreated(val current: Player) : RosterEvent

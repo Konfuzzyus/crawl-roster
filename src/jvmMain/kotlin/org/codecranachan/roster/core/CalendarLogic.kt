@@ -14,7 +14,6 @@ import org.codecranachan.roster.core.events.TableCreated
 import org.codecranachan.roster.core.events.TableUpdated
 import org.codecranachan.roster.query.CalendarQueryResult
 import org.codecranachan.roster.query.EventQueryResult
-import org.codecranachan.roster.query.EventStatisticsQueryResult
 import org.codecranachan.roster.query.TableQueryResult
 import org.codecranachan.roster.repo.Repository
 
@@ -26,6 +25,9 @@ class PlayerAlreadyRegistered(eventId: Uuid, playerId: Uuid) :
 
 class PlayerAlreadyHosting(eventId: Uuid, playerId: Uuid) :
     RosterLogicException("Player $playerId already hosting a table for event $eventId")
+
+class TableAlreadyFull(eventId: Uuid, dungeonMasterId: Uuid) :
+    RosterLogicException("Table hosted by $dungeonMasterId for event $eventId is already full.")
 
 class EventCalendarLogic(
     repository: Repository,
@@ -97,6 +99,10 @@ class EventCalendarLogic(
         } else {
             val registration = eventRepository.getRegistration(eventId, playerId)
             if (registration == null) {
+                val table = details.dungeonMasterId?.let { eventRepository.queryTableData(eventId, it) }
+                if (table != null && table.isFull()) {
+                    throw TableAlreadyFull(eventId, table.dm.id)
+                }
                 val reg = Registration(
                     eventId = eventId,
                     playerId = playerId,
@@ -113,6 +119,11 @@ class EventCalendarLogic(
 
     fun updatePlayerRegistration(eventId: Uuid, playerId: Uuid, details: Registration.Details) {
         if (eventRepository.isPlayerForEvent(playerId, eventId)) {
+            val table = details.dungeonMasterId?.let { eventRepository.queryTableData(eventId, it) }
+            if (table != null && table.isFull()) {
+                throw TableAlreadyFull(eventId, table.dm.id)
+            }
+
             val previous = eventRepository.getRegistration(eventId, playerId)
             eventRepository.updateRegistration(eventId, playerId, details.dungeonMasterId)
             val current = eventRepository.getRegistration(eventId, playerId)

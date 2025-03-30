@@ -137,7 +137,8 @@ class EventRepository(private val base: Repository) {
                 event,
                 t.into(HostedtablesRecord::class.java).asModel(),
                 t.into(PlayersRecord::class.java).asModel(),
-                regs.into(PlayersRecord::class.java).map { it.asModel() }
+                regs.sortedBy { it[EVENTREGISTRATIONS.REGISTRATION_TIME] }
+                    .map { it.into(PlayersRecord::class.java).asModel() }
             )
         }
     }
