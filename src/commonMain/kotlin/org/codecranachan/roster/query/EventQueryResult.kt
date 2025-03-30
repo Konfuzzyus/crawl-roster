@@ -42,8 +42,10 @@ data class EventQueryResult(
         return rawTables.any { it.dungeonMasterId == playerId }
     }
 
+    @Transient
     val playerCount: Int = rawRegistrations.size
 
+    @Transient
     val tableSpace: Int = rawTables.sumOf { it.details.playerRange.last }
 
     private fun resolveTables(): Map<Uuid, ResolvedTable> {

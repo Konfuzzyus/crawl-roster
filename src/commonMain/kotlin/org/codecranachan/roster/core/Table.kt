@@ -34,12 +34,17 @@ data class Table(
 
     @Transient
     val title: String = listOfNotNull(
+        if (details.audience == Audience.Beginner) "\uD83D\uDD30" else null,
         details.adventureTitle ?: "Mystery adventure",
-        details.moduleDesignation?.let { "($it)" }).joinToString(" ")
+        details.moduleDesignation?.let { "($it)" }
+    ).joinToString(" ")
 
     @Transient
-    val settings: String =
-        "${details.language.name} - Character levels ${details.levelRange.first} to ${details.levelRange.last}"
+    val settings: String = listOfNotNull(
+        details.language.name,
+        details.gameSystem,
+        "Character levels ${details.levelRange.first} to ${details.levelRange.last}"
+    ).joinToString(" - ")
 }
 
 

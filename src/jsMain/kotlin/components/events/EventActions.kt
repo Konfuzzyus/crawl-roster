@@ -7,6 +7,7 @@ import mui.material.ListItemText
 import mui.material.Menu
 import mui.material.MenuItem
 import mui.material.Tooltip
+import org.codecranachan.roster.core.Audience
 import org.codecranachan.roster.query.EventQueryResult
 import org.reduxkotlin.Store
 import web.dom.Element
@@ -156,16 +157,19 @@ val EventActions = FC<EventActionsProps> { props ->
 
 fun compileAnnouncementString(store: Store<ApplicationState>, event: EventQueryResult): String {
     return buildString {
-        append("The ${store.state.calendar.selectedLinkedGuild?.name} is hosting an event on ${event.event.formattedDate} and is currently accepting registrations.\n")
-        append("\n")
-        append("Available Tables:\n")
+        appendLine("The ${store.state.calendar.selectedLinkedGuild?.name} is hosting an event on ${event.event.formattedDate} and is currently accepting registrations.")
+        appendLine("## Available Tables")
         append(
-            event.rawTables.joinToString("~~\n") { table ->
+            event.tables.values.joinToString("") { resolved ->
+                val table = resolved.table!!
+                val isBeginner = table.details.audience == Audience.Beginner
                 buildString {
-                    append("> _Adventure:_ **${table.details.adventureTitle}**\n")
-                    append("> _Character Level:_ ${table.details.levelRange}\n")
-                    append("> _Player Limit:_ ${table.details.playerRange.last}\n")
-                    append("> _Language:_ ${table.details.language.flag} ${table.details.language.name}\n")
+                    appendLine("### ${if (isBeginner) ":beginner:" else ""}${table.details.adventureTitle ?: "Mystery Adventure"}")
+                    appendLine("> Run by ${resolved.dungeonMaster.discordMention}")
+                    appendLine(
+                        "> ${if (isBeginner) "Beginner friendly" else "For character Levels ${table.details.levelRange}"}"
+                    )
+                    appendLine("> -# ${table.details.gameSystem?.let { "**$it** " } ?: ""}for up to ${table.details.playerRange.last} players in ${table.details.language.flag} ${table.details.language.name}")
                 }
             }
         )
