@@ -342,6 +342,13 @@ class RosterBot(val core: RosterCore, botToken: String, rootUrl: String) {
                                 data.dm.id
                             ).asCustomId(),
                             "Join table"
+                        ),
+                        Button.secondary(
+                            ActiveId(
+                                Action.RegisterPlayer,
+                                data.event.id
+                            ).asCustomId(),
+                            "Leave table"
                         )
                     )
 
