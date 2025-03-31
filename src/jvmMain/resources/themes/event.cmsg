@@ -7,21 +7,21 @@ To register use the buttons on this message or head over to {$root_url}.
 {% loop in $tables_beginner as $tbl first_last=true %}
 {% if ($first) %}## :beginner: Tables for Beginners
 {% endif %}
-> {$tbl.table.details.language.flag} {$tbl.dungeon_master.discord_mention} is hosting **{$tbl.table.details.adventure_title:Mystery Adventure}**
-> -# {$tbl.table.details.game_system:} {$tbl.occupancy_fraction} players
+> {$tbl.dungeon_master.discord_mention} is hosting **{$tbl.table.details.adventure_title:Mystery Adventure}**
+-# **{$tbl.table.details.game_system:}** {$tbl.table.details.language.flag} {$tbl.occupancy_fraction} players
 {% onEmpty %}
 {% endloop %}
 {% loop in $tables_regular as $tbl first_last=true %}
-{% if ($first) %}## Regular Tables
+{% if ($first) %}## :fleur_de_lis: Regular Tables
 {% endif %}
-> {$tbl.table.details.language.flag} {$tbl.dungeon_master.discord_mention} is hosting **{$tbl.table.details.adventure_title:Mystery Adventure}**
-> -# {$tbl.table.details.game_system:} {$tbl.occupancy_fraction} players
+> {$tbl.dungeon_master.discord_mention} is hosting **{$tbl.table.details.adventure_title:Mystery Adventure}**
+-# **{$tbl.table.details.game_system:}** {$tbl.table.details.language.flag} {$tbl.occupancy_fraction} players
 {% onEmpty %}
 {% endloop %}
 {% loop in $unseated as $ust first_last=true %}
-{% if ($first) %}## Unseated players
+{% if ($first) %}## :coffee: Unseated players
 {% endif %}
-> {$ust.discord_mention} {% loop in $ust.details.languages as $lng divider=" " %}{$lng.flag}{% endloop %}
+- {$ust.discord_mention} {% loop in $ust.details.languages as $lng divider=" " %}{$lng.flag}{% endloop %}
 {% onEmpty %}
 {% endloop %}
 

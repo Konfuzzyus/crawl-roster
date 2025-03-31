@@ -4,12 +4,15 @@ import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.plus
 import org.codecranachan.roster.LinkedGuild
+import org.codecranachan.roster.core.Audience
 import org.codecranachan.roster.core.Event
 import org.codecranachan.roster.core.Player
 import org.codecranachan.roster.core.Registration
 import org.codecranachan.roster.core.Table
+import org.codecranachan.roster.core.TableLanguage
 import org.codecranachan.roster.repo.Repository
 import java.util.function.Supplier
+import kotlin.random.Random
 
 class EntityGenerator {
     private var entityCounter = 0
@@ -60,7 +63,13 @@ class EntityGenerator {
     fun makeTable(event: Event, dm: Player): Table {
         return Table(
             eventId = event.id,
-            dungeonMasterId = dm.id
+            dungeonMasterId = dm.id,
+            details = Table.Details(
+                playerRange = 2..5,
+                gameSystem = "D&D 5e",
+                language = TableLanguage.entries.random(),
+                audience = Audience.entries.random()
+            )
         )
     }
 

@@ -168,22 +168,13 @@ class RosterBot(val core: RosterCore, botToken: String, rootUrl: String) {
                     val eventId = activeId.getParam(0)!!
                     val dm = activeId.getParam(1)?.let { dmId -> core.playerRoster.getPlayer(dmId)?.player }
                     try {
-                        createPlayerRegistration(event, p, eventId, dm)
+                        joinEvent(event, p, eventId, dm)
                     } catch (e: RosterLogicException) {
-                        when (e) {
-                            is PlayerAlreadyRegistered -> {
-                                updatePlayerRegistration(event, p, eventId, dm)
-                            }
-
-                            else -> {
-                                event.sendEphemeralResponse(
-                                    """
-                                    I am afraid I could not process your registration.
-                                    The computer said: `${e.message}`""".trimIndent()
-                                )
-                            }
-                        }
-
+                        event.sendEphemeralResponse(
+                            """
+                            I am afraid I could not process your registration.
+                            The computer said: `${e.message}`""".trimIndent()
+                        )
                     }
                 }
 
@@ -213,22 +204,15 @@ class RosterBot(val core: RosterCore, botToken: String, rootUrl: String) {
                                 """
                                 I am afraid there are no beginner tables with free seats at the moment.""".trimIndent()
                             )
-                        }  else {
-                            createPlayerRegistration(event, p, eventId, dm)
+                        } else {
+                            joinEvent(event, p, eventId, dm)
                         }
                     } catch (e: RosterLogicException) {
-                        when (e) {
-                            is PlayerAlreadyRegistered -> {
-                                updatePlayerRegistration(event, p, eventId, dm)
-                            }
-                            else -> {
-                                event.sendEphemeralResponse(
-                                    """
-                                    I am afraid I could not process your registration.
-                                    The computer said: `${e.message}`""".trimIndent()
-                                )
-                            }
-                        }
+                        event.sendEphemeralResponse(
+                            """
+                            I am afraid I could not process your registration.
+                            The computer said: `${e.message}`""".trimIndent()
+                        )
                     }
                 }
 
@@ -238,6 +222,19 @@ class RosterBot(val core: RosterCore, botToken: String, rootUrl: String) {
 
     }
 
+    private fun joinEvent(
+        event: InteractionCreateEvent,
+        p: PlayerQueryResult,
+        eventId: Uuid,
+        dm: Player?,
+    ) {
+        kotlin.runCatching {
+            createPlayerRegistration(event, p, eventId, dm)
+        }.onFailure { err ->
+            if (err is PlayerAlreadyRegistered) updatePlayerRegistration(event, p, eventId, dm)
+            else throw err
+        }
+    }
 
     private fun handleRosterEvent(e: RosterEvent) {
         logger.debug("Handling event from RosterCore: {}", e)
