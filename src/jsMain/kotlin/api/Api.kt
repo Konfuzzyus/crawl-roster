@@ -16,6 +16,7 @@ import org.codecranachan.roster.core.Player
 import org.codecranachan.roster.core.Registration
 import org.codecranachan.roster.core.Table
 import org.codecranachan.roster.query.EventQueryResult
+import org.codecranachan.roster.query.EventStatisticsQueryResult
 import org.codecranachan.roster.query.PlayerQueryResult
 
 val client = HttpClient(Js) {
@@ -45,6 +46,17 @@ suspend fun fetchServerSettings(): GuildRoster {
     } catch (e: Exception) {
         GuildRoster(0, emptyList())
     }
+}
+
+suspend fun fetchStats(
+    linkedGuild: LinkedGuild,
+    after: LocalDate? = null,
+    before: LocalDate? = null,
+): EventStatisticsQueryResult {
+    return client.get("/api/v1/guilds/${linkedGuild.id}/stats") {
+        after?.let { parameter("after", it) }
+        before?.let { parameter("before", it) }
+    }.body()
 }
 
 suspend fun fetchEvents(

@@ -1,17 +1,12 @@
 package org.codecranachan.roster.query
 
-import com.benasher44.uuid.Uuid
 import kotlinx.serialization.Serializable
-import org.codecranachan.roster.UuidSerializer
 import org.codecranachan.roster.core.Player
-import org.codecranachan.roster.core.TableLanguage
 
 @Serializable
 data class EventStatisticsQueryResult(
-    @Serializable(with = UuidSerializer::class)
-    val linkedGuildId: Uuid,
-    val eventStats: EventStatistics,
-    val dmStats: List<DungeonMasterStatistics>
+    val eventStats: EventStatistics = EventStatistics(0, 0, 0, 0),
+    val dmStats: List<DungeonMasterStatistics> = emptyList()
 ) {
     @Serializable
     data class EventStatistics(
@@ -25,7 +20,6 @@ data class EventStatisticsQueryResult(
     data class DungeonMasterStatistics(
         val dungeonMaster: Player,
         val tablesHosted: Int,
-        val hostedLanguages: Set<TableLanguage>,
         val seatsFilled: Int,
         val distinctPlayers: Int,
     )

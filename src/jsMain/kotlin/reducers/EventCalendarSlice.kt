@@ -11,13 +11,15 @@ import kotlinx.datetime.toLocalDateTime
 import kotlinx.datetime.todayIn
 import org.codecranachan.roster.LinkedGuild
 import org.codecranachan.roster.query.EventQueryResult
+import org.codecranachan.roster.query.EventStatisticsQueryResult
 import org.reduxkotlin.Reducer
 
 data class EventCalendarState(
     val selectedLinkedGuild: LinkedGuild? = null,
     val selectedDateRange: Pair<LocalDate?, LocalDate?> = Clock.System.todayIn(TimeZone.UTC)
         .minus(DatePeriod(months = 1)) to null,
-    val events: List<EventQueryResult>? = null
+    val events: List<EventQueryResult>? = null,
+    val stats: EventStatisticsQueryResult = EventStatisticsQueryResult(),
 ) {
     fun getEvent(id: Uuid): EventQueryResult? {
         return events?.find { it.event.id == id }
@@ -26,6 +28,7 @@ data class EventCalendarState(
 
 data class GuildSelected(val linkedGuild: LinkedGuild)
 data class EventsUpdated(val events: List<EventQueryResult>)
+data class StatisticsUpdated(val stats: EventStatisticsQueryResult)
 data class DateRangeSelected(val after: LocalDate?, val before: LocalDate?)
 
 val eventCalendarReducer: Reducer<ApplicationState> = { s: ApplicationState, a: Any ->
@@ -34,6 +37,7 @@ val eventCalendarReducer: Reducer<ApplicationState> = { s: ApplicationState, a: 
         is GuildSelected -> old.copy(selectedLinkedGuild = a.linkedGuild)
         is EventsUpdated -> old.copy(events = a.events)
         is DateRangeSelected -> old.copy(selectedDateRange = a.after to a.before)
+        is StatisticsUpdated -> old.copy(stats = a.stats)
         else -> old
     }
     s.copy(calendar = new)

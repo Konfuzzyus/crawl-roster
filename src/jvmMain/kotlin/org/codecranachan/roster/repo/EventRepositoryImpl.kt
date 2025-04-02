@@ -5,6 +5,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.toJavaLocalDate
 import kotlinx.datetime.toJavaLocalTime
 import org.codecranachan.roster.core.Event
+import org.codecranachan.roster.core.Player
 import org.codecranachan.roster.core.Registration
 import org.codecranachan.roster.core.Table
 import org.codecranachan.roster.jooq.enums.Tableaudience
@@ -17,9 +18,13 @@ import org.codecranachan.roster.jooq.tables.references.EVENTS
 import org.codecranachan.roster.jooq.tables.references.HOSTEDTABLES
 import org.codecranachan.roster.jooq.tables.references.PLAYERS
 import org.codecranachan.roster.query.EventQueryResult
+import org.codecranachan.roster.query.EventStatisticsQueryResult
 import org.codecranachan.roster.query.TableQueryResult
 import org.jooq.Condition
+import org.jooq.TableField
 import org.jooq.impl.DSL
+import org.jooq.impl.SQLDataType
+import org.jooq.impl.TableImpl.createField
 
 class EventRepository(private val base: Repository) {
 
@@ -249,6 +254,82 @@ class EventRepository(private val base: Repository) {
                 )
                 .fetchOne()
         } != null
+    }
+
+    fun queryEventStats(linkedGuildId: Uuid, after: LocalDate?, before: LocalDate?): EventStatisticsQueryResult {
+        val eventStats = EventStatisticsQueryResult.EventStatistics(
+            base.withJooq {
+                fetchCount(
+                    EVENTS,
+                    EVENTS.GUILD_ID.eq(linkedGuildId),
+                    after?.let { EVENTS.EVENT_DATE.ge(it.toJavaLocalDate()) },
+                    before?.let { EVENTS.EVENT_DATE.le(it.toJavaLocalDate()) },
+                )
+            },
+            base.withJooq {
+                fetchCount(
+                    HOSTEDTABLES.join(EVENTS).onKey(),
+                    EVENTS.GUILD_ID.eq(linkedGuildId),
+                    after?.let { EVENTS.EVENT_DATE.ge(it.toJavaLocalDate()) },
+                    before?.let { EVENTS.EVENT_DATE.le(it.toJavaLocalDate()) },
+                )
+            },
+            base.withJooq {
+                fetchCount(
+                    EVENTREGISTRATIONS.join(EVENTS).onKey(),
+                    EVENTS.GUILD_ID.eq(linkedGuildId),
+                    after?.let { EVENTS.EVENT_DATE.ge(it.toJavaLocalDate()) },
+                    before?.let { EVENTS.EVENT_DATE.le(it.toJavaLocalDate()) },
+                    EVENTREGISTRATIONS.DUNGEON_MASTER_ID.isNotNull
+                )
+            },
+            base.withJooq {
+                fetchCount(
+                    selectDistinct(EVENTREGISTRATIONS.PLAYER_ID)
+                        .from(EVENTREGISTRATIONS.join(EVENTS).onKey())
+                        .where(
+                            EVENTS.GUILD_ID.eq(linkedGuildId),
+                            after?.let { EVENTS.EVENT_DATE.ge(it.toJavaLocalDate()) },
+                            before?.let { EVENTS.EVENT_DATE.le(it.toJavaLocalDate()) })
+                )
+            }
+        )
+
+        val dmStats = base.withJooq {
+            select(
+                HOSTEDTABLES.DUNGEON_MASTER_ID,
+                DSL.countDistinct(EVENTS.ID),
+                DSL.countDistinct(EVENTREGISTRATIONS.PLAYER_ID),
+                DSL.count(EVENTREGISTRATIONS.PLAYER_ID)
+            ).from(
+                HOSTEDTABLES
+                    .join(EVENTS).onKey()
+                    .join(EVENTREGISTRATIONS).on(
+                        HOSTEDTABLES.DUNGEON_MASTER_ID.eq(EVENTREGISTRATIONS.DUNGEON_MASTER_ID),
+                        EVENTS.ID.eq(EVENTREGISTRATIONS.EVENT_ID)
+                    )
+            ).where(
+                EVENTS.GUILD_ID.eq(linkedGuildId),
+                after?.let { EVENTS.EVENT_DATE.ge(it.toJavaLocalDate()) },
+                before?.let { EVENTS.EVENT_DATE.le(it.toJavaLocalDate()) },
+            ).groupBy(HOSTEDTABLES.DUNGEON_MASTER_ID)
+        }
+
+        val playerMap = base.withJooq { selectFrom(PLAYERS).where(PLAYERS.ID.`in`(dmStats.map { it.value1() })) }
+            .associateBy { it[PLAYERS.ID] }
+
+
+        return EventStatisticsQueryResult(
+            eventStats,
+            dmStats.map {
+                EventStatisticsQueryResult.DungeonMasterStatistics(
+                    playerMap[it.value1()]!!.asModel(),
+                    it.value2(),
+                    it.value4(),
+                    it.value3()
+                )
+            }.sortedByDescending { it.tablesHosted }
+        )
     }
 }
 

@@ -26,38 +26,24 @@ val App = FC<Props> {
 
     Container {
         maxWidth = "lg"
-        Grid {
-            container = true
-            spacing = responsive(2)
-            Grid {
-                item = true
-                columns = responsive(8)
+        Stack {
+            direction = responsive(StackDirection.column)
+            Stack {
+                direction = responsive(StackDirection.row)
                 Typography {
                     variant = TypographyVariant.h5
                     +"Crawl-Roster"
                 }
-            }
-            Grid {
-                item = true
-                columns = responsive( 4)
-
                 if (isLoaded) {
-                    Stack {
-                        direction = responsive(StackDirection.column)
-                        Identity { }
-                    }
+                    Identity { }
                 } else {
                     CircularProgress { }
                 }
             }
-            Grid {
-                item = true
-                columns = responsive(12)
-                if (isLoaded) {
-                    RosterWidget { }
-                } else {
-                    CircularProgress { }
-                }
+            if (isLoaded) {
+                RosterWidget { }
+            } else {
+                CircularProgress { }
             }
         }
     }

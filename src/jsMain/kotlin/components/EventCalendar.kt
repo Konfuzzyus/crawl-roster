@@ -29,7 +29,6 @@ val EventCalendar = FC<EventCalendarProps> { props ->
     }
 
     Box {
-        CalendarSpanSelector {}
         if (events == null) {
             CircularProgress {}
         } else {

@@ -7,6 +7,7 @@ import api.deleteEvent
 import api.fetchEvents
 import api.fetchPlayerInfo
 import api.fetchServerSettings
+import api.fetchStats
 import api.removeDmRegistration
 import api.removePlayerRegistration
 import api.updateDmRegistration
@@ -21,6 +22,7 @@ import org.codecranachan.roster.LinkedGuild
 import org.codecranachan.roster.core.Event
 import org.codecranachan.roster.core.Player
 import org.codecranachan.roster.core.Table
+import org.codecranachan.roster.query.EventStatisticsQueryResult
 import org.reduxkotlin.thunk.Thunk
 
 private val scope = MainScope()
@@ -46,6 +48,7 @@ fun selectGuild(g: LinkedGuild): Thunk<ApplicationState> = { dispatch, _, _ ->
     scope.launch {
         dispatch(GuildSelected(g))
         dispatch(updateEvents(g))
+        dispatch(updateStats(g))
     }
 }
 
@@ -53,6 +56,7 @@ fun selectCalendarRange(after: LocalDate?, before: LocalDate?): Thunk<Applicatio
     scope.launch {
         dispatch(DateRangeSelected(after, before))
         dispatch(updateEvents(getState().calendar.selectedLinkedGuild))
+        dispatch(updateStats(getState().calendar.selectedLinkedGuild))
     }
 }
 
@@ -106,6 +110,19 @@ fun removeRegistration(e: Event): Thunk<ApplicationState> = { dispatch, getState
         }
     }
 }
+
+fun updateStats(g: LinkedGuild?): Thunk<ApplicationState> =
+    { dispatch, getState, _ ->
+        scope.launch {
+            val (after, before) = getState().calendar.selectedDateRange
+            if (g == null) {
+                dispatch(StatisticsUpdated(EventStatisticsQueryResult()))
+            } else {
+                val stats = fetchStats(g, after, before)
+                dispatch(StatisticsUpdated(stats))
+            }
+        }
+    }
 
 fun updateEvents(g: LinkedGuild?): Thunk<ApplicationState> =
     { dispatch, getState, _ ->

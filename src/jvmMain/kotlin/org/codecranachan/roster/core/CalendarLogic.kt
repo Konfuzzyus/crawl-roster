@@ -14,6 +14,7 @@ import org.codecranachan.roster.core.events.TableCreated
 import org.codecranachan.roster.core.events.TableUpdated
 import org.codecranachan.roster.query.CalendarQueryResult
 import org.codecranachan.roster.query.EventQueryResult
+import org.codecranachan.roster.query.EventStatisticsQueryResult
 import org.codecranachan.roster.query.TableQueryResult
 import org.codecranachan.roster.repo.Repository
 
@@ -55,6 +56,12 @@ class EventCalendarLogic(
 
     fun queryTable(eventId: Uuid, dmId: Uuid): TableQueryResult? {
         return eventRepository.queryTableData(eventId, dmId)
+    }
+
+
+    fun queryStatistics(linkedGuildId: Uuid, after: LocalDate? = null, before: LocalDate? = null): EventStatisticsQueryResult? {
+        guildRepository.getLinkedGuild(linkedGuildId) ?: return null
+        return eventRepository.queryEventStats(linkedGuildId, after, before)
     }
 
     // -----
