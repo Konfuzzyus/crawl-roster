@@ -17,6 +17,10 @@ class EntityCache {
     val entityCache: ConcurrentHashMap<Key, CompletableFuture<out Entity>> = ConcurrentHashMap()
     private val removeActions: ConcurrentHashMap<Snowflake, Runnable> = ConcurrentHashMap()
 
+    fun hasKey(name: String, type: Class<*>): Boolean {
+        return entityCache.containsKey(Key(type, name))
+    }
+
     inline fun <reified T : Entity> get(
         name: String,
         factory: (String) -> CompletableFuture<T>,

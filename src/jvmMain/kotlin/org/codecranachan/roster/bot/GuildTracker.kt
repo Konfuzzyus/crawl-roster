@@ -210,6 +210,10 @@ class GuildTracker(
         getTableMessage(event, dm).thenAccept(block)
     }
 
+    fun hasChannelFor(event: Event): Boolean {
+        return entityCache.hasKey(event.getChannelName(), TextChannel::class.java)
+    }
+
     private fun membersOnly(vararg permissions: Permission): List<PermissionOverwrite> {
         val everyone = getEveryoneRole()
         val member = getMemberRole()

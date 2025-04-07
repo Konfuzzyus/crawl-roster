@@ -3,6 +3,7 @@ package reducers
 import api.addDmRegistration
 import api.addEvent
 import api.addPlayerRegistration
+import api.closeEvent
 import api.deleteEvent
 import api.fetchEvents
 import api.fetchPlayerInfo
@@ -63,6 +64,13 @@ fun selectCalendarRange(after: LocalDate?, before: LocalDate?): Thunk<Applicatio
 fun createEvent(e: Event): Thunk<ApplicationState> = { dispatch, getState, _ ->
     scope.launch {
         addEvent(e)
+        dispatch(updateEvents(getState().calendar.selectedLinkedGuild))
+    }
+}
+
+fun lockEvent(e: Event): Thunk<ApplicationState> = { dispatch, getState, _ ->
+    scope.launch {
+        closeEvent(e.id)
         dispatch(updateEvents(getState().calendar.selectedLinkedGuild))
     }
 }

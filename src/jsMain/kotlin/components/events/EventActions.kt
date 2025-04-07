@@ -1,5 +1,6 @@
 package components.events
 
+import api.closeEvent
 import mui.material.Button
 import mui.material.ButtonColor
 import mui.material.ButtonGroup
@@ -23,6 +24,7 @@ import reducers.EventEditorOpened
 import reducers.StoreContext
 import reducers.addRegistration
 import reducers.cancelEvent
+import reducers.lockEvent
 import reducers.registerTable
 import reducers.removeRegistration
 import reducers.unregisterTable
@@ -114,7 +116,14 @@ val EventActions = FC<EventActionsProps> { props ->
                 }
             }
             Tooltip {
-                title = ReactNode("Cancel the event")
+                title = ReactNode("Locks the event - prevents further registrations")
+                Button {
+                    onClick = { myStore.dispatch(lockEvent(props.targetEvent.event)) }
+                    +"Lock Event"
+                }
+            }
+            Tooltip {
+                title = ReactNode("Cancel the event - deletes all data for the event")
                 Button {
                     color = ButtonColor.warning
                     onClick = { myStore.dispatch(cancelEvent(props.targetEvent.event)) }

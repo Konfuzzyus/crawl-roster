@@ -34,7 +34,6 @@ internal fun Registration.asRecord(): EventregistrationsRecord {
     return EventregistrationsRecord(
         eventId,
         playerId,
-        null,
         OffsetDateTime.ofInstant(meta.registrationDate.toJavaInstant(), ZoneId.systemDefault()),
         details.dungeonMasterId
     )
@@ -46,9 +45,8 @@ internal fun Event.asRecord(): EventsRecord {
         date.toJavaLocalDate(),
         details.time?.toJavaLocalTime(),
         guildId,
-        null,
-        null,
-        details.location
+        details.location,
+        details.closedOn?.let { OffsetDateTime.ofInstant(it.toJavaInstant(), ZoneId.systemDefault()) }
     )
 }
 
@@ -60,7 +58,7 @@ internal fun EventsRecord.asModel(): Event {
         Event.Details(
             eventTime?.toKotlinLocalTime(),
             location,
-            null
+            closedOn?.toInstant()?.toKotlinInstant()
         ),
     )
 }

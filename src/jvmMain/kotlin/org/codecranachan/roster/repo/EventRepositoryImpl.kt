@@ -1,11 +1,12 @@
 package org.codecranachan.roster.repo
 
 import com.benasher44.uuid.Uuid
+import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.toJavaInstant
 import kotlinx.datetime.toJavaLocalDate
 import kotlinx.datetime.toJavaLocalTime
 import org.codecranachan.roster.core.Event
-import org.codecranachan.roster.core.Player
 import org.codecranachan.roster.core.Registration
 import org.codecranachan.roster.core.Table
 import org.codecranachan.roster.jooq.enums.Tableaudience
@@ -21,10 +22,10 @@ import org.codecranachan.roster.query.EventQueryResult
 import org.codecranachan.roster.query.EventStatisticsQueryResult
 import org.codecranachan.roster.query.TableQueryResult
 import org.jooq.Condition
-import org.jooq.TableField
 import org.jooq.impl.DSL
-import org.jooq.impl.SQLDataType
-import org.jooq.impl.TableImpl.createField
+import java.time.OffsetDateTime
+import java.time.ZoneId
+import java.time.ZonedDateTime
 
 class EventRepository(private val base: Repository) {
 
@@ -37,11 +38,24 @@ class EventRepository(private val base: Repository) {
             EVENTS.GUILD_ID.eq(linkedGuildId),
             after?.let { EVENTS.EVENT_DATE.ge(it.toJavaLocalDate()) },
             before?.let { EVENTS.EVENT_DATE.le(it.toJavaLocalDate()) },
+            EVENTS.CLOSED_ON.isNull
         )
 
         return fetchEventsWhere(
             DSL.and(conditions)
         )
+    }
+
+    fun getEventByDate(linkedGuildId: Uuid, date: LocalDate): Event? {
+        return base.withJooq {
+            selectFrom(EVENTS)
+                .where(
+                    EVENTS.GUILD_ID.eq(linkedGuildId),
+                    EVENTS.EVENT_DATE.eq(date.toJavaLocalDate())
+                )
+                .fetchOne()
+                ?.asModel()
+        }
     }
 
     fun getEvent(eventId: Uuid): Event? {
@@ -64,6 +78,9 @@ class EventRepository(private val base: Repository) {
             update(EVENTS)
                 .set(EVENTS.LOCATION, details.location)
                 .set(EVENTS.EVENT_TIME, details.time?.toJavaLocalTime())
+                .set(
+                    EVENTS.CLOSED_ON,
+                    details.closedOn?.let { OffsetDateTime.ofInstant(it.toJavaInstant(), ZoneId.systemDefault()) })
                 .where(EVENTS.ID.eq(eventId))
                 .execute()
         }
@@ -78,6 +95,26 @@ class EventRepository(private val base: Repository) {
                 .where(HOSTEDTABLES.EVENT_ID.eq(eventId))
                 .execute()
             deleteFrom(EVENTS)
+                .where(EVENTS.ID.eq(eventId))
+                .execute()
+        }
+    }
+
+    fun closeEvent(eventId: Uuid, closedOn: Instant) {
+        return base.withJooq {
+            update(EVENTS)
+                .set(
+                    EVENTS.CLOSED_ON,
+                    closedOn.let { OffsetDateTime.ofInstant(it.toJavaInstant(), ZoneId.systemDefault()) })
+                .where(EVENTS.ID.eq(eventId))
+                .execute()
+        }
+    }
+
+    fun openEvent(eventId: Uuid) {
+        return base.withJooq {
+            update(EVENTS)
+                .setNull(EVENTS.CLOSED_ON)
                 .where(EVENTS.ID.eq(eventId))
                 .execute()
         }

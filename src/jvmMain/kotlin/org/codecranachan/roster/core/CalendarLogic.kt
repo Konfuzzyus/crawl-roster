@@ -1,8 +1,10 @@
 package org.codecranachan.roster.core
 
 import com.benasher44.uuid.Uuid
+import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
 import org.codecranachan.roster.core.events.CalendarEventCanceled
+import org.codecranachan.roster.core.events.CalendarEventClosed
 import org.codecranachan.roster.core.events.CalendarEventCreated
 import org.codecranachan.roster.core.events.CalendarEventUpdated
 import org.codecranachan.roster.core.events.EventBus
@@ -59,9 +61,17 @@ class EventCalendarLogic(
     }
 
 
-    fun queryStatistics(linkedGuildId: Uuid, after: LocalDate? = null, before: LocalDate? = null): EventStatisticsQueryResult? {
+    fun queryStatistics(
+        linkedGuildId: Uuid,
+        after: LocalDate? = null,
+        before: LocalDate? = null,
+    ): EventStatisticsQueryResult? {
         guildRepository.getLinkedGuild(linkedGuildId) ?: return null
         return eventRepository.queryEventStats(linkedGuildId, after, before)
+    }
+
+    fun fetchEventByDate(linkedGuildId: Uuid, date: LocalDate): Event? {
+        return eventRepository.getEventByDate(linkedGuildId, date)
     }
 
     // -----
@@ -79,6 +89,24 @@ class EventCalendarLogic(
         eventRepository.updateEvent(eventId, details)
         val current = eventRepository.getEvent(eventId)
         eventBus.publish(CalendarEventUpdated(previous!!, current!!))
+    }
+
+    fun reopenEvent(eventId: Uuid) {
+        val previous = eventRepository.getEvent(eventId)
+        if (previous != null) {
+            eventRepository.openEvent(eventId)
+            val current = eventRepository.getEvent(eventId)
+            eventBus.publish(CalendarEventUpdated(previous!!, current!!))
+        }
+    }
+
+    fun closeEvent(eventId: Uuid) {
+        val previous = eventRepository.getEvent(eventId)
+        if (previous != null) {
+            eventRepository.closeEvent(eventId, Clock.System.now())
+            val current = eventRepository.getEvent(eventId)
+            eventBus.publish(CalendarEventClosed(current!!))
+        }
     }
 
     fun cancelEvent(eventId: Uuid) {

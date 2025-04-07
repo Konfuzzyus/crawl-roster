@@ -84,6 +84,12 @@ suspend fun updateEvent(eventId: Uuid, details: Event.Details) {
     }
 }
 
+suspend fun closeEvent(eventId: Uuid) {
+    client.post("/api/v1/events/${eventId}/close") {
+        contentType(ContentType.Application.Json)
+    }
+}
+
 suspend fun deleteEvent(eventId: Uuid) {
     client.delete("/api/v1/events/${eventId}")
 }

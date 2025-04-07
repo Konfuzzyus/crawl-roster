@@ -241,8 +241,8 @@ class RosterBot(val core: RosterCore, botToken: String, rootUrl: String) {
         when (e) {
             is CalendarEventCreated -> updateEventOnDiscord(e.current.id)
             is CalendarEventUpdated -> updateEventOnDiscord(e.current.id)
-            is CalendarEventCanceled -> cancelEventOnDiscord(e.previous)
-            is CalendarEventClosed -> {}
+            is CalendarEventCanceled -> removeEventFromDiscord(e.previous)
+            is CalendarEventClosed -> removeEventFromDiscord(e.current)
             is TableCreated -> {
                 updateEventOnDiscord(e.current.eventId)
                 updateTableOnDiscord(e.current.eventId, e.current.dungeonMasterId)
@@ -377,12 +377,15 @@ class RosterBot(val core: RosterCore, botToken: String, rootUrl: String) {
         }
     }
 
-    private fun cancelEventOnDiscord(event: Event) {
+    private fun removeEventFromDiscord(event: Event) {
         tracking.get(event.guildId)?.apply {
-            withEventChannel(event) { channel ->
-                channel.delete("Event has been canceled by admin")
-                    .subscribe({}, { err -> logger.error("Failed to delete event channel", err) })
-
+            if (hasChannelFor(event)) {
+                withEventChannel(event) { channel ->
+                    channel.delete("Event has been canceled by admin")
+                        .subscribe({}, { err -> logger.error("Failed to delete event channel", err) })
+                }
+            } else {
+                // Channel does not exist - do nothing
             }
         }
     }
