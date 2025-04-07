@@ -1,6 +1,7 @@
 package components.editors
 
 import com.benasher44.uuid.Uuid
+import js.objects.jso
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
 import mui.icons.material.Cancel
@@ -16,23 +17,23 @@ import mui.material.StackDirection
 import mui.material.TextField
 import mui.system.responsive
 import org.codecranachan.roster.core.Event
-import org.w3c.dom.HTMLInputElement
+import web.html.HTMLInputElement
 import react.FC
 import react.Props
 import react.ReactNode
 import react.create
 import react.dom.events.ChangeEvent
-import react.dom.html.InputType
 import react.dom.onChange
-import react.useContext
-import react.useEffectOnce
+import react.use
+import react.useEffectOnceWithCleanup
 import react.useState
 import reducers.EditorClosed
 import reducers.StoreContext
 import reducers.updateEventDetails
+import web.html.InputType
 
 val EventEditor = FC<Props> {
-    val store = useContext(StoreContext)
+    val store = use(StoreContext)!!
     val (isOpen, setIsOpen) = useState(false)
 
     val (eventId, setEventId) = useState(null as Uuid?)
@@ -47,7 +48,7 @@ val EventEditor = FC<Props> {
         setEventLocation(event.details.location ?: "")
     }
 
-    useEffectOnce {
+    useEffectOnceWithCleanup {
         val unsubscribe = store.subscribe {
             val t = store.state.ui.editorTarget
             if (t is Event) {
@@ -57,7 +58,7 @@ val EventEditor = FC<Props> {
                 setIsOpen(false)
             }
         }
-        cleanup(unsubscribe)
+        onCleanup(unsubscribe)
     }
 
     Dialog {
@@ -92,6 +93,9 @@ val EventEditor = FC<Props> {
                     label = ReactNode("Event Time")
                     value = eventTime?.toString()
                     type = InputType.time
+                    InputLabelProps = jso {
+                        shrink = true
+                    }
                     onChange = {
                         val e = it.unsafeCast<ChangeEvent<HTMLInputElement>>()
                         if (e.target.value.isBlank()) {

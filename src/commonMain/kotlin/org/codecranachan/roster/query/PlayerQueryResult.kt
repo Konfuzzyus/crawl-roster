@@ -14,13 +14,5 @@ data class PlayerQueryResult(
     fun isAdminOf(guildId: Uuid) : Boolean {
         return memberships.firstOrNull { it.linkedGuild.id == guildId }?.isAdmin ?: false
     }
-
-    @Serializable
-    data class Details(
-        val name: String = "Anonymous",
-        val languages: List<TableLanguage> = listOf(TableLanguage.English),
-        val playTier: Int = 0
-    )
-
 }
 

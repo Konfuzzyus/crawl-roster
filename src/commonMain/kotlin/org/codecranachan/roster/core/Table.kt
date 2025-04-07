@@ -25,7 +25,8 @@ data class Table(
         val playerRange: IntRange = 3..7,
         @Serializable(with = IntRangeSerializer::class)
         val levelRange: IntRange = 1..4,
-        val canceledOn: Instant? = null
+        val audience: Audience = Audience.Regular,
+        val gameSystem: String? = null
     )
 
     @Transient
@@ -33,12 +34,17 @@ data class Table(
 
     @Transient
     val title: String = listOfNotNull(
+        if (details.audience == Audience.Beginner) "\uD83D\uDD30" else null,
         details.adventureTitle ?: "Mystery adventure",
-        details.moduleDesignation?.let { "($it)" }).joinToString(" ")
+        details.moduleDesignation?.let { "($it)" }
+    ).joinToString(" ")
 
     @Transient
-    val settings: String =
-        "${details.language.name} - Character levels ${details.levelRange.first} to ${details.levelRange.last}"
+    val settings: String = listOfNotNull(
+        details.language.name,
+        details.gameSystem,
+        "Character levels ${details.levelRange.first} to ${details.levelRange.last}"
+    ).joinToString(" - ")
 }
 
 

@@ -1,7 +1,10 @@
 package org.codecranachan.roster.core
 
 import com.benasher44.uuid.Uuid
+import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
+import org.codecranachan.roster.core.events.CalendarEventCanceled
+import org.codecranachan.roster.core.events.CalendarEventClosed
 import org.codecranachan.roster.core.events.CalendarEventCreated
 import org.codecranachan.roster.core.events.CalendarEventUpdated
 import org.codecranachan.roster.core.events.EventBus
@@ -13,6 +16,7 @@ import org.codecranachan.roster.core.events.TableCreated
 import org.codecranachan.roster.core.events.TableUpdated
 import org.codecranachan.roster.query.CalendarQueryResult
 import org.codecranachan.roster.query.EventQueryResult
+import org.codecranachan.roster.query.EventStatisticsQueryResult
 import org.codecranachan.roster.query.TableQueryResult
 import org.codecranachan.roster.repo.Repository
 
@@ -25,9 +29,12 @@ class PlayerAlreadyRegistered(eventId: Uuid, playerId: Uuid) :
 class PlayerAlreadyHosting(eventId: Uuid, playerId: Uuid) :
     RosterLogicException("Player $playerId already hosting a table for event $eventId")
 
+class TableAlreadyFull(eventId: Uuid, dungeonMasterId: Uuid) :
+    RosterLogicException("Table hosted by $dungeonMasterId for event $eventId is already full.")
+
 class EventCalendarLogic(
     repository: Repository,
-    private val eventBus: EventBus
+    private val eventBus: EventBus,
 ) {
     private val eventRepository = repository.eventRepository
     private val guildRepository = repository.guildRepository
@@ -53,6 +60,20 @@ class EventCalendarLogic(
         return eventRepository.queryTableData(eventId, dmId)
     }
 
+
+    fun queryStatistics(
+        linkedGuildId: Uuid,
+        after: LocalDate? = null,
+        before: LocalDate? = null,
+    ): EventStatisticsQueryResult? {
+        guildRepository.getLinkedGuild(linkedGuildId) ?: return null
+        return eventRepository.queryEventStats(linkedGuildId, after, before)
+    }
+
+    fun fetchEventByDate(linkedGuildId: Uuid, date: LocalDate): Event? {
+        return eventRepository.getEventByDate(linkedGuildId, date)
+    }
+
     // -----
     // Management
     // -----
@@ -68,6 +89,32 @@ class EventCalendarLogic(
         eventRepository.updateEvent(eventId, details)
         val current = eventRepository.getEvent(eventId)
         eventBus.publish(CalendarEventUpdated(previous!!, current!!))
+    }
+
+    fun reopenEvent(eventId: Uuid) {
+        val previous = eventRepository.getEvent(eventId)
+        if (previous != null) {
+            eventRepository.openEvent(eventId)
+            val current = eventRepository.getEvent(eventId)
+            eventBus.publish(CalendarEventUpdated(previous!!, current!!))
+        }
+    }
+
+    fun closeEvent(eventId: Uuid) {
+        val previous = eventRepository.getEvent(eventId)
+        if (previous != null) {
+            eventRepository.closeEvent(eventId, Clock.System.now())
+            val current = eventRepository.getEvent(eventId)
+            eventBus.publish(CalendarEventClosed(current!!))
+        }
+    }
+
+    fun cancelEvent(eventId: Uuid) {
+        val previous = eventRepository.getEvent(eventId)
+        if (previous != null) {
+            eventRepository.deleteEvent(eventId)
+            eventBus.publish(CalendarEventCanceled(previous))
+        }
     }
 
     fun getPlayerRegistration(eventId: Uuid, playerId: Uuid): Registration? {
@@ -87,6 +134,10 @@ class EventCalendarLogic(
         } else {
             val registration = eventRepository.getRegistration(eventId, playerId)
             if (registration == null) {
+                val table = details.dungeonMasterId?.let { eventRepository.queryTableData(eventId, it) }
+                if (table != null && table.isFull()) {
+                    throw TableAlreadyFull(eventId, table.dm.id)
+                }
                 val reg = Registration(
                     eventId = eventId,
                     playerId = playerId,
@@ -103,6 +154,11 @@ class EventCalendarLogic(
 
     fun updatePlayerRegistration(eventId: Uuid, playerId: Uuid, details: Registration.Details) {
         if (eventRepository.isPlayerForEvent(playerId, eventId)) {
+            val table = details.dungeonMasterId?.let { eventRepository.queryTableData(eventId, it) }
+            if (table != null && table.isFull()) {
+                throw TableAlreadyFull(eventId, table.dm.id)
+            }
+
             val previous = eventRepository.getRegistration(eventId, playerId)
             eventRepository.updateRegistration(eventId, playerId, details.dungeonMasterId)
             val current = eventRepository.getRegistration(eventId, playerId)

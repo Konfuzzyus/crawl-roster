@@ -1,9 +1,6 @@
-import com.rohanprabhu.gradle.plugins.kdjooq.database
-import com.rohanprabhu.gradle.plugins.kdjooq.generator
-import com.rohanprabhu.gradle.plugins.kdjooq.jdbc
-import com.rohanprabhu.gradle.plugins.kdjooq.jooqCodegenConfiguration
-import com.rohanprabhu.gradle.plugins.kdjooq.target
 import org.flywaydb.gradle.task.FlywayMigrateTask
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 
 buildscript {
     repositories {
@@ -16,42 +13,37 @@ buildscript {
 }
 
 plugins {
-    val kotlin = "1.8.22"
+    val kotlin = "2.1.10"
 
     kotlin("multiplatform") version kotlin
     kotlin("plugin.serialization") version kotlin
-    id("org.flywaydb.flyway") version "8.5.10"
-    id("com.rohanprabhu.kotlin-dsl-jooq") version "0.4.6"
+    id("org.flywaydb.flyway") version "11.3.4"
+    id("org.jooq.jooq-codegen-gradle") version "3.20.1"
     application
 }
 
 group = "org.codecranachan"
-version = "2023.10.2"
+version = "2025.3.1"
 
 object Versions {
-    const val kotlin = "1.8.22"
-    const val kotlinReact = "18.2.0-pre.347"
-    const val kotlinMui = "5.8.3-pre.345"
-    const val kotlinEmotion = "11.9.3-pre.347"
-    const val kotlinCoroutines = "1.6.4"
-    const val kotlinDateTime = "0.4.0"
+    const val kotlin = "2.1.10"
+    const val kotlinWrappers = "2025.3.10"
+    const val kotlinCoroutines = "1.10.1"
+    const val kotlinDateTime = "0.6.2"
     const val kotlinRedux = "0.6.0"
-    const val kotlinxSerJson = "1.4.1"
-    const val ktor = "2.2.1"
-    const val jooq = "3.18.3"
+    const val kotlinxSerJson = "1.8.0"
+    const val kotlinxHtml = "0.12.0"
+    const val ktor = "3.1.1"
+    const val jooq = "3.20.1"
     const val h2db = "2.1.214"
-    const val flyway = "9.20.0"
+    const val flyway = "11.3.4"
     const val logback = "1.4.5"
-    const val uuid = "0.6.0"
-    const val jose4j = "0.7.12"
+    const val uuid = "0.8.2"
+    const val jose4j = "0.9.6"
     const val discord4j = "3.3.0-M2"
-    const val reactor = "3.4.24"
+    const val reactor = "3.7.3"
     const val chunk = "3.6.2"
 }
-
-val flywayGeneratedDir = "${project.buildDir}/generated/flyway"
-val flywayJdbc = "jdbc:h2:file:${flywayGeneratedDir}/database"
-val jooqGeneratedDir = "${project.buildDir}/generated/jooq"
 
 repositories {
     mavenCentral()
@@ -61,12 +53,11 @@ repositories {
 
 kotlin {
     jvm {
-        compilations.all {
-            kotlinOptions.jvmTarget = "17"
-        }
         withJava()
-        testRuns["test"].executionTask.configure {
-            useJUnitPlatform()
+        compilerOptions {
+            jvmTarget.set(JvmTarget.JVM_21)
+            languageVersion.set(KotlinVersion.KOTLIN_2_1)
+
         }
     }
     js(IR) {
@@ -74,13 +65,14 @@ kotlin {
         browser {
             commonWebpackConfig {
                 cssSupport {
+                    enabled.set(true)
                 }
+                devServer?.open = false
+                devServer?.port = 9090
             }
         }
     }
     sourceSets {
-        val flyway by creating {
-        }
         val commonMain by getting {
             dependencies {
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:${Versions.kotlinxSerJson}")
@@ -93,13 +85,14 @@ kotlin {
                 implementation(kotlin("test"))
             }
         }
-        val jvmJooq by creating {
-            kotlin.srcDir(jooqGeneratedDir)
-        }
         val jvmMain by getting {
-            dependsOn(flyway)
-            dependsOn(jvmJooq)
+            kotlin {
+                srcDir("src/jvmMain")
+                srcDir("generated/jooq")
+            }
             dependencies {
+                implementation("org.jetbrains.kotlinx:kotlinx-html-jvm:${Versions.kotlinxHtml}")
+
                 implementation("io.projectreactor:reactor-core:${Versions.reactor}")
                 implementation("com.discord4j:discord4j-core:${Versions.discord4j}")
                 implementation("io.ktor:ktor-serialization-kotlinx-json:${Versions.ktor}")
@@ -136,63 +129,70 @@ kotlin {
                 implementation("org.reduxkotlin:redux-kotlin-js:${Versions.kotlinRedux}")
                 implementation("org.reduxkotlin:redux-kotlin-thunk-js:${Versions.kotlinRedux}")
 
-                implementation("org.jetbrains.kotlin-wrappers:kotlin-react:${Versions.kotlinReact}")
-                implementation("org.jetbrains.kotlin-wrappers:kotlin-react-dom:${Versions.kotlinReact}")
-                implementation("org.jetbrains.kotlin-wrappers:kotlin-emotion:${Versions.kotlinEmotion}")
-                implementation("org.jetbrains.kotlin-wrappers:kotlin-mui:${Versions.kotlinMui}")
-                implementation("org.jetbrains.kotlin-wrappers:kotlin-mui-icons:${Versions.kotlinMui}")
+                implementation(project.dependencies.enforcedPlatform("org.jetbrains.kotlin-wrappers:kotlin-wrappers-bom:${Versions.kotlinWrappers}"))
+                implementation("org.jetbrains.kotlin-wrappers:kotlin-browser")
+                implementation("org.jetbrains.kotlin-wrappers:kotlin-react")
+                implementation("org.jetbrains.kotlin-wrappers:kotlin-react-core")
+                implementation("org.jetbrains.kotlin-wrappers:kotlin-react-dom")
+                implementation("org.jetbrains.kotlin-wrappers:kotlin-emotion")
+                implementation("org.jetbrains.kotlin-wrappers:kotlin-mui-material")
+                implementation("org.jetbrains.kotlin-wrappers:kotlin-mui-icons-material")
             }
         }
         val jsTest by getting
     }
 }
 
-flyway {
+application {
+    mainClass.set("${project.group}.roster.ServerKt")
+}
+
+val flywayGeneratedDir = "${project.layout.projectDirectory}/generated/flyway"
+val flywayJdbc = "jdbc:h2:file:${flywayGeneratedDir}/database"
+
+tasks.flywayMigrate {
+    doFirst {
+        file(flywayGeneratedDir).mkdirs()
+        delete(outputs.files)
+    }
     url = flywayJdbc
     user = "sa"
     password = ""
     schemas = arrayOf("ROSTER")
-    locations = project.kotlin.sourceSets["flyway"].resources.srcDirs.map { "filesystem:$it" }.toTypedArray()
     createSchemas = true
-}
 
-tasks.flywayMigrate {
-    project.kotlin.sourceSets["flyway"].resources.srcDirs.forEach(inputs::dir)
+    val migrationsDir = project.kotlin.sourceSets["jvmMain"].resources.srcDirs
+    locations = migrationsDir.map { "filesystem:${it.canonicalPath}" }.toTypedArray()
+    migrationsDir.forEach(inputs::dir)
     outputs.dir(flywayGeneratedDir)
-    doFirst { delete(outputs.files) }
 }
 
-jooqGenerator {
-    jooqVersion = "3.16.6"
-    configuration("jvm", project.java.sourceSets["main"]) {
-        configuration = jooqCodegenConfiguration {
-            jdbc {
-                username = "sa"
-                password = ""
-                driver = "org.h2.Driver"
-                url = flywayJdbc
+val jooqGeneratedDir = "${project.layout.projectDirectory}/generated/jooq"
+
+jooq {
+    configuration {
+        jdbc {
+            url = flywayJdbc
+            user = "sa"
+            password = ""
+            driver = "org.h2.Driver"
+        }
+        generator {
+            name = "org.jooq.codegen.KotlinGenerator"
+            target {
+                packageName = "${project.group}.roster.jooq"
+                directory = jooqGeneratedDir
             }
 
-            generator {
-                name = "org.jooq.codegen.KotlinGenerator"
-                target {
-                    packageName = "${project.group}.roster.jooq"
-                    directory = jooqGeneratedDir
-                }
-
-                database {
-                    name = "org.jooq.meta.h2.H2Database"
-                    inputSchema = "ROSTER"
-                }
+            database {
+                name = "org.jooq.meta.h2.H2Database"
+                inputSchema = "ROSTER"
             }
         }
     }
-    dependencies {
-        jooqGeneratorRuntime("com.h2database:h2:${Versions.h2db}")
-    }
 }
 
-tasks.named("jooq-codegen-jvm") {
+tasks.jooqCodegen {
     val fw = tasks.named<FlywayMigrateTask>("flywayMigrate")
     inputs.files(fw.get().outputs.files)
     dependsOn(fw)
@@ -200,19 +200,15 @@ tasks.named("jooq-codegen-jvm") {
 }
 
 tasks.named("compileKotlinJvm") {
-    dependsOn(tasks.named("jooq-codegen-jvm"))
+    dependsOn(tasks.named("jooqCodegen"))
 }
 
-application {
-    mainClass.set("${project.group}.roster.ServerKt")
-}
-
-tasks.named<Copy>("jvmProcessResources") {
-    val jsBrowserDistribution = tasks.named("jsBrowserDistribution")
-    from(jsBrowserDistribution)
-}
-
-tasks.named<JavaExec>("run") {
-    dependsOn(tasks.named<Jar>("jvmJar"))
-    classpath(tasks.named<Jar>("jvmJar"))
+// include JS artifacts on production builds JAR we generate
+tasks.getByName<Jar>("jvmJar") {
+    val webpackTask =
+        tasks.getByName<org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpack>("jsBrowserProductionWebpack")
+    // make sure JS gets compiled first
+    dependsOn(webpackTask)
+    // bring output file along into the JAR
+    from(webpackTask.outputDirectory)
 }

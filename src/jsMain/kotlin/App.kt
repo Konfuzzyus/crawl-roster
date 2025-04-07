@@ -8,61 +8,42 @@ import mui.material.StackDirection
 import mui.material.Typography
 import mui.material.styles.TypographyVariant
 import mui.system.responsive
-import react.FC
-import react.Props
-import react.useContext
-import react.useEffectOnce
-import react.useState
+import react.*
 import reducers.StoreContext
 import reducers.updateUserId
 
 val App = FC<Props> {
-    val store = useContext(StoreContext)
+    val store = use(StoreContext)!!
     val (isLoaded, setIsLoaded) = useState(store.state.identity.isLoaded)
 
-    useEffectOnce {
+    useEffectOnceWithCleanup {
         val unsubscribe = store.subscribe {
             setIsLoaded(store.state.identity.isLoaded)
         }
         store.dispatch(updateUserId())
-        cleanup(unsubscribe)
+        onCleanup(unsubscribe)
     }
 
     Container {
         maxWidth = "lg"
-        Grid {
-            container = true
-            spacing = responsive(2)
-            Grid {
-                item = true
-                xs = 8
-
+        Stack {
+            direction = responsive(StackDirection.column)
+            Stack {
+                direction = responsive(StackDirection.row)
                 Typography {
                     variant = TypographyVariant.h5
                     +"Crawl-Roster"
                 }
-            }
-            Grid {
-                item = true
-                xs = 4
-
                 if (isLoaded) {
-                    Stack {
-                        direction = responsive(StackDirection.column)
-                        Identity { }
-                    }
+                    Identity { }
                 } else {
                     CircularProgress { }
                 }
             }
-            Grid {
-                item = true
-                xs = 12
-                if (isLoaded) {
-                    RosterWidget { }
-                } else {
-                    CircularProgress { }
-                }
+            if (isLoaded) {
+                RosterWidget { }
+            } else {
+                CircularProgress { }
             }
         }
     }

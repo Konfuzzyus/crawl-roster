@@ -1,7 +1,5 @@
 package components
 
-import csstype.Padding
-import csstype.px
 import mui.icons.material.ErrorOutline
 import mui.material.Chip
 import mui.system.Box
@@ -11,15 +9,17 @@ import react.FC
 import react.Props
 import react.ReactNode
 import react.create
-import react.useContext
+import react.use
 import reducers.StoreContext
+import web.cssom.Padding
+import web.cssom.px
 
 external interface EventDetailsProps : Props {
     var result: EventQueryResult
 }
 
 val EventDetails = FC<EventDetailsProps> { props ->
-    val store = useContext(StoreContext)
+    val store = use(StoreContext)!!
     val profile = store.state.identity.player
 
     Box {

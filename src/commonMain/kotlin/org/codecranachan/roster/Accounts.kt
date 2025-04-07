@@ -4,8 +4,7 @@ package org.codecranachan.roster
 data class DiscordUser(
     val id: String,
     val username: String,
-    val avatar: String? = null,
-    val discriminator: String = "0"
+    val avatar: String? = null
 ) {
     fun getAvatarUrl(): String? = avatar?.let { "https://cdn.discordapp.com/avatars/${id}/${it}" }
 }

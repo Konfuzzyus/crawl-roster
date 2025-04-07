@@ -10,7 +10,7 @@ data class TableQueryResult(
     val event: Event,
     val table: Table,
     val dm: Player,
-    val players: List<Player> = listOf()
+    val players: List<Player> = listOf(),
 ) {
     fun getTableName(): String = dm.getTableName()
 
@@ -30,4 +30,6 @@ data class TableQueryResult(
     fun isDungeonMaster(player: Player): Boolean {
         return dm.id == player.id
     }
+
+    fun isFull() = players.size >= table.details.playerRange.endInclusive
 }

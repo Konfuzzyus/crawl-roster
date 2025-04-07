@@ -1,4 +1,4 @@
-package org.codecranachan.roster.discord
+package org.codecranachan.roster.bot.discord
 
 import io.ktor.client.*
 import io.ktor.client.call.*

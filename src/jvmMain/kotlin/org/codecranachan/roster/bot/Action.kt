@@ -4,7 +4,8 @@ import com.benasher44.uuid.Uuid
 
 enum class Action {
     RegisterPlayer,
-    UnregisterPlayer
+    UnregisterPlayer,
+    RegisterBeginner
 }
 
 class ActiveId(val action: Action, private vararg val params: Uuid) {

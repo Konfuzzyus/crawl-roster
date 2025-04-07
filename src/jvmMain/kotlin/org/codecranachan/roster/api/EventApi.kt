@@ -34,10 +34,35 @@ class EventApi(private val core: RosterCore) {
                 } else {
                     val event = call.receive<Event>()
                     if (core.playerRoster.isGuildAdmin(userSession.playerId, event.guildId)) {
-                        core.eventCalendar.addEvent(event)
-                        call.respond(HttpStatusCode.Created)
+                        val existing = core.eventCalendar.fetchEventByDate(event.guildId, event.date)
+                        if (existing == null) {
+                            core.eventCalendar.addEvent(event)
+                            call.respond(HttpStatusCode.Created)
+                        } else {
+                            core.eventCalendar.reopenEvent(existing.id)
+                            call.respond(HttpStatusCode.OK)
+                        }
                     } else {
                         call.respond(HttpStatusCode.Forbidden, "Only guild admins can create events")
+                    }
+                }
+            }
+            post("/api/v1/events/{evtId}/close") {
+                val userSession = call.sessions.get<UserSession>()
+                if (userSession == null) {
+                    call.respond(HttpStatusCode.Unauthorized, "Not logged in")
+                } else {
+                    val evtId = Uuid.fromString(call.parameters["evtId"])
+                    val query = core.eventCalendar.queryEvent(evtId)
+                    if (query == null) {
+                        call.respond(HttpStatusCode.NotFound)
+                    } else {
+                        if (core.playerRoster.isGuildAdmin(userSession.playerId, query.event.guildId)) {
+                            core.eventCalendar.closeEvent(evtId)
+                            call.respond(HttpStatusCode.OK)
+                        } else {
+                            call.respond(HttpStatusCode.Forbidden, "Only guild admins can close events")
+                        }
                     }
                 }
             }
@@ -55,9 +80,29 @@ class EventApi(private val core: RosterCore) {
                         if (core.playerRoster.isGuildAdmin(userSession.playerId, query.event.guildId)) {
                             val details = call.receive<Event.Details>()
                             core.eventCalendar.updateEvent(evtId, details)
-                            call.respond(HttpStatusCode.Created)
+                            call.respond(HttpStatusCode.OK)
                         } else {
                             call.respond(HttpStatusCode.Forbidden, "Only guild admins can update events")
+                        }
+                    }
+                }
+            }
+
+            delete("/api/v1/events/{evtId}") {
+                val userSession = call.sessions.get<UserSession>()
+                if (userSession == null) {
+                    call.respond(HttpStatusCode.Unauthorized, "Not logged in")
+                } else {
+                    val evtId = Uuid.fromString(call.parameters["evtId"])
+                    val query = core.eventCalendar.queryEvent(evtId)
+                    if (query == null) {
+                        call.respond(HttpStatusCode.NotFound)
+                    } else {
+                        if (core.playerRoster.isGuildAdmin(userSession.playerId, query.event.guildId)) {
+                            core.eventCalendar.cancelEvent(evtId)
+                            call.respond(HttpStatusCode.OK)
+                        } else {
+                            call.respond(HttpStatusCode.Forbidden, "Only guild admins can cancel events")
                         }
                     }
                 }
@@ -92,8 +137,10 @@ class EventApi(private val core: RosterCore) {
                     val reg = call.receive<Registration.Details>()
 
                     val current = core.eventCalendar.getPlayerRegistration(evtId, plrId)
-                    val isKickByDm = reg.dungeonMasterId == null && current?.details?.dungeonMasterId == userSession.playerId
-                    val isInviteByDm = reg.dungeonMasterId == userSession.playerId && current?.details?.dungeonMasterId == null
+                    val isKickByDm =
+                        reg.dungeonMasterId == null && current?.details?.dungeonMasterId == userSession.playerId
+                    val isInviteByDm =
+                        reg.dungeonMasterId == userSession.playerId && current?.details?.dungeonMasterId == null
 
                     if (plrId == userSession.playerId || isKickByDm || isInviteByDm) {
                         core.eventCalendar.updatePlayerRegistration(evtId, plrId, reg)

@@ -7,6 +7,7 @@ import discord4j.core.`object`.entity.Guild
 import discord4j.core.`object`.entity.Message
 import discord4j.core.`object`.entity.Role
 import discord4j.core.`object`.entity.channel.Category
+import discord4j.core.`object`.entity.channel.Channel
 import discord4j.core.`object`.entity.channel.TextChannel
 import discord4j.core.`object`.entity.channel.ThreadChannel
 import discord4j.core.spec.StartThreadWithoutMessageSpec
@@ -15,9 +16,9 @@ import discord4j.rest.util.PermissionSet
 import org.codecranachan.roster.LinkedGuild
 import org.codecranachan.roster.core.Event
 import org.codecranachan.roster.core.Player
+import org.codecranachan.roster.util.orNull
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import java.util.concurrent.CompletableFuture
 import kotlin.jvm.optionals.getOrNull
@@ -25,7 +26,7 @@ import kotlin.jvm.optionals.getOrNull
 class GuildTracker(
     val linkedGuild: LinkedGuild,
     private val discordGuild: Guild,
-    val botId: Snowflake
+    val botId: Snowflake,
 ) {
     companion object {
         const val eventCalendarCategoryName = "Organisation"
@@ -44,27 +45,41 @@ class GuildTracker(
 
     fun initialize() {
         discordGuild.roles.subscribe { r -> putEntity(r) }
-        discordGuild.channels.concatWith(discordGuild.activeThreads.flatMapIterable { it.threads })
-            .sort { a, b -> channelProcessingOrder.indexOf(b.javaClass) - channelProcessingOrder.indexOf(a.javaClass) }
-            .doOnNext { channel -> putEntity(channel) }
+        val categoryMono = discordGuild.channels.filter { it is Category }
+            .filter { it.name == eventCalendarCategoryName }
+            .map { it as Category }
+            .doOnNext(::putEntity)
+            .single()
+
+        val channelFlux = categoryMono.flatMapMany { category ->
+            discordGuild.channels
+                .filter { it is TextChannel }
+                .map { it as TextChannel }
+                .filter { it.categoryId.orNull() == category.id }
+                .doOnNext(::putEntity)
+        }
+
+        channelFlux
             .flatMap { channel ->
-                val msgs: Flux<Message> = when (channel) {
-                    is TextChannel -> channel.pinnedMessages
-                        .flatMap { msg ->
-                            if (getEntityName(msg) != null && getEntityName(msg) != getEntityName(channel)
-                            ) {
-                                logger.debug("Rempving message")
-                                msg.delete().ofType(Message::class.java)
-                            } else {
-                                Mono.just(msg)
-                            }
+                channel
+                    .pinnedMessages
+                    .flatMap { msg ->
+                        if (getEntityName(msg) != null && getEntityName(msg) != getEntityName(channel)
+                        ) {
+                            msg.delete().ofType(Message::class.java)
+                        } else {
+                            Mono.just(msg)
                         }
-                    is ThreadChannel -> channel.pinnedMessages
-                    else -> Flux.empty()
-                }
-                msgs
-            }.subscribe(::putEntity)
-        discordGuild.activeThreads.subscribe()
+                    }
+                    .concatWith(
+                        discordGuild.activeThreads
+                            .flatMapIterable { it.threads }
+                            .filter { channel.id == it.parentId.orNull() }
+                            .doOnNext(::putEntity)
+                            .flatMap { it.pinnedMessages }
+                    )
+            }
+            .subscribe(::putEntity)
     }
 
     private fun getEntityName(e: Entity): String? {
@@ -75,6 +90,7 @@ class GuildTracker(
             is Message -> {
                 if (e.isAuthoredByBot()) BotMessage.getMessageTitle(e) else null
             }
+
             is Role -> if (e.isEveryone) everyoneRoleName else e.name
             else -> null
         }
@@ -86,6 +102,17 @@ class GuildTracker(
             logger.debug("Adding {}({}) as {}", e.javaClass.simpleName, e.id, name)
             entityCache.put(this, e)
         }
+    }
+
+    fun <T : Entity> removeEntities(clazz: Class<T>, predicate: (T) -> Boolean) {
+        getEntities(clazz)
+            .filterValues { predicate(it) }
+            .forEach { (_, v) -> entityCache.remove(v.id) }
+    }
+
+    fun <T : Entity> getEntities(clazz: Class<T>): Map<EntityCache.Key, T> {
+        return entityCache.getAll(clazz)
+            .mapValues { (_, v) -> v.get() }
     }
 
     fun removeEntity(e: Snowflake) {
@@ -171,12 +198,20 @@ class GuildTracker(
         return getRole(dungeonMasterRoleName)
     }
 
+    fun withEventChannel(event: Event, block: (Channel) -> Unit) {
+        getEventChannel(event).thenAccept(block)
+    }
+
     fun withEventMessage(event: Event, block: (Message) -> Unit) {
         getEventMessage(event).thenAccept(block)
     }
 
     fun withTableMessage(event: Event, dm: Player, block: (Message) -> Unit) {
         getTableMessage(event, dm).thenAccept(block)
+    }
+
+    fun hasChannelFor(event: Event): Boolean {
+        return entityCache.hasKey(event.getChannelName(), TextChannel::class.java)
     }
 
     private fun membersOnly(vararg permissions: Permission): List<PermissionOverwrite> {

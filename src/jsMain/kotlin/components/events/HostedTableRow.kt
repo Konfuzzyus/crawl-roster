@@ -23,7 +23,7 @@ import react.FC
 import react.Props
 import react.ReactNode
 import react.create
-import react.useContext
+import react.use
 import reducers.StoreContext
 import reducers.TableEditorOpened
 import reducers.addRegistration
@@ -36,7 +36,7 @@ external interface HostedTableRowProps : Props {
 }
 
 val HostedTableRow = FC<HostedTableRowProps> { props ->
-    val store = useContext(StoreContext)
+    val store = use(StoreContext)!!
 
     val isDm = props.tableData.isDungeonMaster(props.me.id)
     val isPc = props.tableData.isPlayer(props.me.id)

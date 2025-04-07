@@ -12,9 +12,9 @@ import org.slf4j.LoggerFactory
 class GuildRosterLogic(
     private val guildRepository: GuildRepository,
     private val linkedGuildLimit: Int,
-    private val botCoordinates: BotCoordinates?
+    private val botCoordinates: BotCoordinates?,
 
-) {
+    ) {
     private val logger: Logger = LoggerFactory.getLogger(javaClass)
 
     fun get(): GuildRoster {
@@ -32,6 +32,9 @@ class GuildRosterLogic(
         val guilds = guildRepository.getLinkedGuilds()
         val link = guilds.find { it.discordId == discordGuild.id.asString() }
         return if (link != null) {
+            if (discordGuild.name != link.name) {
+                guildRepository.updateGuild(link.copy(name = discordGuild.name))
+            }
             logger.debug("Did not link guild ${discordGuild.name} to the server - already linked")
             link
         } else if (guilds.size >= linkedGuildLimit) {
@@ -46,6 +49,14 @@ class GuildRosterLogic(
             guildRepository.addLinkedGuild(newLink)
             logger.info("Guild ${discordGuild.name} has been linked to the server")
             newLink
+        }
+    }
+
+    fun update(discordGuild: Guild) {
+        val guilds = guildRepository.getLinkedGuilds()
+        val link = guilds.find { it.discordId == discordGuild.id.asString() }
+        if (link != null && discordGuild.name != link.name) {
+            guildRepository.updateGuild(link.copy(name = discordGuild.name))
         }
     }
 }

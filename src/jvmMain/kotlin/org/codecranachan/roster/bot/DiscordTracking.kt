@@ -3,22 +3,16 @@ package org.codecranachan.roster.bot
 import com.benasher44.uuid.Uuid
 import discord4j.common.util.Snowflake
 import discord4j.core.GatewayDiscordClient
-import discord4j.core.event.domain.Event
-import discord4j.core.event.domain.channel.CategoryCreateEvent
 import discord4j.core.event.domain.channel.CategoryDeleteEvent
-import discord4j.core.event.domain.channel.CategoryUpdateEvent
-import discord4j.core.event.domain.channel.TextChannelCreateEvent
 import discord4j.core.event.domain.channel.TextChannelDeleteEvent
-import discord4j.core.event.domain.channel.TextChannelUpdateEvent
-import discord4j.core.event.domain.message.MessageCreateEvent
 import discord4j.core.event.domain.message.MessageDeleteEvent
-import discord4j.core.event.domain.message.MessageUpdateEvent
 import discord4j.core.event.domain.role.RoleCreateEvent
 import discord4j.core.event.domain.role.RoleDeleteEvent
 import discord4j.core.event.domain.role.RoleUpdateEvent
-import discord4j.core.event.domain.thread.ThreadChannelCreateEvent
 import discord4j.core.event.domain.thread.ThreadChannelDeleteEvent
 import discord4j.core.`object`.entity.Guild
+import discord4j.core.`object`.entity.Message
+import discord4j.core.`object`.entity.channel.ThreadChannel
 import org.codecranachan.roster.LinkedGuild
 import org.slf4j.LoggerFactory
 import reactor.core.Disposable
@@ -36,24 +30,17 @@ class DiscordTracking {
         val disposables = ArrayList<Disposable>()
 
         // Categories
-        gateway.on(CategoryCreateEvent::class.java).subscribe(this::handleCategoryCreateEvent).apply(disposables::add)
         gateway.on(CategoryDeleteEvent::class.java).subscribe(this::handleCategoryDeleteEvent).apply(disposables::add)
 
         // Text Channels
-        gateway.on(TextChannelCreateEvent::class.java).subscribe(this::handleTextChannelCreateEvent)
-            .apply(disposables::add)
         gateway.on(TextChannelDeleteEvent::class.java).subscribe(this::handleTextChannelDeleteEvent)
             .apply(disposables::add)
 
         // Text Messages
-        gateway.on(MessageCreateEvent::class.java).subscribe(this::handleMessageCreateEvent)
-            .apply(disposables::add)
         gateway.on(MessageDeleteEvent::class.java).subscribe(this::handleMessageDeleteEvent)
             .apply(disposables::add)
 
         // Thread Channels
-        gateway.on(ThreadChannelCreateEvent::class.java).subscribe(this::handleThreadChannelCreateEvent)
-            .apply(disposables::add)
         gateway.on(ThreadChannelDeleteEvent::class.java).subscribe(this::handleThreadChannelDeleteEvent)
             .apply(disposables::add)
 
@@ -82,39 +69,31 @@ class DiscordTracking {
         return tendedGuilds.values.find { t -> t.linkedGuild.id == linkedGuildId }
     }
 
-    private fun handleCategoryCreateEvent(event: CategoryCreateEvent) {
-        logger.debug("Category created: {}", event.category.name)
-        tendedGuilds[event.category.guildId]?.putEntity(event.category)
-    }
-
     private fun handleCategoryDeleteEvent(event: CategoryDeleteEvent) {
         logger.debug("Category deleted: {}", event.category.name)
         tendedGuilds[event.category.guildId]?.removeEntity(event.category.id)
     }
 
-    private fun handleTextChannelCreateEvent(event: TextChannelCreateEvent) {
-        logger.debug("Text channel created: {}", event.channel.name)
-        tendedGuilds[event.channel.guildId]?.putEntity(event.channel)
-    }
-
     private fun handleTextChannelDeleteEvent(event: TextChannelDeleteEvent) {
         logger.debug("Text channel deleted {}", event.channel.name)
-        tendedGuilds[event.channel.guildId]?.removeEntity(event.channel.id)
-    }
-
-    private fun handleThreadChannelCreateEvent(event: ThreadChannelCreateEvent) {
-        logger.debug("Thread channel created: {}", event.channel.name)
-        tendedGuilds[event.channel.guildId]?.putEntity(event.channel)
+        tendedGuilds[event.channel.guildId]?.apply {
+            removeEntity(event.channel.id)
+            removeEntities(Message::class.java) { it.channelId == event.channel.id }
+            getEntities(ThreadChannel::class.java)
+                .filterValues { it.parentId.getOrNull() == event.channel.id }
+                .forEach { (_, thread) ->
+                    removeEntity(thread.id)
+                    removeEntities(Message::class.java) { it.channelId == thread.id }
+                }
+        }
     }
 
     private fun handleThreadChannelDeleteEvent(event: ThreadChannelDeleteEvent) {
-        logger.debug("Thread channel deleted {}", event.channel.name)
-        tendedGuilds[event.channel.guildId]?.removeEntity(event.channel.id)
-    }
-
-    private fun handleMessageCreateEvent(event: MessageCreateEvent) {
-        logger.debug("Message created: {}", event.message.id)
-        event.guildId.getOrNull()?.apply { tendedGuilds[this]?.putEntity(event.message) }
+        logger.debug("Thread channel deleted {}", event.channel.id)
+        tendedGuilds[event.channel.guildId]?.apply {
+            removeEntity(event.channel.id)
+            removeEntities(Message::class.java) { it.channelId == event.channel.id }
+        }
     }
 
     private fun handleMessageDeleteEvent(event: MessageDeleteEvent) {

@@ -18,7 +18,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import org.codecranachan.roster.auth.DiscordAuthorizationInfo
 import org.codecranachan.roster.core.RosterCore
-import org.codecranachan.roster.discord.DiscordApiClient
+import org.codecranachan.roster.bot.discord.DiscordApiClient
 import kotlin.collections.set
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
@@ -31,7 +31,7 @@ data class UserSession(
     @Serializable(with = UuidSerializer::class)
     val playerId: Uuid,
     val authInfo: DiscordAuthorizationInfo
-) : Principal
+)
 
 @Serializable
 data class OpenIdConfiguration(

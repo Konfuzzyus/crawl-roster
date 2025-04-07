@@ -2,7 +2,6 @@ package components
 
 import components.events.EventActions
 import components.events.PlayTableIndicator
-import csstype.px
 import mui.icons.material.KeyboardArrowDown
 import mui.icons.material.KeyboardArrowUp
 import mui.material.Collapse
@@ -20,6 +19,7 @@ import org.codecranachan.roster.query.EventQueryResult
 import react.FC
 import react.Props
 import react.useState
+import web.cssom.px
 
 val EventCalendarHeaderRow = FC<Props> {
     TableRow {

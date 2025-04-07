@@ -1,6 +1,7 @@
 package components
 
 import com.benasher44.uuid.uuid4
+import js.objects.jso
 import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
@@ -15,18 +16,18 @@ import mui.material.FormControlMargin
 import mui.material.TextField
 import org.codecranachan.roster.core.Event
 import org.codecranachan.roster.LinkedGuild
-import org.w3c.dom.HTMLInputElement
 import react.FC
 import react.Props
 import react.ReactNode
 import react.create
 import react.dom.events.ChangeEvent
-import react.dom.html.InputType
 import react.dom.onChange
-import react.useContext
+import react.use
 import react.useState
 import reducers.StoreContext
 import reducers.createEvent
+import web.html.HTMLInputElement
+import web.html.InputType
 
 
 external interface SubmitEventProps : Props {
@@ -34,7 +35,7 @@ external interface SubmitEventProps : Props {
 }
 
 val SubmitEvent = FC<SubmitEventProps> { props ->
-    val store = useContext(StoreContext)
+    val store = use(StoreContext)!!
     val (isOpen, setIsOpen) = useState(false)
     val (selectedDate, setSelectedDate) = useState(Clock.System.todayIn(TimeZone.currentSystemDefault()))
 
@@ -56,9 +57,13 @@ val SubmitEvent = FC<SubmitEventProps> { props ->
                 label = ReactNode("Event Date")
                 value = selectedDate.toString()
                 type = InputType.date
+                InputLabelProps = jso {
+                    shrink = true
+                }
                 onChange = {
                     val e = it.unsafeCast<ChangeEvent<HTMLInputElement>>()
-                    setSelectedDate(LocalDate.parse(e.target.value))
+                    val date = if (e.target.value.isBlank()) null else LocalDate.parse(e.target.value)
+                    date?.apply { setSelectedDate(this) }
                 }
             }
         }

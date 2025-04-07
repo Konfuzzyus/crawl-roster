@@ -9,8 +9,8 @@ import mui.material.TableHead
 import org.codecranachan.roster.LinkedGuild
 import react.FC
 import react.Props
-import react.useContext
-import react.useEffectOnce
+import react.use
+import react.useEffectOnceWithCleanup
 import react.useState
 import reducers.StoreContext
 
@@ -19,13 +19,13 @@ external interface EventCalendarProps : Props {
 }
 
 val EventCalendar = FC<EventCalendarProps> { props ->
-    val store = useContext(StoreContext)
+    val store = use(StoreContext)!!
     var events by useState(store.state.calendar.events)
     val account = store.state.identity.player
 
-    useEffectOnce {
+    useEffectOnceWithCleanup {
         val unsubscribe = store.subscribe { events = store.state.calendar.events }
-        cleanup(unsubscribe)
+        onCleanup(unsubscribe)
     }
 
     Box {

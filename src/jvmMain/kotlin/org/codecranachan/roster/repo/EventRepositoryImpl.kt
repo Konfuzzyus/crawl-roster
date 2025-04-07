@@ -1,12 +1,15 @@
 package org.codecranachan.roster.repo
 
 import com.benasher44.uuid.Uuid
+import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.toJavaInstant
 import kotlinx.datetime.toJavaLocalDate
 import kotlinx.datetime.toJavaLocalTime
 import org.codecranachan.roster.core.Event
 import org.codecranachan.roster.core.Registration
 import org.codecranachan.roster.core.Table
+import org.codecranachan.roster.jooq.enums.Tableaudience
 import org.codecranachan.roster.jooq.enums.Tablelanguage
 import org.codecranachan.roster.jooq.tables.records.EventregistrationsRecord
 import org.codecranachan.roster.jooq.tables.records.HostedtablesRecord
@@ -16,9 +19,13 @@ import org.codecranachan.roster.jooq.tables.references.EVENTS
 import org.codecranachan.roster.jooq.tables.references.HOSTEDTABLES
 import org.codecranachan.roster.jooq.tables.references.PLAYERS
 import org.codecranachan.roster.query.EventQueryResult
+import org.codecranachan.roster.query.EventStatisticsQueryResult
 import org.codecranachan.roster.query.TableQueryResult
 import org.jooq.Condition
 import org.jooq.impl.DSL
+import java.time.OffsetDateTime
+import java.time.ZoneId
+import java.time.ZonedDateTime
 
 class EventRepository(private val base: Repository) {
 
@@ -31,11 +38,24 @@ class EventRepository(private val base: Repository) {
             EVENTS.GUILD_ID.eq(linkedGuildId),
             after?.let { EVENTS.EVENT_DATE.ge(it.toJavaLocalDate()) },
             before?.let { EVENTS.EVENT_DATE.le(it.toJavaLocalDate()) },
+            EVENTS.CLOSED_ON.isNull
         )
 
         return fetchEventsWhere(
             DSL.and(conditions)
         )
+    }
+
+    fun getEventByDate(linkedGuildId: Uuid, date: LocalDate): Event? {
+        return base.withJooq {
+            selectFrom(EVENTS)
+                .where(
+                    EVENTS.GUILD_ID.eq(linkedGuildId),
+                    EVENTS.EVENT_DATE.eq(date.toJavaLocalDate())
+                )
+                .fetchOne()
+                ?.asModel()
+        }
     }
 
     fun getEvent(eventId: Uuid): Event? {
@@ -58,6 +78,43 @@ class EventRepository(private val base: Repository) {
             update(EVENTS)
                 .set(EVENTS.LOCATION, details.location)
                 .set(EVENTS.EVENT_TIME, details.time?.toJavaLocalTime())
+                .set(
+                    EVENTS.CLOSED_ON,
+                    details.closedOn?.let { OffsetDateTime.ofInstant(it.toJavaInstant(), ZoneId.systemDefault()) })
+                .where(EVENTS.ID.eq(eventId))
+                .execute()
+        }
+    }
+
+    fun deleteEvent(eventId: Uuid) {
+        base.withJooq {
+            deleteFrom(EVENTREGISTRATIONS)
+                .where(EVENTREGISTRATIONS.EVENT_ID.eq(eventId))
+                .execute()
+            deleteFrom(HOSTEDTABLES)
+                .where(HOSTEDTABLES.EVENT_ID.eq(eventId))
+                .execute()
+            deleteFrom(EVENTS)
+                .where(EVENTS.ID.eq(eventId))
+                .execute()
+        }
+    }
+
+    fun closeEvent(eventId: Uuid, closedOn: Instant) {
+        return base.withJooq {
+            update(EVENTS)
+                .set(
+                    EVENTS.CLOSED_ON,
+                    closedOn.let { OffsetDateTime.ofInstant(it.toJavaInstant(), ZoneId.systemDefault()) })
+                .where(EVENTS.ID.eq(eventId))
+                .execute()
+        }
+    }
+
+    fun openEvent(eventId: Uuid) {
+        return base.withJooq {
+            update(EVENTS)
+                .setNull(EVENTS.CLOSED_ON)
                 .where(EVENTS.ID.eq(eventId))
                 .execute()
         }
@@ -122,7 +179,8 @@ class EventRepository(private val base: Repository) {
                 event,
                 t.into(HostedtablesRecord::class.java).asModel(),
                 t.into(PlayersRecord::class.java).asModel(),
-                regs.into(PlayersRecord::class.java).map { it.asModel() }
+                regs.sortedBy { it[EVENTREGISTRATIONS.REGISTRATION_TIME] }
+                    .map { it.into(PlayersRecord::class.java).asModel() }
             )
         }
     }
@@ -156,6 +214,8 @@ class EventRepository(private val base: Repository) {
                 maxPlayers = details.playerRange.last
                 minCharacterLevel = details.levelRange.first
                 maxCharacterLevel = details.levelRange.last
+                audience = Tableaudience.valueOf(details.audience.name)
+                gameSystem = details.gameSystem?.ifBlank { null }
             }.store()
         }
     }
@@ -231,6 +291,82 @@ class EventRepository(private val base: Repository) {
                 )
                 .fetchOne()
         } != null
+    }
+
+    fun queryEventStats(linkedGuildId: Uuid, after: LocalDate?, before: LocalDate?): EventStatisticsQueryResult {
+        val eventStats = EventStatisticsQueryResult.EventStatistics(
+            base.withJooq {
+                fetchCount(
+                    EVENTS,
+                    EVENTS.GUILD_ID.eq(linkedGuildId),
+                    after?.let { EVENTS.EVENT_DATE.ge(it.toJavaLocalDate()) },
+                    before?.let { EVENTS.EVENT_DATE.le(it.toJavaLocalDate()) },
+                )
+            },
+            base.withJooq {
+                fetchCount(
+                    HOSTEDTABLES.join(EVENTS).onKey(),
+                    EVENTS.GUILD_ID.eq(linkedGuildId),
+                    after?.let { EVENTS.EVENT_DATE.ge(it.toJavaLocalDate()) },
+                    before?.let { EVENTS.EVENT_DATE.le(it.toJavaLocalDate()) },
+                )
+            },
+            base.withJooq {
+                fetchCount(
+                    EVENTREGISTRATIONS.join(EVENTS).onKey(),
+                    EVENTS.GUILD_ID.eq(linkedGuildId),
+                    after?.let { EVENTS.EVENT_DATE.ge(it.toJavaLocalDate()) },
+                    before?.let { EVENTS.EVENT_DATE.le(it.toJavaLocalDate()) },
+                    EVENTREGISTRATIONS.DUNGEON_MASTER_ID.isNotNull
+                )
+            },
+            base.withJooq {
+                fetchCount(
+                    selectDistinct(EVENTREGISTRATIONS.PLAYER_ID)
+                        .from(EVENTREGISTRATIONS.join(EVENTS).onKey())
+                        .where(
+                            EVENTS.GUILD_ID.eq(linkedGuildId),
+                            after?.let { EVENTS.EVENT_DATE.ge(it.toJavaLocalDate()) },
+                            before?.let { EVENTS.EVENT_DATE.le(it.toJavaLocalDate()) })
+                )
+            }
+        )
+
+        val dmStats = base.withJooq {
+            select(
+                HOSTEDTABLES.DUNGEON_MASTER_ID,
+                DSL.countDistinct(EVENTS.ID),
+                DSL.countDistinct(EVENTREGISTRATIONS.PLAYER_ID),
+                DSL.count(EVENTREGISTRATIONS.PLAYER_ID)
+            ).from(
+                HOSTEDTABLES
+                    .join(EVENTS).onKey()
+                    .join(EVENTREGISTRATIONS).on(
+                        HOSTEDTABLES.DUNGEON_MASTER_ID.eq(EVENTREGISTRATIONS.DUNGEON_MASTER_ID),
+                        EVENTS.ID.eq(EVENTREGISTRATIONS.EVENT_ID)
+                    )
+            ).where(
+                EVENTS.GUILD_ID.eq(linkedGuildId),
+                after?.let { EVENTS.EVENT_DATE.ge(it.toJavaLocalDate()) },
+                before?.let { EVENTS.EVENT_DATE.le(it.toJavaLocalDate()) },
+            ).groupBy(HOSTEDTABLES.DUNGEON_MASTER_ID)
+        }
+
+        val playerMap = base.withJooq { selectFrom(PLAYERS).where(PLAYERS.ID.`in`(dmStats.map { it.value1() })) }
+            .associateBy { it[PLAYERS.ID] }
+
+
+        return EventStatisticsQueryResult(
+            eventStats,
+            dmStats.map {
+                EventStatisticsQueryResult.DungeonMasterStatistics(
+                    playerMap[it.value1()]!!.asModel(),
+                    it.value2(),
+                    it.value4(),
+                    it.value3()
+                )
+            }.sortedByDescending { it.tablesHosted }
+        )
     }
 }
 

@@ -19,23 +19,22 @@ import mui.material.TextField
 import mui.system.responsive
 import org.codecranachan.roster.core.Player
 import org.codecranachan.roster.core.TableLanguage
-import org.w3c.dom.HTMLInputElement
 import react.FC
 import react.Props
 import react.ReactNode
 import react.create
 import react.dom.events.ChangeEvent
 import react.dom.onChange
-import react.key
-import react.useContext
-import react.useEffectOnce
+import react.use
+import react.useEffectOnceWithCleanup
 import react.useState
 import reducers.EditorClosed
 import reducers.StoreContext
 import reducers.updatePlayerDetails
+import web.html.*
 
 val PlayerEditor = FC<Props> {
-    val store = useContext(StoreContext)
+    val store = use(StoreContext)!!
     var isOpen by useState(false)
 
     var name by useState("Anonymous")
@@ -48,7 +47,7 @@ val PlayerEditor = FC<Props> {
         playTier = player.details.playTier
     }
 
-    useEffectOnce {
+    useEffectOnceWithCleanup {
         val unsubscribe = store.subscribe {
             val p = store.state.ui.editorTarget
             if (p is Player) {
@@ -58,7 +57,7 @@ val PlayerEditor = FC<Props> {
                 isOpen = false
             }
         }
-        cleanup(unsubscribe)
+        onCleanup(unsubscribe)
     }
 
     Dialog {
@@ -81,7 +80,7 @@ val PlayerEditor = FC<Props> {
                     placeholder = "Your name"
                     value = name
                     onChange = {
-                        val e = it.unsafeCast<ChangeEvent<HTMLInputElement>>()
+                        val e = it.unsafeCast<ChangeEvent<web.html.HTMLInputElement>>()
                         name = e.target.value
                     }
                 }

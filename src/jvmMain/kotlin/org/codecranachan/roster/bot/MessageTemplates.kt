@@ -3,7 +3,6 @@ package org.codecranachan.roster.bot
 import com.x5.template.Theme
 import org.codecranachan.roster.core.Player
 import org.codecranachan.roster.query.EventQueryResult
-import org.codecranachan.roster.query.ResolvedTable
 import org.codecranachan.roster.query.TableQueryResult
 
 class MessageTemplates(private val rootUrl: String) {
@@ -15,7 +14,8 @@ class MessageTemplates(private val rootUrl: String) {
     fun eventMessageContent(data: EventQueryResult): String {
         val c = theme.makeChunk("event#open")
         c.set("event", data.event)
-        c.set("tables", data.tables.values.toList())
+        c.set("tables_beginner", data.beginnerTables.values.toList())
+        c.set("tables_regular", data.regularTables.values.toList())
         c.set("table_count", data.tables.size)
         c.set("table_space", data.tableSpace)
         c.set("unseated", data.unseated)

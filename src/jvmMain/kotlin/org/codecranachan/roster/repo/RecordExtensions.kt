@@ -6,11 +6,13 @@ import kotlinx.datetime.toJavaLocalTime
 import kotlinx.datetime.toKotlinInstant
 import kotlinx.datetime.toKotlinLocalDate
 import kotlinx.datetime.toKotlinLocalTime
+import org.codecranachan.roster.core.Audience
 import org.codecranachan.roster.core.Event
 import org.codecranachan.roster.core.Player
 import org.codecranachan.roster.core.Registration
 import org.codecranachan.roster.core.Table
 import org.codecranachan.roster.core.TableLanguage
+import org.codecranachan.roster.jooq.enums.Tableaudience
 import org.codecranachan.roster.jooq.enums.Tablelanguage
 import org.codecranachan.roster.jooq.tables.records.EventregistrationsRecord
 import org.codecranachan.roster.jooq.tables.records.EventsRecord
@@ -32,7 +34,6 @@ internal fun Registration.asRecord(): EventregistrationsRecord {
     return EventregistrationsRecord(
         eventId,
         playerId,
-        null,
         OffsetDateTime.ofInstant(meta.registrationDate.toJavaInstant(), ZoneId.systemDefault()),
         details.dungeonMasterId
     )
@@ -44,9 +45,8 @@ internal fun Event.asRecord(): EventsRecord {
         date.toJavaLocalDate(),
         details.time?.toJavaLocalTime(),
         guildId,
-        null,
-        null,
-        details.location
+        details.location,
+        details.closedOn?.let { OffsetDateTime.ofInstant(it.toJavaInstant(), ZoneId.systemDefault()) }
     )
 }
 
@@ -58,7 +58,7 @@ internal fun EventsRecord.asModel(): Event {
         Event.Details(
             eventTime?.toKotlinLocalTime(),
             location,
-            null
+            closedOn?.toInstant()?.toKotlinInstant()
         ),
     )
 }
@@ -74,7 +74,9 @@ internal fun Table.asRecord(): HostedtablesRecord {
         details.playerRange.first,
         details.playerRange.last,
         details.levelRange.first,
-        details.levelRange.last
+        details.levelRange.last,
+        Tableaudience.valueOf(details.audience.name),
+        details.gameSystem
     )
 }
 
@@ -88,7 +90,9 @@ internal fun HostedtablesRecord.asModel(): Table {
             moduleDesignation,
             TableLanguage.valueOf(tableLanguage!!.name),
             IntRange(minPlayers!!, maxPlayers!!),
-            IntRange(minCharacterLevel!!, maxCharacterLevel!!)
+            IntRange(minCharacterLevel!!, maxCharacterLevel!!),
+            Audience.valueOf(audience!!.name),
+            gameSystem
         )
     )
 }

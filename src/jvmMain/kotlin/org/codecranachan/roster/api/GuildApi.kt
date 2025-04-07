@@ -31,6 +31,23 @@ class GuildApi(private val core: RosterCore) {
             get("/api/v1/guilds") {
                 call.respond(core.guildRoster.get())
             }
+
+            get("/api/v1/guilds/{id}/stats") {
+                try {
+                    val id = Uuid.fromString(call.parameters["id"])
+                    val after = call.request.queryParameters["after"]?.let { LocalDate.parse(it) }
+                    val before = call.request.queryParameters["before"]?.let { LocalDate.parse(it) }
+                    val stats = core.eventCalendar.queryStatistics(id, after, before)
+                    if (stats == null) {
+                        call.respond(HttpStatusCode.NotFound)
+                    } else {
+                        call.respond(stats)
+                    }
+                } catch (e: IllegalArgumentException) {
+                    call.respond(HttpStatusCode.BadRequest)
+                }
+            }
+
         }
     }
 

@@ -1,8 +1,11 @@
 package components.editors
 
 import com.benasher44.uuid.Uuid
+import js.objects.jso
 import mui.icons.material.Cancel
 import mui.icons.material.Save
+import mui.material.Autocomplete
+import mui.material.AutocompleteProps
 import mui.material.Button
 import mui.material.Dialog
 import mui.material.DialogActions
@@ -14,23 +17,23 @@ import mui.material.Stack
 import mui.material.StackDirection
 import mui.material.TextField
 import mui.system.responsive
+import org.codecranachan.roster.core.Audience
 import org.codecranachan.roster.core.Table
 import org.codecranachan.roster.core.TableLanguage
-import org.w3c.dom.HTMLInputElement
+import web.html.HTMLInputElement
 import react.FC
 import react.Props
 import react.ReactNode
 import react.create
 import react.dom.events.ChangeEvent
-import react.dom.html.InputType
 import react.dom.onChange
-import react.key
-import react.useContext
-import react.useEffectOnce
+import react.use
+import react.useEffectOnceWithCleanup
 import react.useState
 import reducers.EditorClosed
 import reducers.StoreContext
 import reducers.updateTableDetails
+import web.html.InputType
 
 object Boundaries {
     const val MIN_PLAYERS = 2
@@ -40,7 +43,7 @@ object Boundaries {
 }
 
 val TableEditor = FC<Props> {
-    val store = useContext(StoreContext)
+    val store = use(StoreContext)!!
     val (isOpen, setIsOpen) = useState(false)
 
     val (eventId, setEventId) = useState(null as Uuid?)
@@ -53,6 +56,8 @@ val TableEditor = FC<Props> {
     val (maxPlayers, setMaxPlayers) = useState("7")
     val (minLevel, setMinLevel) = useState("1")
     val (maxLevel, setMaxLevel) = useState("4")
+    val (gameSystem, setGameSystem) = useState("")
+    val (audience, setAudience) = useState(Audience.Regular)
 
     fun updateTable(table: Table) {
         setEventId(table.eventId)
@@ -65,9 +70,11 @@ val TableEditor = FC<Props> {
         setMaxPlayers(table.details.playerRange.last.toString())
         setMinLevel(table.details.levelRange.first.toString())
         setMaxLevel(table.details.levelRange.last.toString())
+        setGameSystem(table.details.gameSystem ?: "")
+        setAudience(table.details.audience)
     }
 
-    useEffectOnce {
+    useEffectOnceWithCleanup {
         val unsubscribe = store.subscribe {
             val t = store.state.ui.editorTarget
             if (t is Table) {
@@ -77,7 +84,7 @@ val TableEditor = FC<Props> {
                 setIsOpen(false)
             }
         }
-        cleanup(unsubscribe)
+        onCleanup(unsubscribe)
     }
 
     Dialog {
@@ -116,6 +123,24 @@ val TableEditor = FC<Props> {
                         setDescription(e.target.value)
                     }
                 }
+                Autocomplete<AutocompleteProps<String>> {
+                    freeSolo = true
+                    options = gameSystems
+                    disablePortal = true
+                    fullWidth = true
+                    onInputChange = { _, value, _ ->
+                        setGameSystem(value)
+                    }
+                    inputValue = gameSystem
+                    renderInput = { params ->
+                        TextField.create {
+                            +params
+                            margin = FormControlMargin.dense
+                            label = ReactNode("Game System")
+                            placeholder = "The game system used"
+                        }
+                    }
+                }
                 TextField {
                     margin = FormControlMargin.dense
                     fullWidth = true
@@ -137,7 +162,7 @@ val TableEditor = FC<Props> {
                         val e = it.unsafeCast<ChangeEvent<HTMLInputElement>>()
                         setLanguage(TableLanguage.valueOf(e.target.value))
                     }
-                    TableLanguage.values().forEach {
+                    TableLanguage.entries.forEach {
                         MenuItem {
                             key = it.name
                             value = it.name
@@ -191,6 +216,23 @@ val TableEditor = FC<Props> {
                         }
                     }
                 }
+                TextField {
+                    margin = FormControlMargin.dense
+                    label = ReactNode("Audience")
+                    value = audience.name
+                    select = true
+                    onChange = {
+                        val e = it.unsafeCast<ChangeEvent<HTMLInputElement>>()
+                        setAudience(Audience.valueOf(e.target.value))
+                    }
+                    Audience.entries.forEach {
+                        MenuItem {
+                            key = it.name
+                            value = it.name
+                            +it.name
+                        }
+                    }
+                }
             }
         }
         DialogActions {
@@ -219,7 +261,9 @@ val TableEditor = FC<Props> {
                                 designation,
                                 language,
                                 truncatedMinPlayers..truncatedMaxPlayers,
-                                truncatedMinLevel..truncatedMaxLevel
+                                truncatedMinLevel..truncatedMaxLevel,
+                                audience,
+                                gameSystem
                             )
                         )
                     )
@@ -233,5 +277,5 @@ val TableEditor = FC<Props> {
 
 private fun toIntInRange(
     value: String,
-    range: IntRange
+    range: IntRange,
 ) = minOf(maxOf(value.toIntOrNull() ?: 1, range.first), range.last)

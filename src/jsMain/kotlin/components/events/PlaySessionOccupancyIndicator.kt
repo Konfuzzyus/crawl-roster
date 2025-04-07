@@ -1,12 +1,5 @@
 package components.events
 
-import csstype.AlignItems
-import csstype.ColorProperty
-import csstype.Display
-import csstype.JustifyContent
-import csstype.Position
-import csstype.number
-import csstype.px
 import mui.material.Avatar
 import mui.material.Badge
 import mui.material.BadgeColor
@@ -27,15 +20,22 @@ import org.codecranachan.roster.query.ResolvedTable
 import react.FC
 import react.Props
 import react.ReactNode
-import react.useContext
+import react.use
 import theme.ThemeContext
+import web.cssom.AlignItems
+import web.cssom.ColorProperty
+import web.cssom.Display
+import web.cssom.JustifyContent
+import web.cssom.Position
+import web.cssom.number
+import web.cssom.px
 
 external interface PlaySessionOccupancyIndicatorProps : Props {
     var data: ResolvedTable
 }
 
 val PlayTableIndicator = FC<PlaySessionOccupancyIndicatorProps> { props ->
-    val theme by useContext(ThemeContext)
+    val theme by use(ThemeContext)!!
     Badge {
         anchorOrigin = object : BadgeOrigin {
             override var horizontal = BadgeOriginHorizontal.left

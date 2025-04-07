@@ -1,7 +1,9 @@
 .secrets
 .gradle
 .idea
+.kotlin
 build
+generated
 
 *.db
 *.tar

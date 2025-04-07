@@ -16,6 +16,7 @@ import org.codecranachan.roster.core.Player
 import org.codecranachan.roster.core.Registration
 import org.codecranachan.roster.core.Table
 import org.codecranachan.roster.query.EventQueryResult
+import org.codecranachan.roster.query.EventStatisticsQueryResult
 import org.codecranachan.roster.query.PlayerQueryResult
 
 val client = HttpClient(Js) {
@@ -47,10 +48,21 @@ suspend fun fetchServerSettings(): GuildRoster {
     }
 }
 
+suspend fun fetchStats(
+    linkedGuild: LinkedGuild,
+    after: LocalDate? = null,
+    before: LocalDate? = null,
+): EventStatisticsQueryResult {
+    return client.get("/api/v1/guilds/${linkedGuild.id}/stats") {
+        after?.let { parameter("after", it) }
+        before?.let { parameter("before", it) }
+    }.body()
+}
+
 suspend fun fetchEvents(
     linkedGuild: LinkedGuild,
     after: LocalDate? = null,
-    before: LocalDate? = null
+    before: LocalDate? = null,
 ): List<EventQueryResult> {
     return client.get("/api/v1/guilds/${linkedGuild.id}/events") {
         after?.let { parameter("after", it) }
@@ -70,6 +82,16 @@ suspend fun updateEvent(eventId: Uuid, details: Event.Details) {
         contentType(ContentType.Application.Json)
         setBody(details)
     }
+}
+
+suspend fun closeEvent(eventId: Uuid) {
+    client.post("/api/v1/events/${eventId}/close") {
+        contentType(ContentType.Application.Json)
+    }
+}
+
+suspend fun deleteEvent(eventId: Uuid) {
+    client.delete("/api/v1/events/${eventId}")
 }
 
 suspend fun addPlayerRegistration(eventId: Uuid, playerId: Uuid, dungeonMasterId: Uuid? = null) {
